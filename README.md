@@ -18,6 +18,12 @@ Override it when needed:
 AI_ADMIN_DEV_API_TARGET=http://127.0.0.1:8000 npm run dev
 ```
 
+The API client uses a 5 second timeout by default. This keeps the login screen usable when the backend is not running yet. Override it with:
+
+```bash
+VITE_API_TIMEOUT_MS=10000 npm run dev
+```
+
 ## Commands
 
 ```bash

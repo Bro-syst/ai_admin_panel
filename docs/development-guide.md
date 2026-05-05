@@ -65,6 +65,7 @@ For a new API contract:
 - adapt backend field naming at the boundary;
 - cover unstable mapping with tests;
 - do not use `axios` directly in `pages` or `ui`.
+- keep requests behind the shared API client timeout, so auth bootstrap and screens can recover when the backend is unavailable.
 
 ## UI Rules
 

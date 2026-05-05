@@ -7,6 +7,7 @@ import { setupErrorInterceptor } from '@/core/api/interceptors/errorInterceptor'
 
 export const apiClient = axios.create({
   baseURL: env.apiBaseUrl,
+  timeout: env.apiTimeoutMs,
   withCredentials: true,
   headers: {
     'x-app-version': env.appVersion,
