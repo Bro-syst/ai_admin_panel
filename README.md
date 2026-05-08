@@ -1,27 +1,42 @@
-# ai_admin_panel
+# ai_admin_panel frontends
 
-React/Vite template for the AI Admin Panel.
+Frontend monorepo for AI Admin Panel products.
 
-The project was bootstrapped from the working `aml_portal` frontend and adapted as a clean starting point for a new admin application. It keeps the proven auth/settings shell, routing, API client, providers, tests, and documentation recipes so future modules can follow the same architecture.
+The repository is structured for multiple frontend applications. The first app is the admin panel in `apps/admin-panel`; future products such as a user site or customer cabinet should be added as sibling apps under `apps/`.
+
+## Structure
+
+```text
+apps/
+  admin-panel/        # Current AI Admin Panel React/Vite app
+  user-site/          # Reserved place for a future user-facing frontend
+
+packages/             # Shared frontend libraries when reuse is proven
+docs/                 # Repository-level architecture and recipes
+tsconfig.base.json    # Shared TypeScript baseline
+package.json          # Workspace scripts and package registry
+```
+
+Admin-panel-specific docs live in `apps/admin-panel/docs/`.
 
 ## Quick Start
 
 ```bash
 npm install
-npm run dev
+npm run dev:admin
 ```
 
-By default the local Vite proxy sends `/api` requests to `http://127.0.0.1:8000`.
+By default the admin panel local Vite proxy sends `/api` requests to `http://127.0.0.1:8000`.
 Override it when needed:
 
 ```bash
-AI_ADMIN_DEV_API_TARGET=http://127.0.0.1:8000 npm run dev
+AI_ADMIN_DEV_API_TARGET=http://127.0.0.1:8000 npm run dev:admin
 ```
 
-The API client uses a 5 second timeout by default. This keeps the login screen usable when the backend is not running yet. Override it with:
+The admin API client uses a 5 second timeout by default, so the login screen remains usable when the backend is not running yet:
 
 ```bash
-VITE_API_TIMEOUT_MS=10000 npm run dev
+VITE_API_TIMEOUT_MS=10000 npm run dev:admin
 ```
 
 ## Commands
@@ -30,16 +45,22 @@ VITE_API_TIMEOUT_MS=10000 npm run dev
 npm test
 npm run lint
 npm run build
-npm run preview
+
+npm run test:admin
+npm run lint:admin
+npm run build:admin
 ```
 
-## Project Docs
+## Repository Docs
 
-- [Overview](docs/overview.md) - current scope and what is included in the template.
-- [Architecture](docs/architecture.md) - layers, module boundaries, backend boundary, state rules.
-- [Development Guide](docs/development-guide.md) - rules for daily development.
-- [Recipes](docs/recipes.md) - practical steps for adding modules, routes, API calls, UI, and tests.
+- [Overview](docs/overview.md) - monorepo purpose and current app map.
+- [Architecture](docs/architecture.md) - workspace layout, app/package boundaries, dependency rules.
+- [Development Guide](docs/development-guide.md) - daily rules for adding apps and shared code.
+- [Recipes](docs/recipes.md) - practical steps for new apps, shared packages, and admin modules.
 
-## Current Baseline
+## Admin Panel Docs
 
-The first screen after login is `/settings`. New product sections should be added only when there is a clear user scenario, route, backend contract, and test minimum.
+- [Admin Overview](apps/admin-panel/docs/overview.md)
+- [Admin Architecture](apps/admin-panel/docs/architecture.md)
+- [Admin Development Guide](apps/admin-panel/docs/development-guide.md)
+- [Admin Recipes](apps/admin-panel/docs/recipes.md)
