@@ -10,6 +10,12 @@ apps/
     package.json
     vite.config.ts
     tsconfig.json
+  client-panel/
+    src/
+    docs/
+    package.json
+    vite.config.ts
+    tsconfig.json
 
 packages/
   README.md
@@ -56,12 +62,19 @@ Forbidden:
 
 ## Current App
 
-`apps/admin-panel` is the first app and currently contains the copied React/Vite admin template.
+`apps/admin-panel` is the internal administration app and currently contains the copied React/Vite admin template.
+
+`apps/client-panel` is the user-facing app workspace and currently contains a lightweight React/Vite baseline.
 
 Its app-specific architecture remains documented in:
 - `apps/admin-panel/docs/architecture.md`;
 - `apps/admin-panel/docs/development-guide.md`;
 - `apps/admin-panel/docs/recipes.md`.
+
+Client-panel architecture is documented in:
+- `apps/client-panel/docs/architecture.md`;
+- `apps/client-panel/docs/development-guide.md`;
+- `apps/client-panel/docs/recipes.md`.
 
 ## Shared Package Policy
 

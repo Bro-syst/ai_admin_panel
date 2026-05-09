@@ -10,12 +10,17 @@
   "scripts": {
     "dev": "npm run dev -w @ai-admin-panel/admin-panel --",
     "dev:admin": "npm run dev -w @ai-admin-panel/admin-panel --",
-    "build": "npm run build -w @ai-admin-panel/admin-panel",
+    "dev:client": "npm run dev -w @ai-admin-panel/client-panel --",
+    "build": "npm run build:admin && npm run build:client",
     "build:admin": "npm run build -w @ai-admin-panel/admin-panel",
-    "lint": "npm run lint -w @ai-admin-panel/admin-panel",
+    "build:client": "npm run build -w @ai-admin-panel/client-panel",
+    "lint": "npm run lint:admin && npm run lint:client",
     "lint:admin": "npm run lint -w @ai-admin-panel/admin-panel",
-    "test": "npm run test -w @ai-admin-panel/admin-panel",
+    "lint:client": "npm run lint -w @ai-admin-panel/client-panel",
+    "test": "npm run test:admin && npm run test:client",
     "test:admin": "npm run test -w @ai-admin-panel/admin-panel",
-    "preview:admin": "npm run preview -w @ai-admin-panel/admin-panel --"
+    "test:client": "npm run test -w @ai-admin-panel/client-panel",
+    "preview:admin": "npm run preview -w @ai-admin-panel/admin-panel --",
+    "preview:client": "npm run preview -w @ai-admin-panel/client-panel --"
   }
 }

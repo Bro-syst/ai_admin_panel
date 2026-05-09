@@ -35,3 +35,11 @@ Use the admin-panel app recipe:
 `apps/admin-panel/docs/recipes.md`
 
 Admin routes, UI, and API contracts stay inside `apps/admin-panel` unless another app genuinely needs them.
+
+## Add A Module To Client Panel
+
+Use the client-panel app recipe:
+
+`apps/client-panel/docs/recipes.md`
+
+Client routes, UI, and API contracts stay inside `apps/client-panel` unless another app genuinely needs them.

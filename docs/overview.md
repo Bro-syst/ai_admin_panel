@@ -4,11 +4,11 @@
 
 This repository is the frontend workspace for multiple AI Admin Panel products.
 
-The current implementation contains one application:
+The current implementation contains two applications:
 - `apps/admin-panel` - internal administration frontend.
+- `apps/client-panel` - user-facing frontend workspace.
 
 Future applications should be added as sibling apps, for example:
-- `apps/user-site`;
 - `apps/customer-cabinet`;
 - `apps/support-console`.
 

@@ -7,12 +7,13 @@ From the repository root:
 ```bash
 npm install
 npm run dev:admin
+npm run dev:client
 npm run test
 npm run lint
 npm run build
 ```
 
-Root `test`, `lint`, and `build` currently delegate to `apps/admin-panel`. When a second app is added, root commands should be updated to run every active app.
+Root `test`, `lint`, and `build` run every active app.
 
 ## Adding A New App
 
@@ -64,4 +65,8 @@ For app-specific changes, also run the named app command, for example:
 npm run test:admin
 npm run lint:admin
 npm run build:admin
+
+npm run test:client
+npm run lint:client
+npm run build:client
 ```

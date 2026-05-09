@@ -9,7 +9,7 @@ The repository is structured for multiple frontend applications. The first app i
 ```text
 apps/
   admin-panel/        # Current AI Admin Panel React/Vite app
-  user-site/          # Reserved place for a future user-facing frontend
+  client-panel/       # User-facing React/Vite app workspace
 
 packages/             # Shared frontend libraries when reuse is proven
 docs/                 # Repository-level architecture and recipes
@@ -24,6 +24,7 @@ Admin-panel-specific docs live in `apps/admin-panel/docs/`.
 ```bash
 npm install
 npm run dev:admin
+npm run dev:client
 ```
 
 By default the admin panel local Vite proxy sends `/api` requests to `http://127.0.0.1:8000`.
@@ -39,6 +40,12 @@ The admin API client uses a 5 second timeout by default, so the login screen rem
 VITE_API_TIMEOUT_MS=10000 npm run dev:admin
 ```
 
+The client panel runs on port `5174` by default:
+
+```bash
+CLIENT_PANEL_DEV_API_TARGET=http://127.0.0.1:8000 npm run dev:client
+```
+
 ## Commands
 
 ```bash
@@ -49,6 +56,10 @@ npm run build
 npm run test:admin
 npm run lint:admin
 npm run build:admin
+
+npm run test:client
+npm run lint:client
+npm run build:client
 ```
 
 ## Repository Docs
@@ -64,3 +75,10 @@ npm run build:admin
 - [Admin Architecture](apps/admin-panel/docs/architecture.md)
 - [Admin Development Guide](apps/admin-panel/docs/development-guide.md)
 - [Admin Recipes](apps/admin-panel/docs/recipes.md)
+
+## Client Panel Docs
+
+- [Client Overview](apps/client-panel/docs/overview.md)
+- [Client Architecture](apps/client-panel/docs/architecture.md)
+- [Client Development Guide](apps/client-panel/docs/development-guide.md)
+- [Client Recipes](apps/client-panel/docs/recipes.md)
