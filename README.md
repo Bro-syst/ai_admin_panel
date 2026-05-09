@@ -40,11 +40,13 @@ The admin API client uses a 5 second timeout by default, so the login screen rem
 VITE_API_TIMEOUT_MS=10000 npm run dev:admin
 ```
 
-The client panel runs on port `5174` by default:
+The client panel runs on port `5174` by default and keeps the auth/security template from the source portal:
 
 ```bash
 CLIENT_PANEL_DEV_API_TARGET=http://127.0.0.1:8000 npm run dev:client
 ```
+
+Without the backend, client-panel should render `/login` after auth bootstrap instead of staying on `Loading...`.
 
 ## Commands
 

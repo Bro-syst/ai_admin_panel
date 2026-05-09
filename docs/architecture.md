@@ -64,7 +64,7 @@ Forbidden:
 
 `apps/admin-panel` is the internal administration app and currently contains the copied React/Vite admin template.
 
-`apps/client-panel` is the user-facing app workspace and currently contains a lightweight React/Vite baseline.
+`apps/client-panel` is the user-facing app workspace. It currently contains the reusable auth/security shell from the portal template: login, registration, email verification, account security, TOTP, sessions, theme and language settings.
 
 Its app-specific architecture remains documented in:
 - `apps/admin-panel/docs/architecture.md`;

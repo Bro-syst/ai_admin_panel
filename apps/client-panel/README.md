@@ -1,8 +1,19 @@
 # Client Panel
 
-React/Vite application for future user-facing flows.
+React/Vite client portal template copied from `/Volumes/Work/DV/ web_kassa/front` and reduced to reusable application infrastructure.
 
-The app is intentionally small for now: it gives the monorepo a real second workspace app with its own runtime entrypoint, docs, tests, and commands. Product modules should be added here only when the client-panel scope is defined.
+The app keeps the parts that define how the frontend is built:
+
+- login and registration;
+- email verification callback and account verification reminders;
+- auth bootstrap, refresh, logout and session management;
+- TOTP enrollment, confirmation, disable and recovery;
+- API client with CSRF, locale, auth and request id interceptors;
+- theme and language providers;
+- authenticated app shell with empty inner workspace;
+- docs that describe the architecture and recipes.
+
+Business modules from the source portal were intentionally not copied into the client scope: cashdesks, orders, settlements, compliance, cashier workspace, users and dashboards.
 
 ## Quick Start
 
@@ -19,7 +30,7 @@ The default dev URL is:
 http://127.0.0.1:5174/
 ```
 
-Override the local API proxy when needed:
+The Vite proxy points `/api` and `/auth` to the backend:
 
 ```bash
 CLIENT_PANEL_DEV_API_TARGET=http://127.0.0.1:8000 npm run dev:client

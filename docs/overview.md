@@ -6,7 +6,7 @@ This repository is the frontend workspace for multiple AI Admin Panel products.
 
 The current implementation contains two applications:
 - `apps/admin-panel` - internal administration frontend.
-- `apps/client-panel` - user-facing frontend workspace.
+- `apps/client-panel` - user-facing frontend workspace with auth/security template shell.
 
 Future applications should be added as sibling apps, for example:
 - `apps/customer-cabinet`;
@@ -20,10 +20,11 @@ The repository should not be coupled to a single frontend forever. Admin, user-f
 
 At the repository level:
 - npm workspaces are configured in the root `package.json`;
-- root scripts delegate to the current admin app;
+- root scripts delegate to the current admin and client apps;
 - shared TypeScript defaults live in `tsconfig.base.json`;
 - repository-level docs describe how multiple frontend apps should coexist;
-- admin-specific docs live under `apps/admin-panel/docs`.
+- admin-specific docs live under `apps/admin-panel/docs`;
+- client-specific docs live under `apps/client-panel/docs`.
 
 ## App Ownership
 
