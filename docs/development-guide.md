@@ -15,6 +15,12 @@ npm run build
 
 Root `test`, `lint`, and `build` run every active app.
 
+## Local App Startup
+
+Use the separate startup guide:
+
+`docs/local-app-startup.md`
+
 ## Adding A New App
 
 New frontend apps go under `apps/<app-name>`.

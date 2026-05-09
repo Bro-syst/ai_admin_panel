@@ -67,6 +67,7 @@ npm run build:client
 ## Repository Docs
 
 - [Overview](docs/overview.md) - monorepo purpose and current app map.
+- [Local App Startup](docs/local-app-startup.md) - how to choose and run admin-panel or client-panel locally.
 - [Architecture](docs/architecture.md) - workspace layout, app/package boundaries, dependency rules.
 - [Development Guide](docs/development-guide.md) - daily rules for adding apps and shared code.
 - [Recipes](docs/recipes.md) - practical steps for new apps, shared packages, and admin modules.
