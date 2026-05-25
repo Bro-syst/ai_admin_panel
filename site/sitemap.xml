@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://core-ai-platform.example/</loc>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://core-ai-platform.example/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://core-ai-platform.example/en/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://core-ai-platform.example/es/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://core-ai-platform.example/"/>
+  </url>
+  <url>
+    <loc>https://core-ai-platform.example/platform/</loc>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://core-ai-platform.example/platform/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://core-ai-platform.example/en/platform/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://core-ai-platform.example/es/platform/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://core-ai-platform.example/platform/"/>
+  </url>
+  <url>
+    <loc>https://core-ai-platform.example/agents/</loc>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://core-ai-platform.example/agents/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://core-ai-platform.example/en/agents/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://core-ai-platform.example/es/agents/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://core-ai-platform.example/agents/"/>
+  </url>
+  <url>
+    <loc>https://core-ai-platform.example/pilot/</loc>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://core-ai-platform.example/pilot/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://core-ai-platform.example/en/pilot/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://core-ai-platform.example/es/pilot/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://core-ai-platform.example/pilot/"/>
+  </url>
+</urlset>

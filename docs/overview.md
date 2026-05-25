@@ -23,6 +23,7 @@ At the repository level:
 - root scripts delegate to the current admin and client apps;
 - shared TypeScript defaults live in `tsconfig.base.json`;
 - repository-level docs describe how multiple frontend apps should coexist;
+- Admin Portal prompt/TZ pipeline lives under `apps/admin-panel/docs` because it is app-specific, not repository-wide;
 - admin-specific docs live under `apps/admin-panel/docs`;
 - client-specific docs live under `apps/client-panel/docs`.
 

@@ -30,21 +30,42 @@ describe('mapApiError', () => {
       response: {
         status: 423,
         data: {
-          code: 'locked',
-          detail: 'Current AML officer is locked',
+          error_code: 'account_locked',
+          message: 'Admin account is locked',
+          correlation_id: 'corr_locked',
         },
-        headers: {
-          'x-request-id': 'req_locked',
-        },
+        headers: {},
       },
     }
 
     expect(mapApiError(error)).toMatchObject({
       kind: 'locked',
       status: 423,
-      code: 'locked',
-      message: 'Current AML officer is locked',
-      requestId: 'req_locked',
+      code: 'account_locked',
+      message: 'Admin account is locked',
+      requestId: 'corr_locked',
+    })
+  })
+
+  it('keeps a code fallback for compatibility error envelopes', () => {
+    const error = {
+      isAxiosError: true,
+      message: 'Request failed',
+      response: {
+        status: 403,
+        data: {
+          code: 'permission_denied',
+          message: 'Permission denied',
+        },
+        headers: {},
+      },
+    }
+
+    expect(mapApiError(error)).toMatchObject({
+      kind: 'forbidden',
+      status: 403,
+      code: 'permission_denied',
+      message: 'Permission denied',
     })
   })
 
@@ -54,7 +75,7 @@ describe('mapApiError', () => {
       message: 'Request failed',
       response: {
         status: 403,
-        data: { detail: 'Forbidden for current AML officer scope' },
+        data: { detail: 'Forbidden for current admin user scope' },
         headers: { 'x-request-id': 'req_403' },
       },
     })
@@ -82,7 +103,7 @@ describe('mapApiError', () => {
     expect(forbidden).toMatchObject({
       kind: 'forbidden',
       status: 403,
-      message: 'Forbidden for current AML officer scope',
+      message: 'Forbidden for current admin user scope',
       requestId: 'req_403',
     })
     expect(notFound).toMatchObject({

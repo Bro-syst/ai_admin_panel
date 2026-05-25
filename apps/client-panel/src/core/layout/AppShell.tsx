@@ -4,7 +4,7 @@ import { useAuth } from '@/core/auth/useAuth'
 import { useI18n } from '@/core/i18n/useI18n'
 import { LocaleThemeToggle } from '@/core/layout/LocaleThemeToggle'
 import { IconButton } from '@/shared/ui/IconButton'
-import { PaymentTerminalIcon } from '@/shared/ui/icons/PaymentTerminal'
+import { AiCoreLogoIcon } from '@/shared/ui/icons/AiCoreLogo'
 
 type NavEntry =
   | { kind: 'route'; to: string; label: string; icon: (props: { className?: string }) => ReactNode }
@@ -57,7 +57,7 @@ function Brand() {
   return (
     <div className="flex min-w-0 items-center gap-3">
       <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-emerald-500/15 text-emerald-600">
-        <PaymentTerminalIcon className="h-6 w-6" />
+        <AiCoreLogoIcon className="h-6 w-6" />
       </div>
       <div className="min-w-0 leading-tight">
         <div className="truncate text-sm font-extrabold tracking-tight text-[var(--text)]">{t('brand.name')}</div>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Core AI Platform</title>
+  <desc id="desc">Social preview image for Core AI Platform.</desc>
+  <rect width="1200" height="630" fill="#f6f4ef"/>
+  <rect x="72" y="72" width="1056" height="486" rx="24" fill="#15201f"/>
+  <rect x="118" y="118" width="96" height="96" rx="18" fill="#ffffff"/>
+  <text x="166" y="178" text-anchor="middle" font-family="Arial, sans-serif" font-size="42" font-weight="800" fill="#15201f">AI</text>
+  <text x="118" y="286" font-family="Arial, sans-serif" font-size="76" font-weight="800" fill="#ffffff">Core AI Platform</text>
+  <text x="118" y="360" font-family="Arial, sans-serif" font-size="38" font-weight="700" fill="#9fd2c3">AI Agents Platform for Business Operations</text>
+  <text x="118" y="438" font-family="Arial, sans-serif" font-size="28" fill="#d8e3df">Managed agents. Controlled knowledge. Scalable operations.</text>
+  <rect x="118" y="486" width="205" height="10" rx="5" fill="#c46f1a"/>
+  <rect x="345" y="486" width="205" height="10" rx="5" fill="#0c6b5b"/>
+  <rect x="572" y="486" width="205" height="10" rx="5" fill="#6b91ba"/>
+</svg>

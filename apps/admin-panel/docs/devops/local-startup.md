@@ -53,13 +53,13 @@ Prefer `npm run dev:admin` when the repository contains multiple apps and you wa
 In local Vite mode, admin-panel proxies `/api` requests to:
 
 ```text
-http://127.0.0.1:8000
+http://127.0.0.1:8008
 ```
 
 Override the backend target when needed:
 
 ```bash
-AI_ADMIN_DEV_API_TARGET=http://127.0.0.1:8000 npm run dev:admin
+AI_ADMIN_DEV_API_TARGET=http://127.0.0.1:8008 npm run dev:admin
 ```
 
 The frontend API client also supports:
@@ -67,7 +67,7 @@ The frontend API client also supports:
 ```bash
 VITE_API_BASE_URL=
 VITE_API_TIMEOUT_MS=5000
-VITE_APP_VERSION=web-1.0.0
+VITE_APP_VERSION=admin-panel-local
 ```
 
 For local proxy mode, `VITE_API_BASE_URL` is normally empty so browser calls stay same-origin and go through Vite proxy.

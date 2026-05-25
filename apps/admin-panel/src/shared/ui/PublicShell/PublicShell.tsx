@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { LocaleThemeToggle } from '@/shared/ui/LocaleThemeToggle'
 import { BRAND_NAME } from '@/shared/brand'
-import { AmlPortalIcon } from '@/shared/ui/icons/AmlPortal'
+import { AiCoreLogoIcon } from '@/shared/ui/icons/AiCoreLogo'
 
 export function PublicShell({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -10,7 +10,7 @@ export function PublicShell({ title, children }: { title: string; children: Reac
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-3">
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-500/15 text-emerald-600">
-              <AmlPortalIcon className="h-5 w-5" />
+              <AiCoreLogoIcon className="h-5 w-5" />
             </div>
             <div className="text-base font-extrabold tracking-tight text-[var(--text)] sm:text-lg">{BRAND_NAME}</div>
           </div>

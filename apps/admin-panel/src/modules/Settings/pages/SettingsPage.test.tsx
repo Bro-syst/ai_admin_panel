@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -10,7 +9,7 @@ import { SettingsPage } from '@/modules/Settings/pages/SettingsPage'
 
 vi.mock('@/core/auth/useAuth', () => ({
   useAuth: () => ({
-    amlOfficer: { id: 'aml_1', email: 'officer@example.test', role: 'aml_officer', status: 'active', lastLoginAt: null },
+    adminUser: { id: 'admin_1', email: 'admin@example.test', role: 'platform_admin', status: 'active', lastLoginAt: null },
     authState: {
       authenticated: true,
       verificationRequired: false,
@@ -28,16 +27,8 @@ vi.mock('@/shared/ui/AppShell', () => ({
   ),
 }))
 
-vi.mock('@/modules/AmlSecurity', () => ({
-  AmlTotpPanel: () => <section>Security panel mock</section>,
-}))
-
-vi.mock('@/modules/Settings/ui/CurrentAmlOfficerPanel', () => ({
-  CurrentAmlOfficerPanel: () => <section>Current AML officer panel mock</section>,
-}))
-
-vi.mock('@/modules/Settings/ui/AmlSessionsPanel', () => ({
-  AmlSessionsPanel: () => <section>Sessions panel mock</section>,
+vi.mock('@/modules/Settings/ui/CurrentAdminUserPanel', () => ({
+  CurrentAdminUserPanel: () => <section>Current admin user panel mock</section>,
 }))
 
 function renderPage(initialEntries = ['/settings']) {
@@ -61,29 +52,13 @@ describe('SettingsPage', () => {
     window.localStorage.clear()
   })
 
-  it('keeps only general and security settings tabs', async () => {
+  it('renders general settings without security panels', () => {
     renderPage()
 
-    expect(screen.getByRole('tab', { name: 'General', selected: true })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Security' })).toBeInTheDocument()
-    expect(screen.getAllByRole('tab')).toHaveLength(2)
-    expect(screen.getByText('Current AML officer panel mock')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument()
+    expect(screen.getByText('Current admin user panel mock')).toBeInTheDocument()
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument()
     expect(screen.queryByText('Security panel mock')).not.toBeInTheDocument()
     expect(screen.queryByText('Sessions panel mock')).not.toBeInTheDocument()
-
-    await userEvent.click(screen.getByRole('tab', { name: 'Security' }))
-
-    expect(screen.getByRole('tab', { name: 'Security', selected: true })).toBeInTheDocument()
-    expect(screen.queryByText('Current AML officer panel mock')).not.toBeInTheDocument()
-    expect(screen.getByText('Security panel mock')).toBeInTheDocument()
-    expect(screen.getByText('Sessions panel mock')).toBeInTheDocument()
-  })
-
-  it('opens security tab from query params', () => {
-    renderPage(['/settings?tab=security'])
-
-    expect(screen.getByRole('tab', { name: 'Security', selected: true })).toBeInTheDocument()
-    expect(screen.getByText('Security panel mock')).toBeInTheDocument()
-    expect(screen.getByText('Sessions panel mock')).toBeInTheDocument()
   })
 })

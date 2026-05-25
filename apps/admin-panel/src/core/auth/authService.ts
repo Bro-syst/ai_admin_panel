@@ -1,7 +1,8 @@
 import { apiClient } from '@/core/api/apiClient'
+import { getLocalizedApiErrorMessage } from '@/core/api/errors/getLocalizedApiErrorMessage'
 import { getStorageKey } from '@/shared/storage/storageKeys'
 
-export type AuthAmlOfficer = {
+export type AuthAdminUser = {
   id: string
   email: string
   role: string
@@ -18,11 +19,11 @@ export type AuthState = {
 }
 
 export type AuthSession = {
-  amlOfficer: AuthAmlOfficer
+  adminUser: AuthAdminUser
   authState: AuthState
 }
 
-export type AmlAuthSessionItem = {
+export type AdminAuthSessionItem = {
   id: string
   createdAt: string
   lastSeenAt: string | null
@@ -33,63 +34,55 @@ export type AmlAuthSessionItem = {
   current: boolean
 }
 
-export type AmlSessionRevocationResult = {
+export type AdminSessionRevocationResult = {
   sessionId: string
   revoked: boolean
   current: boolean
 }
 
-type AuthStatePayload = {
-  authenticated?: boolean
-  verification_required?: boolean
-  critical_actions_allowed?: boolean
-}
+type AdminAuthStatePayload = 'authenticated' | string
 
-type AmlOfficerPayload = {
-  id?: string
+type AdminUserPayload = {
+  user_id?: string
   email?: string
+  display_name?: string | null
+  tenant_id?: string | null
   role?: string
-  status?: string
-  last_login_at?: string | null
+  permissions?: string[]
+  auth_state?: AdminAuthStatePayload
 }
 
 type AuthContextPayload = {
-  aml_officer?: AmlOfficerPayload
-  auth_state?: AuthStatePayload
-}
-
-type RefreshResponse = {
-  authenticated?: boolean
-  refreshed?: boolean
-  auth_state?: AuthStatePayload
+  admin?: AdminUserPayload
+  auth_state?: AdminAuthStatePayload
+  csrf_cookie_name?: string
 }
 
 type LogoutResponse = {
-  logged_out?: boolean
+  status?: string
+  revoked_sessions?: number
 }
 
 type PasswordSetupConfirmResponse = {
-  password_set?: boolean
+  status?: string
 }
 
 type PasswordResetRequestResponse = {
-  accepted?: boolean
+  status?: string
 }
 
 type PasswordResetConfirmResponse = {
-  password_reset?: boolean
-  sessions_revoked?: boolean
+  status?: string
+  revoked_sessions?: number
 }
 
 type AuthSessionPayload = {
   id?: string
-  created_at?: string
-  last_seen_at?: string | null
+  issued_at?: string
   expires_at?: string
-  idle_expires_at?: string
-  ip_address?: string | null
-  user_agent?: string | null
   current?: boolean
+  status?: string
+  revoked_at?: string | null
 }
 
 type AuthSessionsResponse = {
@@ -97,13 +90,12 @@ type AuthSessionsResponse = {
 }
 
 type AuthSessionRevocationResponse = {
-  session_id?: string
-  revoked?: boolean
-  current?: boolean
+  status?: string
+  revoked_sessions?: number
 }
 
-const AUTH_PREFIX = '/api/v1/aml/auth'
-const USERS_PREFIX = '/api/v1/aml/users'
+const AUTH_PREFIX = '/api/admin/v1/auth'
+const USERS_PREFIX = '/api/admin/v1/users'
 const LAST_LOGIN_EMAIL_STORAGE_KEY = getStorageKey('last_login_email')
 
 function normalizeEmail(email: string) {
@@ -126,45 +118,45 @@ function setStoredLastLoginEmail(email: string) {
   }
 }
 
-function mapAuthState(payload?: AuthStatePayload): AuthState {
+function mapAuthState(payload?: AdminAuthStatePayload): AuthState {
+  const authenticated = payload === 'authenticated'
   return {
-    authenticated: payload?.authenticated === true,
-    verificationRequired: payload?.verification_required === true,
-    criticalActionsAllowed: payload?.critical_actions_allowed === true,
+    authenticated,
+    verificationRequired: false,
+    criticalActionsAllowed: authenticated,
   }
 }
 
 function mapSession(payload: AuthContextPayload | undefined): AuthSession {
-  const amlOfficer = payload?.aml_officer
-  if (!amlOfficer?.id || !amlOfficer?.email || !amlOfficer?.role || !amlOfficer?.status) {
+  const admin = payload?.admin
+  if (!admin?.user_id || !admin.email || !admin.role) {
     throw new Error('Invalid auth response')
   }
 
+  const authState = mapAuthState(payload?.auth_state ?? admin.auth_state)
   return {
-    amlOfficer: {
-      id: String(amlOfficer.id),
-      email: String(amlOfficer.email),
-      role: String(amlOfficer.role),
-      status: String(amlOfficer.status),
-      lastLoginAt: amlOfficer.last_login_at ?? null,
+    adminUser: {
+      id: String(admin.user_id),
+      email: String(admin.email),
+      role: String(admin.role),
+      status: authState.authenticated ? 'active' : String(admin.auth_state ?? payload?.auth_state ?? 'inactive'),
+      lastLoginAt: null,
+      roles: [String(admin.role)],
+      permissions: Array.isArray(admin.permissions) ? admin.permissions.filter((item): item is string => typeof item === 'string') : [],
     },
-    authState: mapAuthState(payload?.auth_state),
+    authState,
   }
 }
 
-function readOptionalText(value: unknown) {
-  return typeof value === 'string' && value.trim() ? value : null
-}
-
-function mapAuthSessionItem(payload: AuthSessionPayload): AmlAuthSessionItem {
+function mapAuthSessionItem(payload: AuthSessionPayload): AdminAuthSessionItem {
   return {
     id: readRequiredString(payload.id, 'id'),
-    createdAt: readRequiredString(payload.created_at, 'created_at'),
-    lastSeenAt: readOptionalText(payload.last_seen_at),
+    createdAt: readRequiredString(payload.issued_at, 'issued_at'),
+    lastSeenAt: null,
     expiresAt: readRequiredString(payload.expires_at, 'expires_at'),
-    idleExpiresAt: readRequiredString(payload.idle_expires_at, 'idle_expires_at'),
-    ipAddress: readOptionalText(payload.ip_address),
-    userAgent: readOptionalText(payload.user_agent),
+    idleExpiresAt: readRequiredString(payload.expires_at, 'expires_at'),
+    ipAddress: null,
+    userAgent: null,
     current: payload.current === true,
   }
 }
@@ -177,7 +169,7 @@ function readRequiredString(value: unknown, field: string) {
   return value
 }
 
-async function getCurrentAmlOfficer() {
+async function getCurrentAdminUser() {
   const response = await apiClient.get<AuthContextPayload>(`${USERS_PREFIX}/me`)
   return mapSession(response.data)
 }
@@ -187,16 +179,13 @@ export const authService = {
     return getStoredLastLoginEmail()
   },
 
-  async getCurrentAmlOfficer(): Promise<AuthSession> {
-    return getCurrentAmlOfficer()
+  async getCurrentAdminUser(): Promise<AuthSession> {
+    return getCurrentAdminUser()
   },
 
   async refresh(): Promise<AuthSession> {
-    const response = await apiClient.post<RefreshResponse>(`${AUTH_PREFIX}/refresh`, {})
-    if (response.data?.authenticated !== true || response.data?.refreshed !== true) {
-      throw new Error('refresh failed')
-    }
-    return getCurrentAmlOfficer()
+    const response = await apiClient.post<AuthContextPayload>(`${AUTH_PREFIX}/refresh`, {})
+    return mapSession(response.data)
   },
 
   async login(email: string, password: string): Promise<AuthSession> {
@@ -205,7 +194,7 @@ export const authService = {
       password,
     })
     const session = mapSession(response.data)
-    setStoredLastLoginEmail(session.amlOfficer.email)
+    setStoredLastLoginEmail(session.adminUser.email)
     return session
   },
 
@@ -215,55 +204,50 @@ export const authService = {
 
   async logoutAll(): Promise<boolean> {
     const response = await apiClient.post<LogoutResponse>(`${AUTH_PREFIX}/logout-all`, {})
-    return response.data?.logged_out === true
+    return response.data?.status === 'logged_out'
   },
 
-  async listSessions(): Promise<AmlAuthSessionItem[]> {
+  async listSessions(): Promise<AdminAuthSessionItem[]> {
     const response = await apiClient.get<AuthSessionsResponse>(`${AUTH_PREFIX}/sessions`)
     return Array.isArray(response.data?.sessions) ? response.data.sessions.map(mapAuthSessionItem) : []
   },
 
-  async revokeSession(sessionId: string): Promise<AmlSessionRevocationResult> {
+  async revokeSession(sessionId: string): Promise<AdminSessionRevocationResult> {
     const response = await apiClient.delete<AuthSessionRevocationResponse>(`${AUTH_PREFIX}/sessions/${sessionId}`)
     return {
-      sessionId: readRequiredString(response.data?.session_id, 'session_id'),
-      revoked: response.data?.revoked === true,
-      current: response.data?.current === true,
+      sessionId,
+      revoked: response.data?.status === 'revoked' && Number(response.data?.revoked_sessions ?? 0) > 0,
+      current: false,
     }
   },
 
   async confirmPasswordSetup(token: string, password: string): Promise<boolean> {
     const response = await apiClient.post<PasswordSetupConfirmResponse>(`${AUTH_PREFIX}/password-setup/confirm`, {
       token,
-      password,
+      new_password: password,
     })
-    return response.data?.password_set === true
+    return response.data?.status === 'password_setup_completed'
   },
 
-  async requestPasswordReset(email: string, localeCode: string): Promise<boolean> {
+  async requestPasswordReset(email: string, _localeCode: string): Promise<boolean> {
     const response = await apiClient.post<PasswordResetRequestResponse>(`${AUTH_PREFIX}/password-reset/request`, {
       email: normalizeEmail(email),
-      locale_code: localeCode,
     })
-    return response.data?.accepted === true
+    return response.data?.status === 'password_reset_requested'
   },
 
   async confirmPasswordReset(token: string, password: string): Promise<{ passwordReset: boolean; sessionsRevoked: boolean }> {
     const response = await apiClient.post<PasswordResetConfirmResponse>(`${AUTH_PREFIX}/password-reset/confirm`, {
       token,
-      password,
+      new_password: password,
     })
     return {
-      passwordReset: response.data?.password_reset === true,
-      sessionsRevoked: response.data?.sessions_revoked === true,
+      passwordReset: response.data?.status === 'password_reset_completed',
+      sessionsRevoked: Number(response.data?.revoked_sessions ?? 0) > 0,
     }
   },
 }
 
-export function readAuthErrorMessage(error: unknown, fallback: string) {
-  if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' && error.message.trim()) {
-    return error.message
-  }
-
-  return fallback
+export function readAuthErrorMessage(error: unknown, fallback: string, t: (key: string) => string) {
+  return getLocalizedApiErrorMessage(error, t, fallback)
 }

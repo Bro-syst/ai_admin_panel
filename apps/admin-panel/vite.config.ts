@@ -1,9 +1,10 @@
 import react from '@vitejs/plugin-react'
 import { fileURLToPath } from 'node:url'
+import { loadEnv } from 'vite'
 import { defineConfig } from 'vitest/config'
 
-const devApiTarget = process.env.AI_ADMIN_DEV_API_TARGET?.trim() || 'http://127.0.0.1:8000'
-const devApiTargetOrigin = new URL(devApiTarget).origin
+const appRoot = fileURLToPath(new URL('.', import.meta.url))
+const defaultDevApiTarget = 'http://127.0.0.1:8008'
 
 function normalizeSetCookieValues(setCookie: string | string[]) {
   const values = Array.isArray(setCookie) ? setCookie : [setCookie]
@@ -29,35 +30,41 @@ function patchDevSetCookie(headers: Record<string, string | string[] | undefined
   )
 }
 
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    proxy: {
-      '/api': {
-        target: devApiTarget,
-        changeOrigin: true,
-        secure: false,
-        cookieDomainRewrite: '',
-        configure(proxy) {
-          proxy.on('proxyReq', (proxyReq, req) => {
-            proxyReq.setHeader('origin', devApiTargetOrigin)
-            proxyReq.setHeader('referer', `${devApiTargetOrigin}${req.url ?? '/'}`)
-          })
-          proxy.on('proxyRes', (proxyRes) => {
-            patchDevSetCookie(proxyRes.headers as Record<string, string | string[] | undefined>)
-          })
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, appRoot, '')
+  const devApiTarget = env.AI_ADMIN_DEV_API_TARGET?.trim() || defaultDevApiTarget
+  const devApiTargetOrigin = new URL(devApiTarget).origin
+
+  return {
+    plugins: [react()],
+    server: {
+      proxy: {
+        '/api': {
+          target: devApiTarget,
+          changeOrigin: true,
+          secure: false,
+          cookieDomainRewrite: '',
+          configure(proxy) {
+            proxy.on('proxyReq', (proxyReq, req) => {
+              proxyReq.setHeader('origin', devApiTargetOrigin)
+              proxyReq.setHeader('referer', `${devApiTargetOrigin}${req.url ?? '/'}`)
+            })
+            proxy.on('proxyRes', (proxyRes) => {
+              patchDevSetCookie(proxyRes.headers as Record<string, string | string[] | undefined>)
+            })
+          },
         },
       },
     },
-  },
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url)),
+      },
     },
-  },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/setupTests.ts'],
-  },
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: ['./src/setupTests.ts'],
+    },
+  }
 })

@@ -38,11 +38,11 @@ function readHeader(config: AxiosRequestConfig, name: string) {
 
 describe('setupCsrfInterceptor', () => {
   beforeEach(() => {
-    document.cookie = 'wk_aml_csrf=; Max-Age=0; path=/'
+    document.cookie = 'ai_core_admin_csrf=; Max-Age=0; path=/'
   })
 
   it('does not add csrf to ordinary metadata GET requests', () => {
-    document.cookie = 'wk_aml_csrf=csrf-token; path=/'
+    document.cookie = 'ai_core_admin_csrf=csrf-token; path=/'
 
     const { client, apply } = createApiClientMock()
     setupCsrfInterceptor(client)
@@ -53,7 +53,7 @@ describe('setupCsrfInterceptor', () => {
   })
 
   it('adds csrf to sensitive GET requests with explicit opt-in', () => {
-    document.cookie = 'wk_aml_csrf=csrf-token; path=/'
+    document.cookie = 'ai_core_admin_csrf=csrf-token; path=/'
 
     const { client, apply } = createApiClientMock()
     setupCsrfInterceptor(client)

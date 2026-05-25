@@ -71,6 +71,7 @@ npm run build:client
 - [Architecture](docs/architecture.md) - workspace layout, app/package boundaries, dependency rules.
 - [Development Guide](docs/development-guide.md) - daily rules for adding apps and shared code.
 - [Recipes](docs/recipes.md) - practical steps for new apps, shared packages, and admin modules.
+- App-specific prompt/TZ pipelines live under the owning app docs.
 
 ## Admin Panel Docs
 
@@ -78,6 +79,8 @@ npm run build:client
 - [Admin Architecture](apps/admin-panel/docs/architecture.md)
 - [Admin Development Guide](apps/admin-panel/docs/development-guide.md)
 - [Admin Recipes](apps/admin-panel/docs/recipes.md)
+- [Admin Prompt Pipeline](apps/admin-panel/docs/prompts/README.md)
+- [Admin Portal Frontend TZ](apps/admin-panel/docs/tz/admin-portal-frontend/ADMIN_PORTAL_FRONTEND_UMBRELLA_TZ.md)
 
 ## Client Panel Docs
 

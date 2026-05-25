@@ -17,18 +17,17 @@ const getMock = apiClient.get as unknown as ReturnType<typeof vi.fn>
 const deleteMock = apiClient.delete as unknown as ReturnType<typeof vi.fn>
 
 const authContextPayload = {
-  aml_officer: {
-    id: 'aml_123',
-    email: 'officer@bank.local',
-    role: 'aml_officer',
-    status: 'active',
-    last_login_at: '2026-03-24T10:15:00Z',
+  admin: {
+    user_id: 'admin_123',
+    email: 'admin@example.test',
+    display_name: 'Admin',
+    tenant_id: 'tenant_123',
+    role: 'platform_admin',
+    permissions: ['admin:read'],
+    auth_state: 'authenticated',
   },
-  auth_state: {
-    authenticated: true,
-    verification_required: false,
-    critical_actions_allowed: true,
-  },
+  auth_state: 'authenticated',
+  csrf_cookie_name: 'ai_core_admin_csrf',
 }
 
 describe('authService', () => {
@@ -39,17 +38,18 @@ describe('authService', () => {
     deleteMock.mockReset()
   })
 
-  it('reads current AML officer from the /users/me contract', async () => {
+  it('reads current admin from the /users/me contract', async () => {
     getMock.mockResolvedValue({ data: authContextPayload })
 
-    const session = await authService.getCurrentAmlOfficer()
+    const session = await authService.getCurrentAdminUser()
 
-    expect(getMock).toHaveBeenCalledWith('/api/v1/aml/users/me')
+    expect(getMock).toHaveBeenCalledWith('/api/admin/v1/users/me')
     expect(session).toMatchObject({
-      amlOfficer: {
-        id: 'aml_123',
-        email: 'officer@bank.local',
-        role: 'aml_officer',
+      adminUser: {
+        id: 'admin_123',
+        email: 'admin@example.test',
+        role: 'platform_admin',
+        permissions: ['admin:read'],
       },
       authState: {
         authenticated: true,
@@ -62,50 +62,47 @@ describe('authService', () => {
   it('logs in by email and password', async () => {
     postMock.mockResolvedValue({ data: authContextPayload })
 
-    const session = await authService.login('  officer@bank.local  ', 'StrongPassword123!')
+    const session = await authService.login('  admin@example.test  ', 'StrongPassword123!')
 
-    expect(postMock).toHaveBeenCalledWith('/api/v1/aml/auth/login', {
-      email: 'officer@bank.local',
+    expect(postMock).toHaveBeenCalledWith('/api/admin/v1/auth/login', {
+      email: 'admin@example.test',
       password: 'StrongPassword123!',
     })
-    expect(session.amlOfficer.email).toBe('officer@bank.local')
-    expect(authService.getLastLoginEmail()).toBe('officer@bank.local')
+    expect(session.adminUser.email).toBe('admin@example.test')
+    expect(authService.getLastLoginEmail()).toBe('admin@example.test')
   })
 
-  it('refreshes session and then reloads current user', async () => {
-    postMock.mockResolvedValue({ data: { authenticated: true, refreshed: true, auth_state: authContextPayload.auth_state } })
-    getMock.mockResolvedValue({ data: authContextPayload })
+  it('refreshes session from the admin auth envelope', async () => {
+    postMock.mockResolvedValue({ data: authContextPayload })
 
     const session = await authService.refresh()
 
-    expect(postMock).toHaveBeenCalledWith('/api/v1/aml/auth/refresh', {})
-    expect(getMock).toHaveBeenCalledWith('/api/v1/aml/users/me')
-    expect(session.amlOfficer.email).toBe('officer@bank.local')
+    expect(postMock).toHaveBeenCalledWith('/api/admin/v1/auth/refresh', {})
+    expect(getMock).not.toHaveBeenCalled()
+    expect(session.adminUser.email).toBe('admin@example.test')
   })
 
   it('logs out through the new endpoint', async () => {
-    window.localStorage.setItem(getStorageKey('last_login_email'), 'officer@bank.local')
-    postMock.mockResolvedValue({ data: { logged_out: true } })
+    window.localStorage.setItem(getStorageKey('last_login_email'), 'admin@example.test')
+    postMock.mockResolvedValue({ data: { status: 'logged_out', revoked_sessions: 1 } })
 
     await authService.logout()
 
-    expect(postMock).toHaveBeenCalledWith('/api/v1/aml/auth/logout', {})
-    expect(authService.getLastLoginEmail()).toBe('officer@bank.local')
+    expect(postMock).toHaveBeenCalledWith('/api/admin/v1/auth/logout', {})
+    expect(authService.getLastLoginEmail()).toBe('admin@example.test')
   })
 
-  it('loads active sessions for the current AML officer', async () => {
+  it('loads active sessions for the current admin user', async () => {
     getMock.mockResolvedValue({
       data: {
         sessions: [
           {
             id: '11111111-1111-1111-1111-111111111111',
-            created_at: '2026-03-26T09:00:00Z',
-            last_seen_at: '2026-03-26T10:30:00Z',
+            issued_at: '2026-03-26T09:00:00Z',
             expires_at: '2026-03-27T09:00:00Z',
-            idle_expires_at: '2026-03-26T11:00:00Z',
-            ip_address: '127.0.0.1',
-            user_agent: 'Mozilla/5.0',
+            status: 'active',
             current: true,
+            revoked_at: null,
           },
         ],
       },
@@ -113,43 +110,42 @@ describe('authService', () => {
 
     const sessions = await authService.listSessions()
 
-    expect(getMock).toHaveBeenCalledWith('/api/v1/aml/auth/sessions')
+    expect(getMock).toHaveBeenCalledWith('/api/admin/v1/auth/sessions')
     expect(sessions).toEqual([
       {
         id: '11111111-1111-1111-1111-111111111111',
         createdAt: '2026-03-26T09:00:00Z',
-        lastSeenAt: '2026-03-26T10:30:00Z',
+        lastSeenAt: null,
         expiresAt: '2026-03-27T09:00:00Z',
-        idleExpiresAt: '2026-03-26T11:00:00Z',
-        ipAddress: '127.0.0.1',
-        userAgent: 'Mozilla/5.0',
+        idleExpiresAt: '2026-03-27T09:00:00Z',
+        ipAddress: null,
+        userAgent: null,
         current: true,
       },
     ])
   })
 
   it('logs out all sessions through the auth contract', async () => {
-    postMock.mockResolvedValue({ data: { logged_out: true } })
+    postMock.mockResolvedValue({ data: { status: 'logged_out', revoked_sessions: 2 } })
 
     const loggedOut = await authService.logoutAll()
 
-    expect(postMock).toHaveBeenCalledWith('/api/v1/aml/auth/logout-all', {})
+    expect(postMock).toHaveBeenCalledWith('/api/admin/v1/auth/logout-all', {})
     expect(loggedOut).toBe(true)
   })
 
-  it('revokes one active session of the current AML officer', async () => {
+  it('revokes one active session of the current admin user', async () => {
     deleteMock.mockResolvedValue({
       data: {
-        session_id: '11111111-1111-1111-1111-111111111111',
-        revoked: true,
-        current: false,
+        status: 'revoked',
+        revoked_sessions: 1,
       },
     })
 
     const result = await authService.revokeSession('11111111-1111-1111-1111-111111111111')
 
     expect(deleteMock).toHaveBeenCalledWith(
-      '/api/v1/aml/auth/sessions/11111111-1111-1111-1111-111111111111',
+      '/api/admin/v1/auth/sessions/11111111-1111-1111-1111-111111111111',
     )
     expect(result).toEqual({
       sessionId: '11111111-1111-1111-1111-111111111111',
@@ -158,39 +154,38 @@ describe('authService', () => {
     })
   })
 
-  it('confirms first password setup through the AML auth contract', async () => {
-    postMock.mockResolvedValue({ data: { password_set: true } })
+  it('confirms first password setup through the admin auth contract', async () => {
+    postMock.mockResolvedValue({ data: { status: 'password_setup_completed' } })
 
     await expect(authService.confirmPasswordSetup('setup-token', 'StrongPassword123!')).resolves.toBe(true)
 
-    expect(postMock).toHaveBeenCalledWith('/api/v1/aml/auth/password-setup/confirm', {
+    expect(postMock).toHaveBeenCalledWith('/api/admin/v1/auth/password-setup/confirm', {
       token: 'setup-token',
-      password: 'StrongPassword123!',
+      new_password: 'StrongPassword123!',
     })
   })
 
-  it('requests password reset with locale code', async () => {
-    postMock.mockResolvedValue({ data: { accepted: true } })
+  it('requests password reset without locale code', async () => {
+    postMock.mockResolvedValue({ data: { status: 'password_reset_requested' } })
 
-    await expect(authService.requestPasswordReset('  officer@bank.local  ', 'ru')).resolves.toBe(true)
+    await expect(authService.requestPasswordReset('  admin@example.test  ', 'ru')).resolves.toBe(true)
 
-    expect(postMock).toHaveBeenCalledWith('/api/v1/aml/auth/password-reset/request', {
-      email: 'officer@bank.local',
-      locale_code: 'ru',
+    expect(postMock).toHaveBeenCalledWith('/api/admin/v1/auth/password-reset/request', {
+      email: 'admin@example.test',
     })
   })
 
   it('confirms password reset and maps session revocation flag', async () => {
-    postMock.mockResolvedValue({ data: { password_reset: true, sessions_revoked: true } })
+    postMock.mockResolvedValue({ data: { status: 'password_reset_completed', revoked_sessions: 2 } })
 
     await expect(authService.confirmPasswordReset('reset-token', 'StrongPassword123!')).resolves.toEqual({
       passwordReset: true,
       sessionsRevoked: true,
     })
 
-    expect(postMock).toHaveBeenCalledWith('/api/v1/aml/auth/password-reset/confirm', {
+    expect(postMock).toHaveBeenCalledWith('/api/admin/v1/auth/password-reset/confirm', {
       token: 'reset-token',
-      password: 'StrongPassword123!',
+      new_password: 'StrongPassword123!',
     })
   })
 })

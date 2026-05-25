@@ -10,7 +10,7 @@ import { App } from '@/app/App'
 vi.mock('@/core/auth/authService', () => ({
   authService: {
     getLastLoginEmail: vi.fn().mockReturnValue(''),
-    getCurrentAmlOfficer: vi.fn().mockRejectedValue(new Error('Unauthorized')),
+    getCurrentAdminUser: vi.fn().mockRejectedValue(new Error('Unauthorized')),
     refresh: vi.fn().mockRejectedValue(new Error('Unauthorized')),
     login: vi.fn(),
     logout: vi.fn(),

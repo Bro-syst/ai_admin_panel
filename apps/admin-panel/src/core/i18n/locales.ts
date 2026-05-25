@@ -8,12 +8,10 @@ export const localeOptions: Array<{
   label: string
   intlCode: string
 }> = [
-  { value: 'ru', shortLabel: 'RU', label: 'Русский', intlCode: 'ru-RU' },
   { value: 'en', shortLabel: 'EN', label: 'English', intlCode: 'en-US' },
   { value: 'es', shortLabel: 'ES', label: 'Español', intlCode: 'es-ES' },
-  { value: 'th', shortLabel: 'TH', label: 'ไทย', intlCode: 'th-TH' },
+  { value: 'ru', shortLabel: 'RU', label: 'Русский', intlCode: 'ru-RU' },
   { value: 'zh', shortLabel: 'ZH', label: '中文', intlCode: 'zh-CN' },
-  { value: 'sr', shortLabel: 'SR', label: 'Srpski', intlCode: 'sr-RS' },
 ]
 
 const localeSet = new Set<Locale>(localeOptions.map((option) => option.value))

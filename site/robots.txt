@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://core-ai-platform.example/sitemap.xml

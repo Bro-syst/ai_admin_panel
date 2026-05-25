@@ -1,6 +1,6 @@
 import { createContext } from 'react'
 
-export type Locale = 'ru' | 'en' | 'es' | 'th' | 'zh' | 'sr'
+export type Locale = 'en' | 'es' | 'ru' | 'zh'
 
 export type I18nContextValue = {
   locale: Locale

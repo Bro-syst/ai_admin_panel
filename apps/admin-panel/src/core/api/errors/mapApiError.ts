@@ -2,9 +2,16 @@ import { isAxiosError } from 'axios'
 import type { ApiError } from './ApiError'
 import { readBackendErrorCode } from './readBackendErrorCode'
 
+function readText(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value : undefined
+}
+
 function readBackendMessage(data: unknown) {
   if (!data || typeof data !== 'object') return undefined
   const payload = data as Record<string, unknown>
+  const topMessage = payload.message
+  if (typeof topMessage === 'string' && topMessage.trim()) return topMessage
+
   const topDescription = payload.description
   if (typeof topDescription === 'string' && topDescription.trim()) return topDescription
 
@@ -63,7 +70,11 @@ export function mapApiError(error: unknown): ApiError {
   const status = error.response?.status
   const message = readBackendMessage(error.response?.data) ?? error.message
   const code = readBackendErrorCode(error.response?.data)
-  const requestId = readHeaderValue(error.response?.headers, 'x-request-id')
+  const requestId =
+    readHeaderValue(error.response?.headers, 'x-request-id') ??
+    (error.response?.data && typeof error.response.data === 'object'
+      ? readText((error.response.data as Record<string, unknown>).correlation_id)
+      : undefined)
 
   if (!error.response) {
     if (error.code === 'ECONNABORTED') return { kind: 'timeout', message, code, requestId, details: error }

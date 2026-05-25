@@ -1,8 +1,8 @@
-# Admin Panel
+# AI Core Admin Portal
 
-React/Vite application for the internal AI Admin Panel.
+React/Vite application for the internal AI Core Admin Portal.
 
-This app was bootstrapped from the working `aml_portal` frontend and adapted as a clean starting point for the admin product. It keeps the proven auth/settings shell, routing, API client, providers, tests, and app-level documentation recipes.
+The app owns the browser frontend for `/api/admin/v1` cookie-backed administrator workflows. It includes the auth/settings shell, routing, API client, providers, tests, and app-level development documentation.
 
 ## Quick Start
 
@@ -20,11 +20,11 @@ npm install
 npm run dev
 ```
 
-By default the local Vite proxy sends `/api` requests to `http://127.0.0.1:8000`.
+By default the local Vite proxy sends `/api` requests to `http://127.0.0.1:8008`.
 Override it when needed:
 
 ```bash
-AI_ADMIN_DEV_API_TARGET=http://127.0.0.1:8000 npm run dev
+AI_ADMIN_DEV_API_TARGET=http://127.0.0.1:8008 npm run dev
 ```
 
 The API client uses a 5 second timeout by default. This keeps the login screen usable when the backend is not running yet. Override it with:
@@ -44,7 +44,7 @@ npm run preview
 
 ## App Docs
 
-- [Overview](docs/overview.md) - current scope and what is included in the admin template.
+- [Overview](docs/overview.md) - current scope and what is included in the admin portal.
 - [Architecture](docs/architecture.md) - layers, module boundaries, backend boundary, state rules.
 - [Development Guide](docs/development-guide.md) - rules for admin-panel development.
 - [Recipes](docs/recipes.md) - practical steps for admin modules, routes, API calls, UI, and tests.

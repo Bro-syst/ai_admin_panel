@@ -114,16 +114,16 @@ describe('PasswordAccessPages', () => {
 
   it('requests password reset with remembered email and current locale', async () => {
     const user = userEvent.setup()
-    getLastLoginEmailMock.mockReturnValue('officer@bank.local')
+    getLastLoginEmailMock.mockReturnValue('admin@example.test')
     requestPasswordResetMock.mockResolvedValue(true)
 
     renderPage(<PasswordResetRequestPage />, '/password-reset/request')
 
-    expect(screen.getByLabelText('Email')).toHaveValue('officer@bank.local')
+    expect(screen.getByLabelText('Email')).toHaveValue('admin@example.test')
     await user.click(screen.getByRole('button', { name: 'Send reset link' }))
 
     await waitFor(() => {
-      expect(requestPasswordResetMock).toHaveBeenCalledWith('officer@bank.local', 'en')
+      expect(requestPasswordResetMock).toHaveBeenCalledWith('admin@example.test', 'en')
     })
     expect(await screen.findByText('If the account exists, a reset link will be sent.')).toBeInTheDocument()
   })

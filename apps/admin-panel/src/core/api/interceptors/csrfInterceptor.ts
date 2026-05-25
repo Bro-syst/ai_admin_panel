@@ -1,7 +1,7 @@
 import { AxiosHeaders } from 'axios'
 import type { AxiosInstance } from 'axios'
 
-const CSRF_COOKIE_NAME = 'wk_aml_csrf'
+const CSRF_COOKIE_NAME = 'ai_core_admin_csrf'
 const SAFE_METHODS = new Set(['get', 'head', 'options'])
 
 declare module 'axios' {

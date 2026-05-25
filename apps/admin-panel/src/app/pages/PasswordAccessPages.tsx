@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
+import { getLocalizedApiErrorMessage } from '@/core/api/errors/getLocalizedApiErrorMessage'
 import { authService } from '@/core/auth/authService'
 import { useAuth } from '@/core/auth/useAuth'
 import { useI18n } from '@/core/i18n/useI18n'
@@ -16,14 +17,6 @@ function sanitizeEmailInput(raw: string) {
 
 function readToken(searchParams: URLSearchParams) {
   return searchParams.get('token')?.trim() || ''
-}
-
-function readErrorMessage(error: unknown, fallback: string) {
-  if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' && error.message.trim()) {
-    return error.message
-  }
-
-  return fallback
 }
 
 function StatusMessage({ tone, children }: { tone: 'error' | 'success'; children: string }) {
@@ -170,7 +163,7 @@ export function PasswordSetupPage() {
                 navigate('/login?password_setup=success', { replace: true })
               })
               .catch((error: unknown) => {
-                setSubmitError(readErrorMessage(error, t('password_setup.error')))
+                setSubmitError(getLocalizedApiErrorMessage(error, t, t('password_setup.error')))
               })
               .finally(() => {
                 setIsSubmitting(false)
@@ -233,7 +226,7 @@ export function PasswordResetRequestPage() {
               .requestPasswordReset(email.trim(), locale)
               .then(() => setIsComplete(true))
               .catch((error: unknown) => {
-                setSubmitError(readErrorMessage(error, t('password_reset_request.error')))
+                setSubmitError(getLocalizedApiErrorMessage(error, t, t('password_reset_request.error')))
               })
               .finally(() => {
                 setIsSubmitting(false)
@@ -315,7 +308,7 @@ export function PasswordResetConfirmPage() {
                 setConfirmPassword('')
               })
               .catch((error: unknown) => {
-                setSubmitError(readErrorMessage(error, t('password_reset_confirm.error')))
+                setSubmitError(getLocalizedApiErrorMessage(error, t, t('password_reset_confirm.error')))
               })
               .finally(() => {
                 setIsSubmitting(false)

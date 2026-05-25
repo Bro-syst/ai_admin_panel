@@ -1,1 +1,1 @@
-export const BRAND_NAME = 'AI Admin Panel'
+export const BRAND_NAME = 'AI Core Admin Portal'
