@@ -247,17 +247,20 @@ publication inside an accepted tenant/agent context.
 5. Render install guidance from backend portal binding values such as widget
    key, site hostname, site id, widget id, allowed origin counts and binding
    readiness. Do not invent runtime config or readiness locally.
-6. Keep release readiness, release list/detail, draft/manual override,
-   publish, rollback and disable endpoint calls and DTO mapping in
-   `src/modules/Releases/api`.
-7. Keep release draft payload building, selected release state, publish
-   evidence state, backend action gating and mutation result feedback in
-   `src/modules/Releases/model`.
+6. Keep release readiness, release evidence requirements, release list/detail,
+   draft/manual override, publish, rollback and disable endpoint calls and DTO
+   mapping in `src/modules/Releases/api`.
+7. Keep release draft payload building, selected release state, smoke-case
+   evidence matrix state, publish evidence state, backend action gating and
+   mutation result feedback in `src/modules/Releases/model`.
 8. Require confirmations for publish, rollback and disable actions with
    version, status, gate mode and active marker in the confirmation text.
-9. Treat backend release readiness, release gates, manual override fields,
-   evidence and active/latest release snapshots as authoritative.
-10. Do not implement Conversations, Usage, Metering or Billing Export in this
+9. Treat backend release readiness, release evidence requirements, release
+   gates, manual override fields, evidence and active/latest release snapshots
+   as authoritative.
+10. Submit backend `required_change_kind` and all backend-required
+    `evidence.smoke_cases[]` rows; keep localized labels out of payloads.
+11. Do not implement Conversations, Usage, Metering or Billing Export in this
     flow.
 
 ## Add A Tenant-Scoped Conversations Support Flow

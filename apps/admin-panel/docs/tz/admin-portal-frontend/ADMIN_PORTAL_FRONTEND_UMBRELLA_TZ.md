@@ -725,6 +725,22 @@ Current gate state:
 - prompt 08 is available as an optional helper to generate adapted execution
   prompts before prompt 04.
 
+Post-finalization urgent packages:
+
+| Urgent package | Stage TZ | Status | Scope |
+| --- | --- | --- | --- |
+| Agent Config operator UX fix | [urgent_stage_agent_config_operator_ux_fix.md](stages/urgent_stage_agent_config_operator_ux_fix.md) | Accepted and docs-synced | Existing Agent Config and Agent Detail UX/evidence polish. |
+| Release Evidence Requirements UI | [urgent_stage_release_evidence_requirements_ui.md](stages/urgent_stage_release_evidence_requirements_ui.md) | Accepted and docs-synced | Existing Releases route consumes backend release evidence requirements, smoke-case matrix and publish evidence metadata. |
+| Release Retrieval Evidence Operator Flow | [urgent_stage_release_retrieval_evidence_operator_flow.md](stages/urgent_stage_release_retrieval_evidence_operator_flow.md) | Created, pending consistency review | Existing Releases route will consume backend-approved retrieval evidence candidates for candidate-backed draft and publish evidence. |
+
+Urgent package rules:
+- urgent packages do not reopen the accepted 13-stage umbrella;
+- urgent packages must not create `stage_14`;
+- implemented app docs are updated only after the urgent package passes
+  acceptance and docs sync;
+- until then, urgent package files and `pipeline_state.md` are the source of
+  truth for planned post-finalization work.
+
 ## 15. Open Questions And Deferred Items
 
 No open pre-implementation questions remain after the code-grounded audit

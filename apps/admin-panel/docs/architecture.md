@@ -35,8 +35,9 @@ The baseline contains:
 - tenant-scoped Sites & Widgets page backed by portal site/widget status,
   site/widget management APIs, backend-derived install guidance and isolated
   public widget smoke APIs;
-- tenant-scoped Releases page backed by release readiness, release list/detail,
-  draft/manual override, publish, rollback and disable APIs;
+- tenant-scoped Releases page backed by release readiness, release evidence
+  requirements, release list/detail, draft/manual override, publish, rollback
+  and disable APIs;
 - tenant-scoped Conversations page backed by conversation runtime summary,
   chat/message/turn/current-memory drill-down APIs, support-safe evidence refs
   and approved close API;
@@ -94,8 +95,9 @@ Active routes:
   approved site/widget management, backend-derived install guidance and public
   smoke evidence;
 - `/tenants/:tenantId/agents/:agentId/releases` - protected tenant-scoped
-  Releases page for backend-owned release readiness, release history/detail,
-  draft/manual override, publish, rollback and disable actions;
+  Releases page for backend-owned release readiness, release evidence
+  requirements, release history/detail, draft/manual override, publish,
+  rollback and disable actions;
 - `/tenants/:tenantId/conversations` - protected tenant-scoped Conversations
   page for support-safe runtime summary, chat/message/turn/current-memory
   inspection, support evidence refs and approved close action;
@@ -146,6 +148,11 @@ Current modules:
   controlled option metadata, backend action-ref gating, create draft/create
   version, validation, activation, rollback orchestration and safe mutation
   evidence display.
+- `src/modules/FormMetadata` - typed API-client bridge over backend-owned
+  admin form metadata endpoints. It maps React scope inputs to canonical
+  `/api/admin/v1` routes, preserves backend option values/localization keys,
+  normalizes safe error details and does not own translations or backend
+  validation rules.
 - `src/modules/Knowledge` - `/tenants/:tenantId/agents/:agentId/knowledge`
   page plus portal knowledge status/source/readiness API mapping, managed
   source/document/indexing orchestration and support-safe chunk/retrieval/
@@ -166,9 +173,10 @@ Current modules:
   site/widget status mapping, approved site/widget management, backend-derived
   install guidance, isolated public widget smoke transport and evidence UI.
 - `src/modules/Releases` - `/tenants/:tenantId/agents/:agentId/releases`
-  page plus release readiness/list/detail mapping, release draft/manual
-  override payload building, publish/rollback/disable orchestration and
-  backend action-ref gating.
+  page plus release readiness/evidence requirements/list/detail mapping,
+  smoke-case evidence matrix state, release draft/manual override payload
+  building, publish/rollback/disable orchestration and backend action-ref
+  gating.
 - `src/modules/Conversations` - `/tenants/:tenantId/conversations` page plus
   runtime summary read-model mapping, chat/message/turn/current-memory
   drill-down mapping, support-safe redaction, evidence refs, close
@@ -267,8 +275,9 @@ The frontend treats the backend as the source of truth for:
   refs.
 - site/widget portal status, site/widget management results, backend-derived
   install guidance values and supported site/widget mutation action refs.
-- release readiness, release gates, release evidence, manual override fields,
-  active/latest release snapshots and supported release mutation action refs.
+- release readiness, release evidence requirements, release gates, release
+  evidence, manual override fields, active/latest release snapshots and
+  supported release mutation action refs.
 - conversation runtime summary, chat/message/turn/current-memory drill-downs,
   support-safe display boundaries, evidence refs and supported close action
   refs.

@@ -9,9 +9,13 @@ import {
   type PublishEvidenceInput,
   type ReleaseCreateInput,
   type ReleaseDetail,
+  type ReleaseEvidenceRequirements,
   type ReleaseListItem,
   type ReleaseReadiness,
+  type ReleaseUsageEvidenceCandidate,
+  type ReleaseUsageEvidenceCandidates,
 } from '@/modules/Releases/api/releasesApi'
+import { applyUsageEvidenceCandidate, selectUsageEvidenceCandidateId } from '@/modules/Releases/model/usageEvidenceCandidates'
 
 const RELEASE_ACTION_REFS = [
   'releases.manage',
@@ -20,6 +24,15 @@ const RELEASE_ACTION_REFS = [
   'agent.releases.manage',
   'agents.releases.manage',
 ]
+
+const PUBLISH_EVIDENCE_FIELD_TO_FORM_KEY: Record<string, keyof PublishEvidenceForm> = {
+  support_reconstruction_reference: 'supportReconstructionReference',
+  usage_chat_id: 'usageChatId',
+  usage_conversation_turn_id: 'usageConversationTurnId',
+  usage_model_request_id: 'usageModelRequestId',
+  billing_export_reference: 'billingExportReference',
+  release_report_reference: 'releaseReportReference',
+}
 
 function canMutateReleases(adminUser: { role: string; permissions?: string[] } | null) {
   if (!adminUser) return false
@@ -41,13 +54,23 @@ export type ReleaseDraftForm = {
   evidenceStableReference: string
   evidenceChangeKind: string
   evidencePassed: boolean
-  smokeCaseId: string
-  smokeCasePassed: boolean
-  smokeCaseReference: string
-  smokeCaseOutcome: string
+  smokeCases: ReleaseDraftSmokeCaseForm[]
+  manualOverrideSelected: boolean
   manualOverrideReasonCode: string
   manualOverrideItemsText: string
   manualOverrideComment: string
+}
+
+export type ReleaseDraftSmokeCaseForm = {
+  caseId: string
+  required: boolean
+  groundedReferenceRequired: boolean
+  stableReferenceMustMatchReleaseReference: boolean
+  labelKey: string
+  descriptionKey: string
+  passed: boolean
+  stableReference: string
+  outcome: string
 }
 
 export type PublishEvidenceForm = {
@@ -63,19 +86,31 @@ function linesToArray(value: string) {
   return value.split('\n').map((line) => line.trim()).filter(Boolean)
 }
 
-function defaultDraftForm(): ReleaseDraftForm {
+function buildSmokeCaseRows(requirements: ReleaseEvidenceRequirements | null): ReleaseDraftSmokeCaseForm[] {
+  return requirements?.requiredSmokeCases.map((smokeCase) => ({
+    caseId: smokeCase.caseId,
+    required: smokeCase.required,
+    groundedReferenceRequired: smokeCase.groundedReferenceRequired,
+    stableReferenceMustMatchReleaseReference: smokeCase.stableReferenceMustMatchReleaseReference,
+    labelKey: smokeCase.labelKey,
+    descriptionKey: smokeCase.descriptionKey,
+    passed: false,
+    stableReference: '',
+    outcome: '',
+  })) ?? []
+}
+
+function defaultDraftForm(requirements: ReleaseEvidenceRequirements | null = null): ReleaseDraftForm {
   return {
     selectedConfigId: '',
     releaseCandidateId: '',
     evidenceStableReference: '',
-    evidenceChangeKind: 'runtime_behavior',
+    evidenceChangeKind: requirements?.requiredChangeKind ?? '',
     evidencePassed: true,
-    smokeCaseId: '',
-    smokeCasePassed: true,
-    smokeCaseReference: '',
-    smokeCaseOutcome: '',
-    manualOverrideReasonCode: '',
-    manualOverrideItemsText: '',
+    smokeCases: buildSmokeCaseRows(requirements),
+    manualOverrideSelected: false,
+    manualOverrideReasonCode: requirements?.manualOverride.defaultReasonCode ?? '',
+    manualOverrideItemsText: requirements?.manualOverride.relatedMissingOrFailedItemsDefault.join('\n') ?? '',
     manualOverrideComment: '',
   }
 }
@@ -91,22 +126,66 @@ function defaultPublishForm(): PublishEvidenceForm {
   }
 }
 
-export function buildReleaseDraftInput(form: ReleaseDraftForm): ReleaseCreateInput {
+function isSmokeCaseComplete(form: ReleaseDraftForm, smokeCase: ReleaseDraftSmokeCaseForm) {
+  if (!smokeCase.required) return true
+  if (!smokeCase.passed) return false
+  if (!smokeCase.outcome.trim()) return false
+  if (smokeCase.groundedReferenceRequired && !smokeCase.stableReference.trim()) return false
+  if (smokeCase.stableReferenceMustMatchReleaseReference && smokeCase.stableReference.trim() !== form.evidenceStableReference.trim()) return false
+  return true
+}
+
+function getReleaseDraftProgress(form: ReleaseDraftForm) {
+  const requiredCases = form.smokeCases.filter((smokeCase) => smokeCase.required)
+  const groundedCases = requiredCases.filter((smokeCase) => smokeCase.groundedReferenceRequired)
+  const completedRequiredCases = requiredCases.filter((smokeCase) => isSmokeCaseComplete(form, smokeCase))
+  const filledGroundedReferences = groundedCases.filter((smokeCase) => smokeCase.stableReference.trim())
+  const missingRequiredOutcomes = requiredCases.filter((smokeCase) => !smokeCase.outcome.trim())
+  const missingGroundedReferences = groundedCases.filter((smokeCase) => !smokeCase.stableReference.trim())
+
+  return {
+    requiredTotal: requiredCases.length,
+    requiredComplete: completedRequiredCases.length,
+    groundedTotal: groundedCases.length,
+    groundedReferencesFilled: filledGroundedReferences.length,
+    missingRequiredOutcomes: missingRequiredOutcomes.length,
+    missingGroundedReferences: missingGroundedReferences.length,
+    missingPassedChecks: requiredCases.filter((smokeCase) => !smokeCase.passed).length,
+  }
+}
+
+export function hasCompleteExplicitEvidence(form: ReleaseDraftForm, requirements: ReleaseEvidenceRequirements | null): boolean {
+  if (!requirements?.evidenceRequired) return false
+  if (!requirements.requiredChangeKind || !form.evidenceStableReference.trim()) return false
+  if (!form.smokeCases.length) return true
+  return form.smokeCases.every((smokeCase) => isSmokeCaseComplete(form, smokeCase))
+}
+
+export function hasCompleteManualOverride(form: ReleaseDraftForm, requirements: ReleaseEvidenceRequirements | null): boolean {
+  if (!form.manualOverrideSelected || !requirements?.manualOverride.allowed) return false
+  return Boolean(form.manualOverrideReasonCode.trim() && linesToArray(form.manualOverrideItemsText).length)
+}
+
+export function buildReleaseDraftInput(form: ReleaseDraftForm, requirements: ReleaseEvidenceRequirements | null = null): ReleaseCreateInput {
+  const explicitEvidenceComplete = hasCompleteExplicitEvidence(form, requirements)
+  const manualOverrideComplete = hasCompleteManualOverride(form, requirements)
   return {
     selectedConfigId: form.selectedConfigId.trim() || null,
     releaseCandidateId: form.releaseCandidateId.trim() || null,
-    evidence: form.evidenceStableReference.trim()
+    evidence: explicitEvidenceComplete
       ? {
           changeKind: form.evidenceChangeKind,
           stableReference: form.evidenceStableReference.trim(),
-          passed: form.evidencePassed,
-          smokeCaseId: form.smokeCaseId.trim(),
-          smokeCasePassed: form.smokeCasePassed,
-          smokeCaseReference: form.smokeCaseReference.trim() || null,
-          smokeCaseOutcome: form.smokeCaseOutcome.trim() || null,
+          passed: form.smokeCases.length ? form.smokeCases.every((smokeCase) => smokeCase.passed) : form.evidencePassed,
+          smokeCases: form.smokeCases.map((smokeCase) => ({
+            caseId: smokeCase.caseId,
+            passed: smokeCase.passed,
+            stableReference: smokeCase.stableReference.trim() || null,
+            outcome: smokeCase.outcome.trim() || null,
+          })),
         }
       : null,
-    manualOverride: form.manualOverrideReasonCode.trim()
+    manualOverride: manualOverrideComplete
       ? {
           reasonCode: form.manualOverrideReasonCode.trim(),
           relatedMissingOrFailedItems: linesToArray(form.manualOverrideItemsText),
@@ -128,19 +207,34 @@ function buildPublishInput(form: PublishEvidenceForm): PublishEvidenceInput | nu
   return Object.values(input).some(Boolean) ? input : null
 }
 
+function getMissingRequiredPublishEvidenceFields(form: PublishEvidenceForm, requirements: ReleaseEvidenceRequirements | null) {
+  if (!requirements) return []
+  return requirements.publishEvidenceRequirements
+    .filter((requirement) => requirement.required)
+    .filter((requirement) => {
+      const formKey = PUBLISH_EVIDENCE_FIELD_TO_FORM_KEY[requirement.field]
+      return !formKey || !form[formKey].trim()
+    })
+}
+
 export function useReleasesManager(tenantId: string, agentId: string) {
   const { adminUser } = useAuth()
   const { t } = useI18n()
   const [agentDetail, setAgentDetail] = useState<PortalAgentDetail | null>(null)
   const [readiness, setReadiness] = useState<ReleaseReadiness | null>(null)
+  const [evidenceRequirements, setEvidenceRequirements] = useState<ReleaseEvidenceRequirements | null>(null)
+  const [usageEvidenceCandidates, setUsageEvidenceCandidates] = useState<ReleaseUsageEvidenceCandidates | null>(null)
+  const [selectedUsageEvidenceCandidateId, setSelectedUsageEvidenceCandidateId] = useState<string>('')
   const [releases, setReleases] = useState<ReleaseListItem[]>([])
   const [selectedRelease, setSelectedRelease] = useState<ReleaseDetail | null>(null)
   const [draftForm, setDraftForm] = useState<ReleaseDraftForm>(() => defaultDraftForm())
   const [publishForm, setPublishForm] = useState<PublishEvidenceForm>(() => defaultPublishForm())
   const [mutationResult, setMutationResult] = useState<MutationResult | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingUsageEvidenceCandidates, setIsLoadingUsageEvidenceCandidates] = useState(true)
   const [isMutating, setIsMutating] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [usageEvidenceCandidatesError, setUsageEvidenceCandidatesError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
 
@@ -150,18 +244,43 @@ export function useReleasesManager(tenantId: string, agentId: string) {
     [agentDetail?.supportedMutationActions, canMutate],
   )
 
+  const loadUsageEvidenceCandidates = useCallback(async () => {
+    setIsLoadingUsageEvidenceCandidates(true)
+    setUsageEvidenceCandidatesError(null)
+    try {
+      const nextUsageEvidenceCandidates = await releasesApi.getUsageEvidenceCandidates(tenantId, agentId)
+      setUsageEvidenceCandidates(nextUsageEvidenceCandidates)
+      setSelectedUsageEvidenceCandidateId((current) => selectUsageEvidenceCandidateId(current, nextUsageEvidenceCandidates))
+    } catch (error) {
+      setUsageEvidenceCandidates(null)
+      setSelectedUsageEvidenceCandidateId('')
+      setUsageEvidenceCandidatesError(getLocalizedApiErrorMessage(error, t, t('releases.usage_evidence_candidates_load_error')))
+    } finally {
+      setIsLoadingUsageEvidenceCandidates(false)
+    }
+  }, [agentId, tenantId, t])
+
   const loadReleases = useCallback(async () => {
     setIsLoading(true)
     setErrorMessage(null)
     try {
-      const [agent, nextReadiness, nextReleases] = await Promise.all([
+      const [agent, nextReadiness, nextEvidenceRequirements, nextReleases] = await Promise.all([
         agentsApi.getPortalAgentDetail(tenantId, agentId),
         releasesApi.getReadiness(tenantId, agentId),
+        releasesApi.getEvidenceRequirements(tenantId, agentId),
         releasesApi.listReleases(tenantId, agentId),
       ])
       setAgentDetail(agent)
       setReadiness(nextReadiness)
+      setEvidenceRequirements(nextEvidenceRequirements)
       setReleases(nextReleases)
+      setDraftForm((current) => ({
+        ...defaultDraftForm(nextEvidenceRequirements),
+        selectedConfigId: current.selectedConfigId || agent.activeConfigId || '',
+        releaseCandidateId: current.releaseCandidateId,
+        evidenceStableReference: current.evidenceStableReference,
+        evidencePassed: current.evidencePassed,
+      }))
       const selectedId = selectedRelease?.releaseId ?? nextReleases[0]?.releaseId
       setSelectedRelease(selectedId ? await releasesApi.getRelease(tenantId, agentId, selectedId) : null)
     } catch (error) {
@@ -173,7 +292,13 @@ export function useReleasesManager(tenantId: string, agentId: string) {
 
   useEffect(() => {
     void loadReleases()
-  }, [loadReleases])
+    void loadUsageEvidenceCandidates()
+  }, [loadReleases, loadUsageEvidenceCandidates])
+
+  const selectedUsageEvidenceCandidate = useMemo<ReleaseUsageEvidenceCandidate | null>(
+    () => usageEvidenceCandidates?.items.find((candidate) => candidate.conversationTurnId === selectedUsageEvidenceCandidateId) ?? null,
+    [selectedUsageEvidenceCandidateId, usageEvidenceCandidates?.items],
+  )
 
   const selectRelease = useCallback(async (releaseId: string) => {
     setIsLoading(true)
@@ -201,11 +326,13 @@ export function useReleasesManager(tenantId: string, agentId: string) {
       setSelectedRelease(response.resource)
       setMutationResult(response.result)
       setNotice(message)
-      const [nextReadiness, nextReleases] = await Promise.all([
+      const [nextReadiness, nextEvidenceRequirements, nextReleases] = await Promise.all([
         releasesApi.getReadiness(tenantId, agentId),
+        releasesApi.getEvidenceRequirements(tenantId, agentId),
         releasesApi.listReleases(tenantId, agentId),
       ])
       setReadiness(nextReadiness)
+      setEvidenceRequirements(nextEvidenceRequirements)
       setReleases(nextReleases)
     } catch (error) {
       setFormError(getLocalizedApiErrorMessage(error, t, t('releases.action_error')))
@@ -214,10 +341,96 @@ export function useReleasesManager(tenantId: string, agentId: string) {
     }
   }, [agentId, canManageReleases, tenantId, t])
 
+  const explicitEvidenceComplete = useMemo(
+    () => hasCompleteExplicitEvidence(draftForm, evidenceRequirements),
+    [draftForm, evidenceRequirements],
+  )
+  const manualOverrideComplete = useMemo(
+    () => hasCompleteManualOverride(draftForm, evidenceRequirements),
+    [draftForm, evidenceRequirements],
+  )
+  const releaseSetupReady = Boolean(evidenceRequirements?.releaseSetupReady)
+  const draftProgress = useMemo(() => getReleaseDraftProgress(draftForm), [draftForm])
+  const canCreateRelease = canManageReleases && !isMutating && releaseSetupReady && (explicitEvidenceComplete || manualOverrideComplete)
+  const createDisabledReason = useMemo(() => {
+    if (!canManageReleases) return t('releases.action_not_available')
+    if (!evidenceRequirements) return t('releases.evidence_requirements_missing')
+    if (!evidenceRequirements.releaseSetupReady) return t('releases.release_setup_not_ready')
+    if (!evidenceRequirements.requiredChangeKind && !manualOverrideComplete) return t('releases.required_change_kind_missing')
+    if (!explicitEvidenceComplete && !manualOverrideComplete) {
+      if (draftProgress.requiredTotal > 0) {
+        return t('releases.create_disabled_remaining_matrix')
+          .replace('{outcomes}', String(draftProgress.missingRequiredOutcomes))
+          .replace('{grounded}', String(draftProgress.missingGroundedReferences))
+      }
+      return t('releases.create_disabled_incomplete_evidence')
+    }
+    return null
+  }, [canManageReleases, draftProgress.missingGroundedReferences, draftProgress.missingRequiredOutcomes, draftProgress.requiredTotal, evidenceRequirements, explicitEvidenceComplete, manualOverrideComplete, t])
+  const missingRequiredPublishEvidenceFields = useMemo(
+    () => getMissingRequiredPublishEvidenceFields(publishForm, evidenceRequirements),
+    [publishForm, evidenceRequirements],
+  )
+  const canPublishSelected = Boolean(
+    canManageReleases &&
+    !isMutating &&
+    selectedRelease &&
+    selectedRelease.status !== 'failed' &&
+    evidenceRequirements?.runtimeProviderPreflight.available &&
+    evidenceRequirements.runtimeProviderPreflight.ready &&
+    !missingRequiredPublishEvidenceFields.length,
+  )
+  const publishDisabledReason = useMemo(() => {
+    if (!canManageReleases) return t('releases.action_not_available')
+    if (!selectedRelease) return null
+    if (selectedRelease.status === 'failed') return t('releases.publish_disabled_failed_release')
+    if (!evidenceRequirements) return t('releases.evidence_requirements_missing')
+    if (!evidenceRequirements.runtimeProviderPreflight.available) return t('releases.runtime_provider_preflight_missing')
+    if (!evidenceRequirements.runtimeProviderPreflight.ready) return t('releases.runtime_provider_publish_warning')
+    if (missingRequiredPublishEvidenceFields.length) {
+      return t('releases.publish_disabled_missing_required_evidence')
+        .replace('{fields}', missingRequiredPublishEvidenceFields.map((field) => {
+          const label = field.labelKey ? t(field.labelKey) : ''
+          return label && label !== field.labelKey ? label : field.field
+        }).join(', '))
+    }
+    return null
+  }, [canManageReleases, evidenceRequirements, missingRequiredPublishEvidenceFields, selectedRelease, t])
+
+  const applyEvidenceReferenceToGroundedCases = useCallback(() => {
+    setDraftForm((current) => ({
+      ...current,
+      smokeCases: current.smokeCases.map((smokeCase) => smokeCase.groundedReferenceRequired
+        ? { ...smokeCase, stableReference: current.evidenceStableReference.trim() }
+        : smokeCase),
+    }))
+  }, [])
+
+  const fillDefaultSmokeOutcomes = useCallback(() => {
+    setDraftForm((current) => ({
+      ...current,
+      smokeCases: current.smokeCases.map((smokeCase) => ({
+        ...smokeCase,
+        outcome: smokeCase.outcome.trim() || t('releases.default_smoke_outcome'),
+        passed: true,
+      })),
+    }))
+  }, [t])
+
+  const applyUsageEvidenceCandidateToPublishForm = useCallback(() => {
+    if (!selectedUsageEvidenceCandidate) {
+      setFormError(t('releases.usage_evidence_select_candidate_first'))
+      return
+    }
+    setPublishForm((current) => applyUsageEvidenceCandidate(current, selectedUsageEvidenceCandidate))
+    setFormError(null)
+    setNotice(t('releases.notice.usage_evidence_applied'))
+  }, [selectedUsageEvidenceCandidate, t])
+
   const createRelease = useCallback(async () => {
-    const input = buildReleaseDraftInput(draftForm)
+    const input = buildReleaseDraftInput(draftForm, evidenceRequirements)
     await applyMutation(() => releasesApi.createRelease(tenantId, agentId, input), t('releases.notice.created'))
-  }, [agentId, applyMutation, draftForm, tenantId, t])
+  }, [agentId, applyMutation, draftForm, evidenceRequirements, tenantId, t])
 
   const publishSelected = useCallback(async () => {
     if (!selectedRelease) return
@@ -242,21 +455,39 @@ export function useReleasesManager(tenantId: string, agentId: string) {
     agentId,
     agentDetail,
     readiness,
+    evidenceRequirements,
+    usageEvidenceCandidates,
+    selectedUsageEvidenceCandidateId,
+    selectedUsageEvidenceCandidate,
     releases,
     selectedRelease,
     draftForm,
     publishForm,
     mutationResult,
     canManageReleases,
+    canCreateRelease,
+    createDisabledReason,
+    canPublishSelected,
+    publishDisabledReason,
+    explicitEvidenceComplete,
+    manualOverrideComplete,
+    draftProgress,
     isLoading,
+    isLoadingUsageEvidenceCandidates,
     isMutating,
     errorMessage,
+    usageEvidenceCandidatesError,
     formError,
     notice,
     loadReleases,
+    loadUsageEvidenceCandidates,
     selectRelease,
     setDraftForm,
     setPublishForm,
+    setSelectedUsageEvidenceCandidateId,
+    applyEvidenceReferenceToGroundedCases,
+    applyUsageEvidenceCandidateToPublishForm,
+    fillDefaultSmokeOutcomes,
     createRelease,
     publishSelected,
     rollbackSelected,

@@ -91,14 +91,110 @@ export type ReleaseDetail = {
   missingOrFailedItems: ReleaseReadinessItem[]
 }
 
+export type ReleaseEvidenceSmokeCaseRequirement = {
+  caseId: string
+  required: boolean
+  groundedReferenceRequired: boolean
+  stableReferenceMustMatchReleaseReference: boolean
+  labelKey: string
+  descriptionKey: string
+}
+
+export type ReleaseManualOverrideRequirement = {
+  allowed: boolean
+  blockedReason: string | null
+  defaultReasonCode: string | null
+  relatedMissingOrFailedItemsDefault: string[]
+}
+
+export type ReleasePublishEvidenceRequirement = {
+  field: string
+  required: boolean
+  labelKey: string
+  descriptionKey: string
+}
+
+export type RuntimeProviderPreflightRequirement = {
+  providerId: string
+  credentialKey: string
+  credentialConfigured: boolean
+  secretResolvable: boolean
+  state: string
+  requiredAction: string | null
+}
+
+export type RuntimeProviderPreflight = {
+  available: boolean
+  ready: boolean
+  requirements: RuntimeProviderPreflightRequirement[]
+}
+
+export type ReleaseUsageEvidenceNoCandidateReason =
+  | 'runtime_provider_not_ready'
+  | 'no_successful_widget_conversation'
+  | 'usage_not_recorded'
+  | 'candidate_source_unavailable'
+  | string
+
+export type ReleaseUsageEvidenceCandidate = {
+  chatId: string
+  conversationTurnId: string
+  modelRequestId: string
+  createdAt: string
+  turnStatus: string
+  modelRequestState: string
+  usageRecorded: boolean
+  agentId: string
+  agentConfigId: string | null
+  widgetKey: string | null
+  channel: string | null
+  displayLabel: string
+}
+
+export type ReleaseUsageEvidenceCandidateSummary = {
+  candidateCount: number
+  ready: boolean
+  noCandidateReason: ReleaseUsageEvidenceNoCandidateReason | null
+  message: string
+}
+
+export type ReleaseUsageEvidenceCandidates = {
+  items: ReleaseUsageEvidenceCandidate[]
+  summary: ReleaseUsageEvidenceCandidateSummary
+  noCandidateReason: ReleaseUsageEvidenceNoCandidateReason | null
+  generatedAt: string | null
+}
+
+export type ReleaseEvidenceRequirements = {
+  agentId: string
+  templateId: string
+  releaseSetupReady: boolean
+  releaseSetupBlockingItems: ReleaseReadinessItem[]
+  evidenceRequired: boolean
+  evidenceStatus: string
+  requiredChangeKind: string | null
+  stableReferenceRule: string | null
+  stableReferencePrefix: string | null
+  requiredSmokeCases: ReleaseEvidenceSmokeCaseRequirement[]
+  manualOverride: ReleaseManualOverrideRequirement
+  publishEvidenceRequirements: ReleasePublishEvidenceRequirement[]
+  runtimeProviderPreflight: RuntimeProviderPreflight
+  lastCheckedAt: string | null
+  ownerStage: string
+}
+
+export type ReleaseEvidenceSmokeCaseInput = {
+  caseId: string
+  passed: boolean
+  stableReference: string | null
+  outcome: string | null
+}
+
 export type ReleaseEvidenceInput = {
   changeKind: string
   stableReference: string
   passed: boolean
-  smokeCaseId: string
-  smokeCasePassed: boolean
-  smokeCaseReference: string | null
-  smokeCaseOutcome: string | null
+  smokeCases: ReleaseEvidenceSmokeCaseInput[]
 }
 
 export type ReleaseManualOverrideInput = {
@@ -205,6 +301,90 @@ type ReleaseDetailPayload = {
       missing_or_failed_items?: ReadinessItemPayload[]
     }
   }
+}
+
+type ReleaseEvidenceSmokeCaseRequirementPayload = {
+  case_id?: string
+  required?: boolean
+  grounded_reference_required?: boolean
+  stable_reference_must_match_release_reference?: boolean
+  label_key?: string
+  description_key?: string
+}
+
+type ReleaseManualOverrideRequirementPayload = {
+  allowed?: boolean
+  blocked_reason?: string | null
+  default_reason_code?: string | null
+  related_missing_or_failed_items_default?: string[]
+}
+
+type ReleasePublishEvidenceRequirementPayload = {
+  field?: string
+  required?: boolean
+  label_key?: string
+  description_key?: string
+}
+
+type RuntimeProviderPreflightRequirementPayload = {
+  provider_id?: string
+  credential_key?: string
+  credential_configured?: boolean
+  secret_resolvable?: boolean
+  state?: string
+  required_action?: string | null
+}
+
+type RuntimeProviderPreflightPayload = {
+  ready?: boolean
+  requirements?: RuntimeProviderPreflightRequirementPayload[]
+}
+
+type ReleaseUsageEvidenceCandidatePayload = {
+  chat_id?: string
+  conversation_turn_id?: string
+  model_request_id?: string
+  created_at?: string
+  turn_status?: string
+  model_request_state?: string
+  usage_recorded?: boolean
+  agent_id?: string
+  agent_config_id?: string | null
+  widget_key?: string | null
+  channel?: string | null
+  display_label?: string
+}
+
+type ReleaseUsageEvidenceCandidateSummaryPayload = {
+  candidate_count?: number
+  ready?: boolean
+  no_candidate_reason?: string | null
+  message?: string
+}
+
+type ReleaseUsageEvidenceCandidatesPayload = {
+  items?: ReleaseUsageEvidenceCandidatePayload[]
+  summary?: ReleaseUsageEvidenceCandidateSummaryPayload
+  no_candidate_reason?: string | null
+  generated_at?: string | null
+}
+
+type ReleaseEvidenceRequirementsPayload = {
+  agent_id?: string
+  template_id?: string
+  release_setup_ready?: boolean
+  release_setup_blocking_items?: ReadinessItemPayload[]
+  evidence_required?: boolean
+  evidence_status?: string
+  required_change_kind?: string | null
+  stable_reference_rule?: string | null
+  stable_reference_prefix?: string | null
+  required_smoke_cases?: ReleaseEvidenceSmokeCaseRequirementPayload[]
+  manual_override?: ReleaseManualOverrideRequirementPayload | null
+  publish_evidence_requirements?: ReleasePublishEvidenceRequirementPayload[]
+  runtime_provider_preflight?: RuntimeProviderPreflightPayload | null
+  last_checked_at?: string | null
+  owner_stage?: string
 }
 
 type MutationResultPayload = {
@@ -348,20 +528,117 @@ export function mapReleaseDetail(payload: ReleaseDetailPayload = {}): ReleaseDet
   }
 }
 
+function mapSmokeCaseRequirement(payload: ReleaseEvidenceSmokeCaseRequirementPayload = {}): ReleaseEvidenceSmokeCaseRequirement {
+  return {
+    caseId: readString(payload.case_id),
+    required: readBoolean(payload.required),
+    groundedReferenceRequired: readBoolean(payload.grounded_reference_required),
+    stableReferenceMustMatchReleaseReference: readBoolean(payload.stable_reference_must_match_release_reference),
+    labelKey: readString(payload.label_key),
+    descriptionKey: readString(payload.description_key),
+  }
+}
+
+function mapManualOverrideRequirement(payload: ReleaseManualOverrideRequirementPayload | null | undefined): ReleaseManualOverrideRequirement {
+  return {
+    allowed: readBoolean(payload?.allowed),
+    blockedReason: readNullableString(payload?.blocked_reason),
+    defaultReasonCode: readNullableString(payload?.default_reason_code),
+    relatedMissingOrFailedItemsDefault: readStringArray(payload?.related_missing_or_failed_items_default),
+  }
+}
+
+function mapPublishEvidenceRequirement(payload: ReleasePublishEvidenceRequirementPayload = {}): ReleasePublishEvidenceRequirement {
+  return {
+    field: readString(payload.field),
+    required: readBoolean(payload.required),
+    labelKey: readString(payload.label_key),
+    descriptionKey: readString(payload.description_key),
+  }
+}
+
+function mapRuntimeProviderPreflightRequirement(payload: RuntimeProviderPreflightRequirementPayload = {}): RuntimeProviderPreflightRequirement {
+  return {
+    providerId: readString(payload.provider_id),
+    credentialKey: readString(payload.credential_key),
+    credentialConfigured: readBoolean(payload.credential_configured),
+    secretResolvable: readBoolean(payload.secret_resolvable),
+    state: readString(payload.state),
+    requiredAction: readNullableString(payload.required_action),
+  }
+}
+
+function mapRuntimeProviderPreflight(payload: RuntimeProviderPreflightPayload | null | undefined): RuntimeProviderPreflight {
+  return {
+    available: Boolean(payload),
+    ready: payload ? readBoolean(payload.ready) : false,
+    requirements: payload?.requirements?.map(mapRuntimeProviderPreflightRequirement) ?? [],
+  }
+}
+
+function mapReleaseUsageEvidenceCandidate(payload: ReleaseUsageEvidenceCandidatePayload = {}): ReleaseUsageEvidenceCandidate {
+  return {
+    chatId: readString(payload.chat_id),
+    conversationTurnId: readString(payload.conversation_turn_id),
+    modelRequestId: readString(payload.model_request_id),
+    createdAt: readString(payload.created_at),
+    turnStatus: readString(payload.turn_status),
+    modelRequestState: readString(payload.model_request_state),
+    usageRecorded: readBoolean(payload.usage_recorded),
+    agentId: readString(payload.agent_id),
+    agentConfigId: readNullableString(payload.agent_config_id),
+    widgetKey: readNullableString(payload.widget_key),
+    channel: readNullableString(payload.channel),
+    displayLabel: readString(payload.display_label),
+  }
+}
+
+export function mapReleaseUsageEvidenceCandidates(payload: ReleaseUsageEvidenceCandidatesPayload = {}): ReleaseUsageEvidenceCandidates {
+  return {
+    items: payload.items?.map(mapReleaseUsageEvidenceCandidate) ?? [],
+    summary: {
+      candidateCount: readNumber(payload.summary?.candidate_count),
+      ready: readBoolean(payload.summary?.ready),
+      noCandidateReason: readNullableString(payload.summary?.no_candidate_reason),
+      message: readString(payload.summary?.message),
+    },
+    noCandidateReason: readNullableString(payload.no_candidate_reason),
+    generatedAt: readNullableString(payload.generated_at),
+  }
+}
+
+export function mapReleaseEvidenceRequirements(payload: ReleaseEvidenceRequirementsPayload = {}): ReleaseEvidenceRequirements {
+  return {
+    agentId: readString(payload.agent_id),
+    templateId: readString(payload.template_id),
+    releaseSetupReady: readBoolean(payload.release_setup_ready),
+    releaseSetupBlockingItems: payload.release_setup_blocking_items?.map(mapReadinessItem) ?? [],
+    evidenceRequired: readBoolean(payload.evidence_required),
+    evidenceStatus: readString(payload.evidence_status),
+    requiredChangeKind: readNullableString(payload.required_change_kind),
+    stableReferenceRule: readNullableString(payload.stable_reference_rule),
+    stableReferencePrefix: readNullableString(payload.stable_reference_prefix),
+    requiredSmokeCases: payload.required_smoke_cases?.map(mapSmokeCaseRequirement) ?? [],
+    manualOverride: mapManualOverrideRequirement(payload.manual_override),
+    publishEvidenceRequirements: payload.publish_evidence_requirements?.map(mapPublishEvidenceRequirement) ?? [],
+    runtimeProviderPreflight: mapRuntimeProviderPreflight(payload.runtime_provider_preflight),
+    lastCheckedAt: readNullableString(payload.last_checked_at),
+    ownerStage: readString(payload.owner_stage),
+  }
+}
+
 function toEvidencePayload(input: ReleaseEvidenceInput | null) {
   if (!input) return null
   return {
     change_kind: input.changeKind,
     stable_reference: input.stableReference,
     passed: input.passed,
-    smoke_cases: input.smokeCaseId
-      ? [{
-          case_id: input.smokeCaseId,
-          passed: input.smokeCasePassed,
-          stable_reference: input.smokeCaseReference,
-          outcome: input.smokeCaseOutcome,
-        }]
-      : [],
+    smoke_cases: input.smokeCases.map((smokeCase) => ({
+      case_id: smokeCase.caseId,
+      passed: smokeCase.passed,
+      stable_reference: smokeCase.stableReference,
+      outcome: smokeCase.outcome,
+    })),
   }
 }
 
@@ -390,6 +667,16 @@ export const releasesApi = {
   async getReadiness(tenantId: string, agentId: string): Promise<ReleaseReadiness> {
     const response = await apiClient.get<ReleaseReadinessPayload>(`${PORTAL_PREFIX}/tenants/${tenantId}/agents/${agentId}/release-readiness`)
     return mapReleaseReadiness(response.data)
+  },
+
+  async getEvidenceRequirements(tenantId: string, agentId: string): Promise<ReleaseEvidenceRequirements> {
+    const response = await apiClient.get<ReleaseEvidenceRequirementsPayload>(`${PORTAL_PREFIX}/tenants/${tenantId}/agents/${agentId}/release-evidence-requirements`)
+    return mapReleaseEvidenceRequirements(response.data)
+  },
+
+  async getUsageEvidenceCandidates(tenantId: string, agentId: string): Promise<ReleaseUsageEvidenceCandidates> {
+    const response = await apiClient.get<ReleaseUsageEvidenceCandidatesPayload>(`${PORTAL_PREFIX}/tenants/${tenantId}/agents/${agentId}/release-usage-evidence-candidates`)
+    return mapReleaseUsageEvidenceCandidates(response.data)
   },
 
   async listReleases(tenantId: string, agentId: string): Promise<ReleaseListItem[]> {

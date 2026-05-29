@@ -3,6 +3,7 @@ import { getLocalizedApiErrorMessage } from './getLocalizedApiErrorMessage'
 
 const messages: Record<string, string> = {
   'errors.backend.authentication_failed': 'Не удалось войти. Проверьте email и пароль.',
+  'errors.backend.credential_configuration_failure': 'Runtime credential не настроен. Сообщение не дошло до модели, usage evidence не создан.',
   'errors.kind.unauthorized': 'Сессия истекла. Войдите снова.',
 }
 
@@ -55,5 +56,19 @@ describe('getLocalizedApiErrorMessage', () => {
         'fallback',
       ),
     ).toBe('retrieval_mode is not allowed for sources: source.faq.public_support_faq')
+  })
+
+  it('localizes runtime credential configuration failures', () => {
+    expect(
+      getLocalizedApiErrorMessage(
+        {
+          kind: 'server',
+          code: 'credential_configuration_failure',
+          message: 'Check the entered data',
+        },
+        t,
+        'fallback',
+      ),
+    ).toBe('Runtime credential не настроен. Сообщение не дошло до модели, usage evidence не создан.')
   })
 })

@@ -1,5 +1,40 @@
 import { describe, expect, it } from 'vitest'
-import { buildReleaseDraftInput, deriveReleasesCanManage } from '@/modules/Releases/model/useReleasesManager'
+import { buildReleaseDraftInput, deriveReleasesCanManage, hasCompleteExplicitEvidence } from '@/modules/Releases/model/useReleasesManager'
+import type { ReleaseEvidenceRequirements } from '@/modules/Releases/api/releasesApi'
+
+const requirements: ReleaseEvidenceRequirements = {
+  agentId: 'agent_1',
+  templateId: 'sales_qualification_v1',
+  releaseSetupReady: true,
+  releaseSetupBlockingItems: [],
+  evidenceRequired: true,
+  evidenceStatus: 'missing_until_submitted',
+  requiredChangeKind: 'retrieval_behavior_future',
+  stableReferenceRule: 'knowledge_retrieval_run_required_for_grounded_cases',
+  stableReferencePrefix: 'knowledge-retrieval-run:',
+  requiredSmokeCases: [{
+    caseId: 'sales_support.product_grounded',
+    required: true,
+    groundedReferenceRequired: true,
+    stableReferenceMustMatchReleaseReference: true,
+    labelKey: 'release.evidence.sales_support.product_grounded.label',
+    descriptionKey: 'release.evidence.sales_support.product_grounded.description',
+  }],
+  manualOverride: {
+    allowed: true,
+    blockedReason: null,
+    defaultReasonCode: 'release_evidence_operator_approved_override',
+    relatedMissingOrFailedItemsDefault: ['evaluation_evidence'],
+  },
+  publishEvidenceRequirements: [],
+  runtimeProviderPreflight: {
+    available: true,
+    ready: true,
+    requirements: [],
+  },
+  lastCheckedAt: '2026-05-25T00:00:00Z',
+  ownerStage: 'stage24_release_workflow',
+}
 
 describe('deriveReleasesCanManage', () => {
   it('allows release mutations only when role and backend action refs both allow them', () => {
@@ -15,22 +50,54 @@ describe('deriveReleasesCanManage', () => {
         selectedConfigId: 'config_7',
         releaseCandidateId: '',
         evidenceStableReference: '',
-        evidenceChangeKind: 'runtime_behavior',
+        evidenceChangeKind: 'retrieval_behavior_future',
         evidencePassed: true,
-        smokeCaseId: '',
-        smokeCasePassed: true,
-        smokeCaseReference: '',
-        smokeCaseOutcome: '',
+        smokeCases: [],
+        manualOverrideSelected: true,
         manualOverrideReasonCode: 'business_approved',
         manualOverrideItemsText: 'knowledge\npolicy',
         manualOverrideComment: 'Approved for limited rollout.',
-      }),
+      }, requirements),
     ).toMatchObject({
       selectedConfigId: 'config_7',
       manualOverride: {
         reasonCode: 'business_approved',
         relatedMissingOrFailedItems: ['knowledge', 'policy'],
         comment: 'Approved for limited rollout.',
+      },
+    })
+  })
+
+  it('uses backend-provided change kind and sends all complete smoke cases', () => {
+    const form = {
+      selectedConfigId: 'config_7',
+      releaseCandidateId: '',
+      evidenceStableReference: 'knowledge-retrieval-run:run_1',
+      evidenceChangeKind: 'retrieval_behavior_future',
+      evidencePassed: true,
+      smokeCases: [{
+        caseId: 'sales_support.product_grounded',
+        required: true,
+        groundedReferenceRequired: true,
+        stableReferenceMustMatchReleaseReference: true,
+        labelKey: 'release.evidence.sales_support.product_grounded.label',
+        descriptionKey: 'release.evidence.sales_support.product_grounded.description',
+        passed: true,
+        stableReference: 'knowledge-retrieval-run:run_1',
+        outcome: 'accepted',
+      }],
+      manualOverrideSelected: false,
+      manualOverrideReasonCode: '',
+      manualOverrideItemsText: '',
+      manualOverrideComment: '',
+    }
+
+    expect(hasCompleteExplicitEvidence(form, requirements)).toBe(true)
+    expect(buildReleaseDraftInput(form, requirements)).toMatchObject({
+      evidence: {
+        changeKind: 'retrieval_behavior_future',
+        stableReference: 'knowledge-retrieval-run:run_1',
+        smokeCases: [{ caseId: 'sales_support.product_grounded', stableReference: 'knowledge-retrieval-run:run_1' }],
       },
     })
   })

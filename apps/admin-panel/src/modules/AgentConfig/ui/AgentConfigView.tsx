@@ -1,15 +1,12 @@
 import { Link } from 'react-router-dom'
 import { useI18n } from '@/core/i18n/useI18n'
-import {
-  agentConfigOptionMetadata,
-  mergeCurrentOption,
-  mergeCurrentOptions,
-  type AgentConfigOption,
-} from '@/modules/AgentConfig/model/agentConfigOptions'
 import { createEmptyActionBinding, type AgentConfigManager } from '@/modules/AgentConfig/model/useAgentConfigManager'
 import type { AgentIntegrationActionBinding } from '@/modules/AgentConfig/api/agentConfigApi'
+import type { FormMetadata, FormMetadataField, FormMetadataOption } from '@/modules/FormMetadata'
 import { CopyableValue, InfoGrid, MutationResultBlock, StatusBadge } from '@/shared/ui/EntityInfo'
 import { RefreshButton } from '@/shared/ui/RefreshButton'
+
+const MISSING_TRANSLATION_EVENT = 'ai-admin:i18n-missing-key'
 
 function linesToArray(value: string) {
   return value.split('\n').map((line) => line.trim()).filter(Boolean)
@@ -21,12 +18,14 @@ function arrayToLines(value: string[]) {
 
 function Field({
   label,
+  help,
   value,
   disabled,
   placeholder,
   onChange,
 }: {
   label: string
+  help?: string | null
   value: string
   disabled: boolean
   placeholder?: string
@@ -36,12 +35,14 @@ function Field({
     <label className="grid gap-1">
       <span className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">{label}</span>
       <input
+        aria-label={label}
         value={value}
         placeholder={placeholder}
         disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
         className="h-10 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:cursor-not-allowed disabled:bg-[var(--surface-muted)]"
       />
+      {help ? <span className="text-xs normal-case tracking-normal text-[var(--text-muted)]">{help}</span> : null}
     </label>
   )
 }
@@ -53,12 +54,14 @@ type SelectOption = {
 
 function SelectField({
   label,
+  help,
   value,
   disabled,
   options,
   onChange,
 }: {
   label: string
+  help?: string | null
   value: string
   disabled: boolean
   options: SelectOption[]
@@ -68,6 +71,7 @@ function SelectField({
     <label className="grid gap-1">
       <span className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">{label}</span>
       <select
+        aria-label={label}
         value={value}
         disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
@@ -79,18 +83,21 @@ function SelectField({
           </option>
         ))}
       </select>
+      {help ? <span className="text-xs normal-case tracking-normal text-[var(--text-muted)]">{help}</span> : null}
     </label>
   )
 }
 
 function TextAreaField({
   label,
+  help,
   value,
   disabled,
   rows = 3,
   onChange,
 }: {
   label: string
+  help?: string | null
   value: string
   disabled: boolean
   rows?: number
@@ -100,12 +107,14 @@ function TextAreaField({
     <label className="grid gap-1">
       <span className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">{label}</span>
       <textarea
+        aria-label={label}
         value={value}
         rows={rows}
         disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
         className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:cursor-not-allowed disabled:bg-[var(--surface-muted)]"
       />
+      {help ? <span className="text-xs normal-case tracking-normal text-[var(--text-muted)]">{help}</span> : null}
     </label>
   )
 }
@@ -123,22 +132,68 @@ function translateListValues(t: (key: string) => string, namespace: string, valu
   return values.map((value) => translatedValue(t, namespace, value))
 }
 
-function optionsWithCurrent(options: SelectOption[], value: string, t: (key: string) => string, namespace: string) {
+function signalMissingTranslation(key: string, fallback: string) {
+  if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return
+  window.dispatchEvent(new CustomEvent(MISSING_TRANSLATION_EVENT, { detail: { key, fallback } }))
+}
+
+function translateMetadataKey(t: (key: string) => string, key: string | null | undefined, fallback: string) {
+  if (!key) return fallback
+  const label = t(key)
+  if (label === key) {
+    signalMissingTranslation(key, fallback)
+    return fallback
+  }
+  return label
+}
+
+function metadataField(metadata: FormMetadata | null, payloadPath: string): FormMetadataField | null {
+  return metadata?.fields.find((field) => field.payloadPath === payloadPath) ?? null
+}
+
+function fieldLabel(t: (key: string) => string, field: FormMetadataField | null, fallbackKey: string) {
+  return translateMetadataKey(t, field?.localizationKey, t(fallbackKey))
+}
+
+function fieldHelp(t: (key: string) => string, field: FormMetadataField | null) {
+  return field?.helpKey ? translateMetadataKey(t, field.helpKey, field.helpKey) : null
+}
+
+function optionValue(option: FormMetadataOption) {
+  return typeof option.value === 'string' ? option.value : String(option.value)
+}
+
+function optionLabel(t: (key: string) => string, option: FormMetadataOption) {
+  const value = optionValue(option)
+  return translateMetadataKey(t, option.localizationKey, value)
+}
+
+function metadataOptions(t: (key: string) => string, field: FormMetadataField | null): SelectOption[] {
+  return (field?.options ?? [])
+    .filter((option) => typeof option.value === 'string')
+    .map((option) => ({
+      value: optionValue(option),
+      label: optionLabel(t, option),
+    }))
+}
+
+function optionsWithCurrent(options: SelectOption[], value: string) {
   if (!value || options.some((option) => option.value === value)) return options
 
-  return [...options, { value, label: translatedValue(t, namespace, value) }]
+  return [...options, { value, label: value }]
 }
 
-function optionLabel(t: (key: string) => string, option: AgentConfigOption) {
-  const label = t(option.labelKey)
-  return label === option.labelKey ? option.value : label
+function optionsWithCurrentValues(options: SelectOption[], values: string[]) {
+  const knownValues = new Set(options.map((option) => option.value))
+  const customOptions = values
+    .filter((value) => value && !knownValues.has(value))
+    .map((value) => ({ value, label: value }))
+
+  return [...options, ...customOptions]
 }
 
-function toSelectOptions(t: (key: string) => string, options: AgentConfigOption[], currentValue: string | null | undefined, includeEmpty = true) {
-  const mappedOptions = mergeCurrentOption(options, currentValue).map((option) => ({
-    value: option.value,
-    label: optionLabel(t, option),
-  }))
+function toSelectOptions(t: (key: string) => string, field: FormMetadataField | null, currentValue: string | null | undefined, includeEmpty = true) {
+  const mappedOptions = optionsWithCurrent(metadataOptions(t, field), currentValue ?? '')
 
   return includeEmpty ? [{ value: '', label: t('agents.empty_value') }, ...mappedOptions] : mappedOptions
 }
@@ -160,48 +215,57 @@ function configStatusLabel(t: (key: string) => string, status: string) {
 
 function ToggleField({
   label,
+  help,
   checked,
   disabled,
   onChange,
 }: {
   label: string
+  help?: string | null
   checked: boolean
   disabled: boolean
   onChange: (value: boolean) => void
 }) {
   return (
-    <label className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] px-3 py-2 text-sm font-semibold text-[var(--text)]">
-      <input
-        type="checkbox"
-        checked={checked}
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.checked)}
-        className="h-4 w-4 rounded border-[var(--border)]"
-      />
-      {label}
+    <label className="grid gap-1 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] px-3 py-2 text-sm font-semibold text-[var(--text)]">
+      <span className="flex items-center gap-2">
+        <input
+          aria-label={label}
+          type="checkbox"
+          checked={checked}
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.checked)}
+          className="h-4 w-4 rounded border-[var(--border)]"
+        />
+        {label}
+      </span>
+      {help ? <span className="text-xs font-normal text-[var(--text-muted)]">{help}</span> : null}
     </label>
   )
 }
 
 function MultiSelectField({
   label,
+  help,
   values,
   disabled,
   options,
   onChange,
 }: {
   label: string
+  help?: string | null
   values: string[]
   disabled: boolean
-  options: AgentConfigOption[]
+  options: SelectOption[]
   onChange: (values: string[]) => void
 }) {
   const { t } = useI18n()
-  const mergedOptions = mergeCurrentOptions(options, values)
+  const mergedOptions = optionsWithCurrentValues(options, values)
 
   return (
     <fieldset className="grid gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
       <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">{label}</legend>
+      {help ? <p className="text-xs text-[var(--text-muted)]">{help}</p> : null}
       <div className="flex flex-wrap gap-2">
         {mergedOptions.map((option) => (
           <label
@@ -221,7 +285,7 @@ function MultiSelectField({
               onChange={(event) => onChange(updateStringList(values, option.value, event.target.checked))}
               className="sr-only"
             />
-            {optionLabel(t, option)}
+            {option.label}
           </label>
         ))}
       </div>
@@ -293,13 +357,36 @@ export function AgentConfigView({ manager }: { manager: AgentConfigManager }) {
   const { t } = useI18n()
   const disabled = !manager.canManageConfig || manager.isMutating
   const draft = manager.draftPayload
-  const toneOptions = toSelectOptions(t, agentConfigOptionMetadata.tone, draft.toneAndLanguage.tone, false)
-  const languageOptions = toSelectOptions(t, agentConfigOptionMetadata.language, draft.toneAndLanguage.language, false)
-  const sensitivityOptions = toSelectOptions(t, agentConfigOptionMetadata.sensitivity, '', true)
-  const modelFamilyOptions = toSelectOptions(t, agentConfigOptionMetadata.modelFamily, draft.modelPreference.preferredModelFamily, true)
-  const profileOptions = toSelectOptions(t, agentConfigOptionMetadata.profileName, draft.executionProfileHints.profileName, true)
-  const responseModeOptions = toSelectOptions(t, agentConfigOptionMetadata.responseMode, draft.executionProfileHints.responseMode, true)
-  const schemaVersionOptions = toSelectOptions(t, agentConfigOptionMetadata.schemaVersion, draft.compatibilityAndSafety.configSchemaVersion, false)
+  const metadata = manager.formMetadata
+  const agentLabelField = metadataField(metadata, 'identity.agent_label')
+  const personaField = metadataField(metadata, 'identity.persona_summary')
+  const toneField = metadataField(metadata, 'tone_and_language.tone')
+  const languageField = metadataField(metadata, 'tone_and_language.language')
+  const handoffEnabledField = metadataField(metadata, 'handoff_policy.handoff_enabled')
+  const handoffConditionsField = metadataField(metadata, 'handoff_policy.handoff_conditions')
+  const integrationEnabledField = metadataField(metadata, 'integration_policy.integration_enabled')
+  const modelFamilyField = metadataField(metadata, 'model_preference.preferred_model_family')
+  const latencyField = metadataField(metadata, 'model_preference.latency_sensitivity')
+  const qualityField = metadataField(metadata, 'model_preference.quality_sensitivity')
+  const costField = metadataField(metadata, 'model_preference.cost_sensitivity')
+  const capabilitiesField = metadataField(metadata, 'model_selection_hints.preferred_capabilities')
+  const fallbackAllowedField = metadataField(metadata, 'model_selection_hints.fallback_allowed')
+  const profileField = metadataField(metadata, 'execution_profile_hints.profile_name')
+  const responseModeField = metadataField(metadata, 'execution_profile_hints.response_mode')
+  const schemaVersionField = metadataField(metadata, 'compatibility_and_safety.config_schema_version')
+  const safetyLabelsField = metadataField(metadata, 'compatibility_and_safety.safety_labels')
+  const compatibilityNotesField = metadataField(metadata, 'compatibility_and_safety.compatibility_notes')
+  const toneOptions = toSelectOptions(t, toneField, draft.toneAndLanguage.tone, false)
+  const languageOptions = toSelectOptions(t, languageField, draft.toneAndLanguage.language, false)
+  const modelFamilyOptions = toSelectOptions(t, modelFamilyField, draft.modelPreference.preferredModelFamily, true)
+  const latencyOptions = toSelectOptions(t, latencyField, draft.modelPreference.latencySensitivity, true)
+  const qualityOptions = toSelectOptions(t, qualityField, draft.modelPreference.qualitySensitivity, true)
+  const costOptions = toSelectOptions(t, costField, draft.modelPreference.costSensitivity, true)
+  const profileOptions = toSelectOptions(t, profileField, draft.executionProfileHints.profileName, true)
+  const responseModeOptions = toSelectOptions(t, responseModeField, draft.executionProfileHints.responseMode, true)
+  const schemaVersionOptions = toSelectOptions(t, schemaVersionField, draft.compatibilityAndSafety.configSchemaVersion, false)
+  const capabilityOptions = metadataOptions(t, capabilitiesField)
+  const safetyLabelOptions = metadataOptions(t, safetyLabelsField)
 
   const updateBinding = (index: number, patch: Partial<AgentIntegrationActionBinding>) => {
     manager.updateDraftPayload((current) => ({
@@ -465,26 +552,30 @@ export function AgentConfigView({ manager }: { manager: AgentConfigManager }) {
             <div className="mt-4 grid gap-4">
               <div className="grid gap-3 lg:grid-cols-2">
                 <Field
-                  label={t('agent_config.identity.agent_label')}
+                  label={fieldLabel(t, agentLabelField, 'agent_config.identity.agent_label')}
+                  help={fieldHelp(t, agentLabelField)}
                   value={draft.identity.agentLabel}
                   disabled={disabled}
                   onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, identity: { ...current.identity, agentLabel: value } }))}
                 />
                 <Field
-                  label={t('agent_config.identity.persona_summary')}
+                  label={fieldLabel(t, personaField, 'agent_config.identity.persona_summary')}
+                  help={fieldHelp(t, personaField)}
                   value={draft.identity.personaSummary ?? ''}
                   disabled={disabled}
                   onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, identity: { ...current.identity, personaSummary: value } }))}
                 />
                 <SelectField
-                  label={t('agent_config.tone')}
+                  label={fieldLabel(t, toneField, 'agent_config.tone')}
+                  help={fieldHelp(t, toneField)}
                   value={draft.toneAndLanguage.tone}
                   disabled={disabled}
                   options={toneOptions}
                   onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, toneAndLanguage: { ...current.toneAndLanguage, tone: value } }))}
                 />
                 <SelectField
-                  label={t('agent_config.language')}
+                  label={fieldLabel(t, languageField, 'agent_config.language')}
+                  help={fieldHelp(t, languageField)}
                   value={draft.toneAndLanguage.language}
                   disabled={disabled}
                   options={languageOptions}
@@ -500,11 +591,11 @@ export function AgentConfigView({ manager }: { manager: AgentConfigManager }) {
 
               <div className="grid gap-3 lg:grid-cols-2">
                 <div className="grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3">
-                  <ToggleField label={t('agent_config.handoff_enabled')} checked={draft.handoffPolicy.handoffEnabled} disabled={disabled} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, handoffPolicy: { ...current.handoffPolicy, handoffEnabled: value } }))} />
-                  <TextAreaField label={t('agent_config.handoff_conditions')} value={arrayToLines(draft.handoffPolicy.handoffConditions)} disabled={disabled} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, handoffPolicy: { ...current.handoffPolicy, handoffConditions: linesToArray(value) } }))} />
+                  <ToggleField label={fieldLabel(t, handoffEnabledField, 'agent_config.handoff_enabled')} help={fieldHelp(t, handoffEnabledField)} checked={draft.handoffPolicy.handoffEnabled} disabled={disabled} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, handoffPolicy: { ...current.handoffPolicy, handoffEnabled: value } }))} />
+                  <TextAreaField label={fieldLabel(t, handoffConditionsField, 'agent_config.handoff_conditions')} help={fieldHelp(t, handoffConditionsField)} value={arrayToLines(draft.handoffPolicy.handoffConditions)} disabled={disabled} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, handoffPolicy: { ...current.handoffPolicy, handoffConditions: linesToArray(value) } }))} />
                 </div>
                 <div className="grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3">
-                  <ToggleField label={t('agent_config.integration_enabled')} checked={draft.integrationPolicy.integrationEnabled} disabled={disabled} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, integrationPolicy: { ...current.integrationPolicy, integrationEnabled: value } }))} />
+                  <ToggleField label={fieldLabel(t, integrationEnabledField, 'agent_config.integration_enabled')} help={fieldHelp(t, integrationEnabledField)} checked={draft.integrationPolicy.integrationEnabled} disabled={disabled} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, integrationPolicy: { ...current.integrationPolicy, integrationEnabled: value } }))} />
                   <button
                     type="button"
                     disabled={disabled}
@@ -558,27 +649,27 @@ export function AgentConfigView({ manager }: { manager: AgentConfigManager }) {
               ))}
 
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <SelectField label={t('agent_config.preferred_model_family')} value={draft.modelPreference.preferredModelFamily ?? ''} disabled={disabled} options={modelFamilyOptions} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, modelPreference: { ...current.modelPreference, preferredModelFamily: value || null } }))} />
-                <SelectField label={t('agent_config.latency_sensitivity')} value={draft.modelPreference.latencySensitivity ?? ''} disabled={disabled} options={optionsWithCurrent(sensitivityOptions, draft.modelPreference.latencySensitivity ?? '', t, 'agent_config.sensitivity_value')} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, modelPreference: { ...current.modelPreference, latencySensitivity: value || null } }))} />
-                <SelectField label={t('agent_config.quality_sensitivity')} value={draft.modelPreference.qualitySensitivity ?? ''} disabled={disabled} options={optionsWithCurrent(sensitivityOptions, draft.modelPreference.qualitySensitivity ?? '', t, 'agent_config.sensitivity_value')} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, modelPreference: { ...current.modelPreference, qualitySensitivity: value || null } }))} />
-                <SelectField label={t('agent_config.cost_sensitivity')} value={draft.modelPreference.costSensitivity ?? ''} disabled={disabled} options={optionsWithCurrent(sensitivityOptions, draft.modelPreference.costSensitivity ?? '', t, 'agent_config.sensitivity_value')} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, modelPreference: { ...current.modelPreference, costSensitivity: value || null } }))} />
+                <SelectField label={fieldLabel(t, modelFamilyField, 'agent_config.preferred_model_family')} help={fieldHelp(t, modelFamilyField)} value={draft.modelPreference.preferredModelFamily ?? ''} disabled={disabled} options={modelFamilyOptions} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, modelPreference: { ...current.modelPreference, preferredModelFamily: value || null } }))} />
+                <SelectField label={fieldLabel(t, latencyField, 'agent_config.latency_sensitivity')} help={fieldHelp(t, latencyField)} value={draft.modelPreference.latencySensitivity ?? ''} disabled={disabled} options={latencyOptions} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, modelPreference: { ...current.modelPreference, latencySensitivity: value || null } }))} />
+                <SelectField label={fieldLabel(t, qualityField, 'agent_config.quality_sensitivity')} help={fieldHelp(t, qualityField)} value={draft.modelPreference.qualitySensitivity ?? ''} disabled={disabled} options={qualityOptions} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, modelPreference: { ...current.modelPreference, qualitySensitivity: value || null } }))} />
+                <SelectField label={fieldLabel(t, costField, 'agent_config.cost_sensitivity')} help={fieldHelp(t, costField)} value={draft.modelPreference.costSensitivity ?? ''} disabled={disabled} options={costOptions} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, modelPreference: { ...current.modelPreference, costSensitivity: value || null } }))} />
               </div>
 
               <div className="grid gap-3 lg:grid-cols-2">
                 <div className="grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3">
-                  <MultiSelectField label={t('agent_config.preferred_capabilities')} values={draft.modelSelectionHints.preferredCapabilities} disabled={disabled} options={agentConfigOptionMetadata.preferredCapabilities} onChange={(values) => manager.updateDraftPayload((current) => ({ ...current, modelSelectionHints: { ...current.modelSelectionHints, preferredCapabilities: values } }))} />
-                  <ToggleField label={t('agent_config.fallback_allowed')} checked={draft.modelSelectionHints.fallbackAllowed} disabled={disabled} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, modelSelectionHints: { ...current.modelSelectionHints, fallbackAllowed: value } }))} />
+                  <MultiSelectField label={fieldLabel(t, capabilitiesField, 'agent_config.preferred_capabilities')} help={fieldHelp(t, capabilitiesField)} values={draft.modelSelectionHints.preferredCapabilities} disabled={disabled} options={capabilityOptions} onChange={(values) => manager.updateDraftPayload((current) => ({ ...current, modelSelectionHints: { ...current.modelSelectionHints, preferredCapabilities: values } }))} />
+                  <ToggleField label={fieldLabel(t, fallbackAllowedField, 'agent_config.fallback_allowed')} help={fieldHelp(t, fallbackAllowedField)} checked={draft.modelSelectionHints.fallbackAllowed} disabled={disabled} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, modelSelectionHints: { ...current.modelSelectionHints, fallbackAllowed: value } }))} />
                 </div>
                 <div className="grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3">
-                  <SelectField label={t('agent_config.profile_name')} value={draft.executionProfileHints.profileName ?? ''} disabled={disabled} options={profileOptions} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, executionProfileHints: { ...current.executionProfileHints, profileName: value || null } }))} />
-                  <SelectField label={t('agent_config.response_mode')} value={draft.executionProfileHints.responseMode ?? ''} disabled={disabled} options={responseModeOptions} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, executionProfileHints: { ...current.executionProfileHints, responseMode: value || null } }))} />
+                  <SelectField label={fieldLabel(t, profileField, 'agent_config.profile_name')} help={fieldHelp(t, profileField)} value={draft.executionProfileHints.profileName ?? ''} disabled={disabled} options={profileOptions} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, executionProfileHints: { ...current.executionProfileHints, profileName: value || null } }))} />
+                  <SelectField label={fieldLabel(t, responseModeField, 'agent_config.response_mode')} help={fieldHelp(t, responseModeField)} value={draft.executionProfileHints.responseMode ?? ''} disabled={disabled} options={responseModeOptions} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, executionProfileHints: { ...current.executionProfileHints, responseMode: value || null } }))} />
                 </div>
               </div>
 
               <div className="grid gap-3 lg:grid-cols-3">
-                <SelectField label={t('agent_config.schema_version')} value={draft.compatibilityAndSafety.configSchemaVersion} disabled={true} options={schemaVersionOptions} onChange={() => undefined} />
-                <MultiSelectField label={t('agent_config.safety_labels')} values={draft.compatibilityAndSafety.safetyLabels} disabled={disabled} options={agentConfigOptionMetadata.safetyLabels} onChange={(values) => manager.updateDraftPayload((current) => ({ ...current, compatibilityAndSafety: { ...current.compatibilityAndSafety, safetyLabels: values } }))} />
-                <TextAreaField label={t('agent_config.compatibility_notes')} value={arrayToLines(draft.compatibilityAndSafety.compatibilityNotes)} disabled={disabled} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, compatibilityAndSafety: { ...current.compatibilityAndSafety, compatibilityNotes: linesToArray(value) } }))} />
+                <SelectField label={fieldLabel(t, schemaVersionField, 'agent_config.schema_version')} help={fieldHelp(t, schemaVersionField)} value={draft.compatibilityAndSafety.configSchemaVersion} disabled={schemaVersionField?.readonly ?? true} options={schemaVersionOptions} onChange={() => undefined} />
+                <MultiSelectField label={fieldLabel(t, safetyLabelsField, 'agent_config.safety_labels')} help={fieldHelp(t, safetyLabelsField)} values={draft.compatibilityAndSafety.safetyLabels} disabled={disabled} options={safetyLabelOptions} onChange={(values) => manager.updateDraftPayload((current) => ({ ...current, compatibilityAndSafety: { ...current.compatibilityAndSafety, safetyLabels: values } }))} />
+                <TextAreaField label={fieldLabel(t, compatibilityNotesField, 'agent_config.compatibility_notes')} help={fieldHelp(t, compatibilityNotesField)} value={arrayToLines(draft.compatibilityAndSafety.compatibilityNotes)} disabled={disabled} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, compatibilityAndSafety: { ...current.compatibilityAndSafety, compatibilityNotes: linesToArray(value) } }))} />
               </div>
 
               <div className="flex flex-col gap-2 border-t border-[var(--border)] pt-4 sm:flex-row sm:items-center sm:justify-end">

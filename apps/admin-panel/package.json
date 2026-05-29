@@ -8,7 +8,11 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .ts,.tsx",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage:tz-svc-8-0": "vitest run --coverage --run src/modules/AgentConfig/api/agentConfigApi.test.ts src/modules/AgentConfig/model/useAgentConfigManager.test.ts src/modules/AgentConfig/model/useAgentConfigManager.flow.test.tsx src/modules/AgentConfig/ui/AgentConfigView.test.tsx src/modules/Agents/ui/AgentDetailView.test.tsx src/shared/ui/EntityInfo.test.tsx",
+    "test:coverage:tz-svc-8-2": "AI_ADMIN_COVERAGE_SCOPE=tz-svc-8-2 vitest run --coverage --run src/modules/FormMetadata/api/formMetadataBridgeApi.test.ts",
+    "test:coverage:tz-svc-8-3": "AI_ADMIN_COVERAGE_SCOPE=tz-svc-8-3 vitest run --coverage --run src/modules/AgentConfig/model/useAgentConfigManager.test.ts src/modules/AgentConfig/model/useAgentConfigManager.flow.test.tsx src/modules/AgentConfig/ui/AgentConfigView.test.tsx src/modules/FormMetadata/api/formMetadataBridgeApi.test.ts",
+    "test:coverage:tz-svc-8-4": "AI_ADMIN_COVERAGE_SCOPE=tz-svc-8-4 vitest run --coverage --run src/modules/Releases/api/releasesApi.test.ts src/modules/Releases/model/useReleasesManager.test.ts src/modules/Releases/model/useReleasesManager.flow.test.tsx src/modules/Releases/ui/ReleasesView.test.tsx"
   },
   "dependencies": {
     "axios": "^1.0.0",
@@ -27,6 +31,7 @@
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "@vitejs/plugin-react": "^4.0.0",
+    "@vitest/coverage-v8": "^2.1.9",
     "autoprefixer": "^10.0.0",
     "eslint": "^8.0.0",
     "eslint-plugin-react-hooks": "^4.0.0",

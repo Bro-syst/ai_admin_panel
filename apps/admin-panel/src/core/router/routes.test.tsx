@@ -245,4 +245,12 @@ describe('admin panel routes', () => {
       expect(screen.getByText('releases-route-page')).toBeInTheDocument()
     })
   })
+
+  it('does not add a separate release evidence requirements route', async () => {
+    renderRoutes('/tenants/tenant_1/agents/agent_1/release-evidence-requirements')
+
+    await waitFor(() => {
+      expect(screen.queryByText('releases-route-page')).not.toBeInTheDocument()
+    })
+  })
 })

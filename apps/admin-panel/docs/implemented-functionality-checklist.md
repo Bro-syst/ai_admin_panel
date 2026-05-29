@@ -5,7 +5,8 @@ Status: `implemented`
 Use this checklist to verify the current functional composition of
 `apps/admin-panel`. It describes what is already implemented and accepted in
 the Admin Portal after umbrella frontend finalization and the accepted urgent
-Agent Config operator UX fix.
+Agent Config operator UX fix plus the urgent Release Evidence Requirements UI
+stage.
 
 ## Product Boundary
 
@@ -253,14 +254,32 @@ Agent Config operator UX fix.
   `apiClient`.
 - [x] Public widget smoke covers response/evidence display.
 - [x] Release readiness display from backend values.
+- [x] Release evidence requirements are loaded from the backend portal read
+  model on the existing `/tenants/:tenantId/agents/:agentId/releases` route.
+- [x] Release setup blockers, evidence status, required change kind, stable
+  reference guidance, owner stage and publish evidence requirements render from
+  backend metadata.
+- [x] Backend-provided smoke cases render as an evidence matrix in backend
+  order.
+- [x] Templates with no backend-required smoke cases do not show a hardcoded
+  sales/support smoke matrix.
 - [x] Release list.
 - [x] Release detail snapshots.
 - [x] Release draft creation.
 - [x] Manual override fields and `gate_mode` visibility.
+- [x] Release create is blocked in the UI unless explicit evidence is complete
+  or backend metadata allows a manual override path.
+- [x] Release evidence payload submits backend `required_change_kind`, stable
+  reference, pass/fail state and every `evidence.smoke_cases[]` row.
+- [x] Manual override payload includes backend/default reason code, related
+  missing or failed items and optional comment when used.
 - [x] Publish action with confirmation.
+- [x] Failed releases cannot be published through the normal UI.
 - [x] Rollback action with confirmation.
 - [x] Disable action with confirmation.
 - [x] Release actions display backend mutation result/correlation feedback.
+- [x] Release mutation evidence uses neutral missing-field wording and does
+  not fabricate correlation ids, statuses or versions.
 
 ## Conversations And Support
 
@@ -324,7 +343,7 @@ npm run build:admin
 
 The final accepted baseline recorded:
 
-- `npm run test:admin` passed: 63 files, 210 tests.
+- `npm run test:admin` passed: 68 files, 269 tests.
 - `npm run lint:admin` passed.
 - `npm run build:admin` passed.
 

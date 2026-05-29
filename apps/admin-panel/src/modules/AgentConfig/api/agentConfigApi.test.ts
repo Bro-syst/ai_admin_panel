@@ -93,6 +93,79 @@ describe('agentConfigApi', () => {
     expect(getMock).toHaveBeenCalledWith('/api/admin/v1/tenants/tenant_1/agents/agent_1/configs/config_1')
   })
 
+  it('loads active config and list metadata with backend defaults', async () => {
+    getMock.mockResolvedValueOnce({ data: configPayload })
+    getMock.mockResolvedValueOnce({
+      data: {
+        items: [configPayload],
+        metadata: {
+          page: 2,
+          page_size: 10,
+          total_items: 11,
+          returned_items: 1,
+          ordering: 'version_desc',
+        },
+      },
+    })
+
+    await expect(agentConfigApi.getActiveConfig('tenant_1', 'agent_1')).resolves.toMatchObject({
+      id: 'config_1',
+      version: 3,
+    })
+    await expect(agentConfigApi.listConfigs('tenant_1', 'agent_1')).resolves.toMatchObject({
+      items: [{ id: 'config_1', version: 3 }],
+      metadata: {
+        page: 2,
+        pageSize: 10,
+        totalItems: 11,
+        returnedItems: 1,
+        ordering: 'version_desc',
+      },
+    })
+
+    expect(getMock).toHaveBeenNthCalledWith(1, '/api/admin/v1/tenants/tenant_1/agents/agent_1/configs/active')
+    expect(getMock).toHaveBeenNthCalledWith(2, '/api/admin/v1/tenants/tenant_1/agents/agent_1/configs')
+  })
+
+  it('uses safe list defaults when backend omits optional metadata', async () => {
+    getMock.mockResolvedValue({ data: {} })
+
+    await expect(agentConfigApi.listConfigs('tenant_1', 'agent_1')).resolves.toEqual({
+      items: [],
+      metadata: {
+        page: 1,
+        pageSize: 20,
+        totalItems: 0,
+        returnedItems: 0,
+        ordering: '',
+      },
+    })
+  })
+
+  it('falls back to an empty action binding list when backend omits the array shape', async () => {
+    getMock.mockResolvedValue({
+      data: {
+        ...configPayload,
+        payload: {
+          ...configPayload.payload,
+          integration_policy: {
+            integration_enabled: true,
+            action_bindings: null,
+          },
+        },
+      },
+    })
+
+    await expect(agentConfigApi.getConfigDetail('tenant_1', 'agent_1', 'config_1')).resolves.toMatchObject({
+      payload: {
+        integrationPolicy: {
+          integrationEnabled: true,
+          actionBindings: [],
+        },
+      },
+    })
+  })
+
   const approvedPayload = {
     identity: { agentLabel: 'Sales assistant', personaSummary: 'Helpful' },
     toneAndLanguage: { tone: 'clear', language: 'en' },
@@ -128,6 +201,27 @@ describe('agentConfigApi', () => {
     })
   })
 
+  it('maps mutation feedback without fabricating changed state summary', async () => {
+    postMock.mockResolvedValue({
+      data: {
+        resource: configPayload,
+        result: {
+          action: 'activate_config',
+          resource_type: 'agent_config',
+          resource_id: 'config_1',
+          mutation_timestamp: '2026-05-13T10:00:00Z',
+        },
+      },
+    })
+
+    await expect(agentConfigApi.activateConfig('tenant_1', 'agent_1', 'config_1')).resolves.toMatchObject({
+      result: {
+        action: 'activate_config',
+        changedStateSummary: {},
+      },
+    })
+  })
+
   it('creates config version through the configs endpoint', async () => {
     postMock.mockResolvedValue({ data: mutationPayload })
 
@@ -140,6 +234,81 @@ describe('agentConfigApi', () => {
       payload: expect.objectContaining({
         identity: { agent_label: 'Sales assistant', persona_summary: 'Helpful' },
         compatibility_and_safety: expect.objectContaining({ config_schema_version: 'v1' }),
+      }),
+    })
+  })
+
+  it('normalizes config payload values without sending localized labels', async () => {
+    postMock.mockResolvedValue({ data: mutationPayload })
+
+    await agentConfigApi.createConfigVersion('tenant_1', 'agent_1', {
+      ...approvedPayload,
+      identity: { agentLabel: '  Sales assistant  ', personaSummary: '  Helpful  ' },
+      goals: [' answer questions ', ''],
+      rules: [' stay grounded '],
+      restrictions: [' no legal advice '],
+      handoffPolicy: { handoffEnabled: true, handoffConditions: [' human requested ', ''] },
+      integrationPolicy: {
+        integrationEnabled: true,
+        actionBindings: [
+          {
+            actionClass: ' ticket.create ',
+            connectorKey: ' support ',
+            operationKey: ' create ',
+            interfaceType: ' http ',
+            sideEffectMode: ' write ',
+            referenceScope: ' tenant ',
+            referenceKey: ' default ',
+            endpointUrl: ' https://example.test ',
+            timeoutClass: '',
+            retryPolicyClass: ' standard ',
+            compensationMode: null,
+          },
+        ],
+      },
+      modelPreference: {
+        preferredModelFamily: '',
+        latencySensitivity: ' low ',
+        qualitySensitivity: '',
+        costSensitivity: null,
+      },
+      modelSelectionHints: { preferredCapabilities: [' chat ', ''], fallbackAllowed: false },
+      executionProfileHints: { profileName: '', responseMode: ' balanced ' },
+      compatibilityAndSafety: {
+        configSchemaVersion: '',
+        safetyLabels: [' baseline ', ''],
+        compatibilityNotes: [' smoke ready ', ''],
+      },
+    })
+
+    expect(postMock).toHaveBeenCalledWith('/api/admin/v1/tenants/tenant_1/agents/agent_1/configs', {
+      payload: expect.objectContaining({
+        identity: { agent_label: 'Sales assistant', persona_summary: 'Helpful' },
+        goals: ['answer questions'],
+        handoff_policy: { handoff_enabled: true, handoff_conditions: ['human requested'] },
+        integration_policy: {
+          integration_enabled: true,
+          action_bindings: [
+            expect.objectContaining({
+              action_class: 'ticket.create',
+              timeout_class: null,
+              retry_policy_class: 'standard',
+            }),
+          ],
+        },
+        model_preference: {
+          preferred_model_family: null,
+          latency_sensitivity: 'low',
+          quality_sensitivity: null,
+          cost_sensitivity: null,
+        },
+        model_selection_hints: { preferred_capabilities: ['chat'], fallback_allowed: false },
+        execution_profile_hints: { profile_name: null, response_mode: 'balanced' },
+        compatibility_and_safety: {
+          config_schema_version: '1.0',
+          safety_labels: ['baseline'],
+          compatibility_notes: ['smoke ready'],
+        },
       }),
     })
   })

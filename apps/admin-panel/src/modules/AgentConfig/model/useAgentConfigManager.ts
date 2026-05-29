@@ -12,6 +12,11 @@ import {
   type AgentIntegrationActionBinding,
 } from '@/modules/AgentConfig/api/agentConfigApi'
 import { agentsApi, type PortalAgentDetail } from '@/modules/Agents'
+import {
+  formMetadataBridgeApi,
+  type FormMetadata,
+  type FormMetadataField,
+} from '@/modules/FormMetadata'
 
 export type ConfigValidationState = {
   configId: string
@@ -59,8 +64,106 @@ export function createEmptyActionBinding(): AgentIntegrationActionBinding {
   }
 }
 
-export function createDefaultAgentConfigPayload(agentLabel = 'Agent'): AgentConfigPayload {
+function metadataField(metadata: FormMetadata | null | undefined, payloadPath: string): FormMetadataField | null {
+  return metadata?.fields.find((field) => field.payloadPath === payloadPath) ?? null
+}
+
+function stringDefault(field: FormMetadataField | null, fallback: string | null) {
+  return typeof field?.defaultValue === 'string' ? field.defaultValue : fallback
+}
+
+function booleanDefault(field: FormMetadataField | null, fallback: boolean) {
+  return typeof field?.defaultValue === 'boolean' ? field.defaultValue : fallback
+}
+
+function stringArrayDefault(field: FormMetadataField | null, fallback: string[]) {
+  return Array.isArray(field?.defaultValue) ? field.defaultValue : fallback
+}
+
+export function applyAgentConfigMetadataDefaults(
+  payload: AgentConfigPayload,
+  metadata: FormMetadata | null | undefined,
+): AgentConfigPayload {
+  if (!metadata) return payload
+
   return {
+    ...payload,
+    toneAndLanguage: {
+      tone: stringDefault(metadataField(metadata, 'tone_and_language.tone'), payload.toneAndLanguage.tone) ?? '',
+      language: stringDefault(metadataField(metadata, 'tone_and_language.language'), payload.toneAndLanguage.language) ?? '',
+    },
+    handoffPolicy: {
+      ...payload.handoffPolicy,
+      handoffEnabled: booleanDefault(
+        metadataField(metadata, 'handoff_policy.handoff_enabled'),
+        payload.handoffPolicy.handoffEnabled,
+      ),
+    },
+    integrationPolicy: {
+      ...payload.integrationPolicy,
+      integrationEnabled: booleanDefault(
+        metadataField(metadata, 'integration_policy.integration_enabled'),
+        payload.integrationPolicy.integrationEnabled,
+      ),
+    },
+    modelPreference: {
+      preferredModelFamily: stringDefault(
+        metadataField(metadata, 'model_preference.preferred_model_family'),
+        payload.modelPreference.preferredModelFamily,
+      ),
+      latencySensitivity: stringDefault(
+        metadataField(metadata, 'model_preference.latency_sensitivity'),
+        payload.modelPreference.latencySensitivity,
+      ),
+      qualitySensitivity: stringDefault(
+        metadataField(metadata, 'model_preference.quality_sensitivity'),
+        payload.modelPreference.qualitySensitivity,
+      ),
+      costSensitivity: stringDefault(
+        metadataField(metadata, 'model_preference.cost_sensitivity'),
+        payload.modelPreference.costSensitivity,
+      ),
+    },
+    modelSelectionHints: {
+      preferredCapabilities: stringArrayDefault(
+        metadataField(metadata, 'model_selection_hints.preferred_capabilities'),
+        payload.modelSelectionHints.preferredCapabilities,
+      ),
+      fallbackAllowed: booleanDefault(
+        metadataField(metadata, 'model_selection_hints.fallback_allowed'),
+        payload.modelSelectionHints.fallbackAllowed,
+      ),
+    },
+    executionProfileHints: {
+      profileName: stringDefault(
+        metadataField(metadata, 'execution_profile_hints.profile_name'),
+        payload.executionProfileHints.profileName,
+      ),
+      responseMode: stringDefault(
+        metadataField(metadata, 'execution_profile_hints.response_mode'),
+        payload.executionProfileHints.responseMode,
+      ),
+    },
+    compatibilityAndSafety: {
+      ...payload.compatibilityAndSafety,
+      configSchemaVersion:
+        stringDefault(
+          metadataField(metadata, 'compatibility_and_safety.config_schema_version'),
+          payload.compatibilityAndSafety.configSchemaVersion,
+        ) ?? '1.0',
+      safetyLabels: stringArrayDefault(
+        metadataField(metadata, 'compatibility_and_safety.safety_labels'),
+        payload.compatibilityAndSafety.safetyLabels,
+      ),
+    },
+  }
+}
+
+export function createDefaultAgentConfigPayload(
+  agentLabel = 'Agent',
+  metadata: FormMetadata | null = null,
+): AgentConfigPayload {
+  const payload = {
     identity: {
       agentLabel,
       personaSummary: null,
@@ -100,6 +203,7 @@ export function createDefaultAgentConfigPayload(agentLabel = 'Agent'): AgentConf
       compatibilityNotes: [],
     },
   }
+  return applyAgentConfigMetadataDefaults(payload, metadata)
 }
 
 function canActivateFromValidation(validationState: ConfigValidationState, configId: string | null) {
@@ -125,6 +229,7 @@ export function useAgentConfigManager(tenantId: string, agentId: string) {
   const [activeConfig, setActiveConfig] = useState<AgentConfigDetail | null>(null)
   const [versions, setVersions] = useState<AgentConfigVersion[]>([])
   const [selectedConfig, setSelectedConfig] = useState<AgentConfigDetail | null>(null)
+  const [formMetadata, setFormMetadata] = useState<FormMetadata | null>(null)
   const [draftPayload, setDraftPayload] = useState<AgentConfigPayload>(() => createDefaultAgentConfigPayload())
   const [validationState, setValidationState] = useState<ConfigValidationState>(null)
   const [mutationResult, setMutationResult] = useState<AgentConfigMutationEvidence | null>(null)
@@ -144,12 +249,21 @@ export function useAgentConfigManager(tenantId: string, agentId: string) {
     setIsLoading(true)
     setErrorMessage(null)
     try {
-      const [agentResult, versionsResult] = await Promise.allSettled([
+      const [agentResult, versionsResult, metadataResult] = await Promise.allSettled([
         agentsApi.getPortalAgentDetail(tenantId, agentId),
         agentConfigApi.listConfigs(tenantId, agentId),
+        formMetadataBridgeApi.getFormMetadata({
+          tenantId,
+          agentId,
+          formId: 'agent_config',
+        }),
       ])
 
       let nextAgentDetail: PortalAgentDetail | null = null
+      if (metadataResult.status === 'rejected') throw metadataResult.reason
+      const nextMetadata = metadataResult.value
+      setFormMetadata(nextMetadata)
+
       if (agentResult.status === 'fulfilled') {
         const loadedAgentDetail = agentResult.value
         nextAgentDetail = loadedAgentDetail
@@ -163,6 +277,10 @@ export function useAgentConfigManager(tenantId: string, agentId: string) {
         }))
       } else {
         throw agentResult.reason
+      }
+
+      if (versionsResult.status === 'rejected') {
+        throw versionsResult.reason
       }
 
       const nextVersions = versionsResult.status === 'fulfilled' ? versionsResult.value.items : []
@@ -184,10 +302,7 @@ export function useAgentConfigManager(tenantId: string, agentId: string) {
         setDraftPayload(detail.payload)
       } else {
         setSelectedConfig(null)
-      }
-
-      if (versionsResult.status === 'rejected') {
-        throw versionsResult.reason
+        setDraftPayload(createDefaultAgentConfigPayload(nextAgentDetail.name, nextMetadata))
       }
     } catch (error) {
       setErrorMessage(getLocalizedApiErrorMessage(error, t, t('agent_config.load_error')))
@@ -221,9 +336,9 @@ export function useAgentConfigManager(tenantId: string, agentId: string) {
   }, [agentId, tenantId, t])
 
   const resetDraftFromSelected = useCallback(() => {
-    setDraftPayload(selectedConfig?.payload ?? createDefaultAgentConfigPayload(agentDetail?.name ?? 'Agent'))
+    setDraftPayload(selectedConfig?.payload ?? createDefaultAgentConfigPayload(agentDetail?.name ?? 'Agent', formMetadata))
     setFormError(null)
-  }, [agentDetail?.name, selectedConfig])
+  }, [agentDetail?.name, formMetadata, selectedConfig])
 
   const applyMutation = useCallback(async (
     mutation: () => Promise<{ resource: AgentConfigDetail; result: AgentConfigMutationResult }>,
@@ -332,6 +447,7 @@ export function useAgentConfigManager(tenantId: string, agentId: string) {
     activeConfig,
     versions,
     selectedConfig,
+    formMetadata,
     draftPayload,
     validationState,
     mutationResult,

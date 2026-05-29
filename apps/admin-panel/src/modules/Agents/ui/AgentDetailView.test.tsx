@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
@@ -124,7 +124,73 @@ function renderView(manager: Partial<AgentDetailManager> = {}, locale = 'en') {
   return defaultManager
 }
 
+function createSetupChecklist(items: NonNullable<AgentDetailManager['setupChecklist']>['items'] = []): NonNullable<AgentDetailManager['setupChecklist']> {
+  return {
+    tenantId: 'tenant_1',
+    agentId: 'agent_1',
+    archetypeId: 'sales_qualification',
+    templateId: 'sales_qualification_v1',
+    lifecycleStatus: 'draft',
+    releaseReady: items.length === 0,
+    summary: {
+      overallReadinessStatus: items.length === 0 ? 'ready' : 'blocked',
+      releaseReady: items.length === 0,
+      blockingItemCount: items.filter((item) => item.blocking).length,
+      tenantStatus: 'active',
+      agentLifecycleStatus: 'draft',
+      archetypeTemplateStatus: 'selected',
+      agentConfigStatus: items.length === 0 ? 'ready' : 'missing',
+      knowledgeStatus: 'ready',
+      capabilityStatus: 'ready',
+      policyStatus: 'ready',
+      policyBindingMode: 'template_default',
+      siteWidgetStatus: 'ready',
+      publicChannelRequired: true,
+      publicChannelInUse: true,
+      meteringInterpretationMarkers: ['turns'],
+      releaseHandoffTarget: 'stage_10',
+    },
+    channelBinding: {
+      tenantId: 'tenant_1',
+      agentId: 'agent_1',
+      supportedChannels: ['public_widget'],
+      publicChannelSupported: true,
+      publicChannelRequired: true,
+      publicChannelInUse: true,
+      readinessStatus: 'ready',
+      releaseReadinessMarker: 'channel_ready',
+      meteringInterpretationMarkers: ['turns'],
+      releaseHandoffTarget: 'stage_10',
+      bindings: [],
+      issues: [],
+    },
+    items,
+  }
+}
+
 describe('AgentDetailView', () => {
+  it('renders loading and empty states without inventing detail data', () => {
+    renderView({
+      isLoading: true,
+      notice: 'Saved.',
+      errorMessage: 'Load failed.',
+      formError: 'Fix metadata.',
+    })
+
+    expect(screen.getByText('Saved.')).toBeInTheDocument()
+    expect(screen.getByText('Load failed.')).toBeInTheDocument()
+    expect(screen.getByText('Fix metadata.')).toBeInTheDocument()
+    expect(screen.getByText(/Loading/)).toBeInTheDocument()
+
+    renderView({
+      isLoading: false,
+      detail: null,
+    })
+
+    expect(screen.getByText('Agent detail is not available')).toBeInTheDocument()
+    expect(screen.getByText('Reload the page or return to the tenant agents list.')).toBeInTheDocument()
+  })
+
   it('renders backend setup, foundation and channel sections without future links', () => {
     renderView()
 
@@ -154,6 +220,90 @@ describe('AgentDetailView', () => {
 
     expect(confirmSpy).toHaveBeenCalledWith('Set this agent status to inactive?')
     expect(manager.updateStatus).toHaveBeenCalledWith('inactive')
+    confirmSpy.mockRestore()
+  })
+
+  it('saves metadata and allows lifecycle actions when backend setup is ready', async () => {
+    const user = userEvent.setup()
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const manager = renderView({
+      detail: {
+        agentId: 'agent_1',
+        tenantId: 'tenant_1',
+        name: 'Sales agent',
+        description: 'Handles sales',
+        purpose: 'Qualify leads',
+        status: 'inactive',
+        lifecycleStatus: 'draft',
+        archetypeId: 'sales_qualification',
+        templateId: 'sales_qualification_v1',
+        activeConfigId: 'config_1',
+        setupReadinessSummary: {
+          overallReadinessStatus: 'ready',
+          releaseReady: true,
+          blockingItemCount: 0,
+          tenantStatus: 'active',
+          agentLifecycleStatus: 'draft',
+          archetypeTemplateStatus: 'selected',
+          agentConfigStatus: 'ready',
+          knowledgeStatus: 'ready',
+          capabilityStatus: 'ready',
+          policyStatus: 'ready',
+          policyBindingMode: 'template_default',
+          siteWidgetStatus: 'ready',
+          publicChannelRequired: true,
+          publicChannelInUse: true,
+          meteringInterpretationMarkers: ['turns'],
+          releaseHandoffTarget: 'stage_10',
+        },
+        foundationAssessmentSummary: {
+          validationStatus: 'valid',
+          compatibilityStatus: 'compatible',
+          processingPath: 'active',
+          normalized: true,
+          safeDefaultsApplied: true,
+          fallbackEligible: false,
+          provenanceMarker: 'backend',
+          issueCount: 0,
+          issues: [],
+          compatibilityNotes: [],
+        },
+        channelBindingSummary: {
+          supportedChannels: ['public_widget'],
+          publicChannelSupported: true,
+          readinessStatus: 'ready',
+          publicChannelRequired: true,
+          publicChannelInUse: true,
+          bindingCount: 1,
+          readyBindingCount: 1,
+          meteringInterpretationMarkers: ['turns'],
+          releaseHandoffTarget: 'stage_10',
+          issueCount: 0,
+        },
+        supportedMutationActions: ['agents.update_metadata', 'agents.change_status', 'agents.change_lifecycle'],
+        agent: {} as never,
+      },
+      setupChecklist: createSetupChecklist(),
+    })
+
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Updated agent' } })
+    fireEvent.change(screen.getByLabelText('Purpose'), { target: { value: 'Updated purpose' } })
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Updated description' } })
+    await user.click(screen.getByRole('button', { name: 'Save metadata' }))
+    await user.click(screen.getByRole('button', { name: 'Set status active' }))
+    await user.click(screen.getByRole('button', { name: 'Set lifecycle active' }))
+    await user.click(screen.getByRole('button', { name: 'Set lifecycle disabled' }))
+
+    expect(manager.updateEditForm).toHaveBeenCalledWith({ name: 'Updated agent' })
+    expect(manager.updateEditForm).toHaveBeenCalledWith({ purpose: 'Updated purpose' })
+    expect(manager.updateEditForm).toHaveBeenCalledWith({ description: 'Updated description' })
+    expect(manager.saveMetadata).toHaveBeenCalled()
+    expect(confirmSpy).toHaveBeenCalledWith('Set this agent status to active?')
+    expect(manager.updateStatus).toHaveBeenCalledWith('active')
+    expect(confirmSpy).toHaveBeenCalledWith('Set this agent lifecycle to active?')
+    expect(manager.updateLifecycle).toHaveBeenCalledWith('active')
+    expect(confirmSpy).toHaveBeenCalledWith('Set this agent lifecycle to disabled?')
+    expect(manager.updateLifecycle).toHaveBeenCalledWith('disabled')
     confirmSpy.mockRestore()
   })
 
@@ -423,6 +573,27 @@ describe('AgentDetailView', () => {
     expect(screen.getAllByRole('link', { name: /Политика.*Требуется/ }).length).toBeGreaterThan(0)
     expect(screen.getAllByRole('link', { name: /Канал.*Требуется/ }).length).toBeGreaterThan(0)
     expect(screen.getByText('Все обязательные пункты отображены выше.')).toBeInTheDocument()
+  })
+
+  it('routes unknown setup owner areas back to agent config', () => {
+    renderView({
+      setupChecklist: createSetupChecklist([
+          {
+            itemId: 'custom_config_blocker',
+            ownerArea: 'custom_owner',
+            state: 'missing',
+            blocking: true,
+            detail: 'Resolve the custom owner item.',
+            requiredAction: 'Resolve custom setup',
+            releaseReadinessMarker: 'custom_ready',
+          },
+        ]),
+    })
+
+    expect(screen.getByRole('link', { name: /Next setup step: custom_owner/i })).toHaveAttribute(
+      'href',
+      '/tenants/tenant_1/agents/agent_1/config',
+    )
   })
 
   it('disables mutation controls when backend action refs do not support them', async () => {

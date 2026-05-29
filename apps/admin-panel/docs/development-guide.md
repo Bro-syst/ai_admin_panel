@@ -278,15 +278,19 @@ For SitesWidgets/Releases-style tenant-scoped publication flows:
 - render install guidance from backend portal binding values such as widget
   key, site hostname, site id, widget id, allowed origin counts and binding
   readiness; do not invent runtime config locally;
-- keep release readiness, release list/detail, draft/manual override, publish,
-  rollback and disable endpoint calls and DTO mapping in
+- keep release readiness, release evidence requirements, release list/detail,
+  draft/manual override, publish, rollback and disable endpoint calls and DTO
+  mapping in
   `src/modules/Releases/api`;
-- keep release draft payload building, selected release state, publish
-  evidence state, backend action gating and mutation result feedback in
-  `src/modules/Releases/model`;
-- treat backend readiness, release gates, manual override fields, evidence,
-  active/latest release snapshots and supported mutation actions as
-  authoritative;
+- keep release draft payload building, selected release state, smoke-case
+  evidence matrix state, publish evidence state, backend action gating and
+  mutation result feedback in `src/modules/Releases/model`;
+- treat backend readiness, evidence requirements, release gates, manual
+  override fields, evidence, active/latest release snapshots and supported
+  mutation actions as authoritative;
+- submit release evidence using backend-provided `required_change_kind` and
+  every backend-required `evidence.smoke_cases[]` row; localized labels must
+  stay display-only;
 - require confirmation for release publish, rollback and disable actions and
   include release version/status/gate/active context in the confirmation;
 - do not calculate release readiness, policy, billing or pricing locally, and

@@ -38,29 +38,34 @@ been implemented, accepted, and docs-synced. The Stage 01 public export
 fix-pass has also been accepted and recorded as docs-sync-not-required.
 Umbrella finalization is complete.
 
-A post-finalization urgent fix stage has now been created for Agent Config
-operator UX and mutation evidence:
+A post-finalization urgent fix stage for Agent Config operator UX and mutation
+evidence is implemented, accepted and docs-synced.
 
-- current status: `post-finalization-urgent-agent-config-operator-ux-docs-synced-accepted`
-- allowed next step: `none`
+A post-finalization urgent stage for Release Evidence Requirements UI has also
+been implemented, accepted and docs-synced.
+
+A new post-finalization urgent stage package for Release Retrieval Evidence
+Operator Flow has been created and is ready for consistency review:
+
+- current status: `post-finalization-urgent-release-retrieval-evidence-stage-created-ready-for-consistency-review`
+- allowed next step: `03_urgent_release_retrieval_evidence_operator_flow_consistency_review`
 - optional next step: `none`
 - state ledger:
   `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
 - stage package:
   `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages`
 - urgent stage TZ:
-  `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_config_operator_ux_fix.md`
+  `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_release_retrieval_evidence_operator_flow.md`
 - urgent source TZ:
-  `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_AGENT_CONFIG_OPERATOR_UX_FIX_TZ.md`
+  `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_RELEASE_RETRIEVAL_EVIDENCE_OPERATOR_FLOW_TZ.md`
 - urgent prompt package:
-  `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_config_operator_ux`
+  `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow`
 - consistency review:
   `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/ADMIN_PORTAL_STAGE_TZ_CONSISTENCY_REVIEW.md`
 - generated execution prompts:
   `04_stage_implementation_prompt.md`, `05_stage_acceptance_review_prompt.md`,
   `06_stage_docs_sync_prompt.md`, `07_umbrella_finalization_prompt.md`
 
-The urgent stage is implemented, accepted and docs-synced. There is no next
-pipeline prompt.
-
-It did not reopen the accepted 13-stage umbrella as `stage_14`.
+Both urgent release packages stay on the existing
+`/tenants/:tenantId/agents/:agentId/releases` route and do not reopen the
+accepted 13-stage umbrella as `stage_14`.

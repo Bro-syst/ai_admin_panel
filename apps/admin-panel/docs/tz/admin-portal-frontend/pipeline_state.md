@@ -1,13 +1,13 @@
 # Admin Portal Frontend Pipeline State
 
-Status: `post-finalization-urgent-agent-config-operator-ux-docs-synced-accepted`
+Status: `post-finalization-urgent-release-retrieval-evidence-stage-created-ready-for-consistency-review`
 
-current_step: `urgent_stage_docs_sync`
-allowed_next_step: `none`
+current_step: `urgent_release_retrieval_evidence_operator_flow_stage_package_created`
+allowed_next_step: `03_urgent_release_retrieval_evidence_operator_flow_consistency_review`
 optional_next_step: `none`
 
-Last updated: `2026-05-20`
-Last refresh type: `post-finalization urgent stage docs sync`
+Last updated: `2026-05-29`
+Last refresh type: `post-finalization urgent release retrieval evidence stage package creation`
 
 ## Paths
 
@@ -24,10 +24,13 @@ STAGE_OUTPUT_DIR:
 - `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages`
 
 URGENT_STAGE_TZ_PATH:
-- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_config_operator_ux_fix.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_release_retrieval_evidence_operator_flow.md`
 
 URGENT_SOURCE_TZ_PATH:
-- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_AGENT_CONFIG_OPERATOR_UX_FIX_TZ.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_RELEASE_RETRIEVAL_EVIDENCE_OPERATOR_FLOW_TZ.md`
+
+URGENT_BACKEND_SOURCE_TZ_PATH:
+- `/Volumes/Work/AI_Agents/ai_core/docs/productization/first-service-sales-support/tz/TZ-SVC-10_release_retrieval_evidence_operator_flow/FRONTEND_RELEASE_SCREEN_RETRIEVAL_EVIDENCE_TZ.md`
 
 FRONTEND_IMPLEMENTATION_PACKAGE:
 - `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/FRONTEND_PRODUCT_BRIEF.md`
@@ -53,6 +56,16 @@ ADAPTED_PROMPTS_PATH:
 - `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_config_operator_ux/04_urgent_agent_config_operator_ux_implementation_prompt.md`
 - `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_config_operator_ux/05_urgent_agent_config_operator_ux_acceptance_review_prompt.md`
 - `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_config_operator_ux/06_urgent_agent_config_operator_ux_docs_sync_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_evidence_requirements_ui/README.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_evidence_requirements_ui/03_urgent_release_evidence_requirements_ui_consistency_review_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_evidence_requirements_ui/04_urgent_release_evidence_requirements_ui_implementation_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_evidence_requirements_ui/05_urgent_release_evidence_requirements_ui_acceptance_review_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_evidence_requirements_ui/06_urgent_release_evidence_requirements_ui_docs_sync_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow/README.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow/03_urgent_release_retrieval_evidence_operator_flow_consistency_review_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow/04_urgent_release_retrieval_evidence_operator_flow_implementation_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow/05_urgent_release_retrieval_evidence_operator_flow_acceptance_review_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow/06_urgent_release_retrieval_evidence_operator_flow_docs_sync_prompt.md`
 
 PIPELINE_STATE_PATH:
 - `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
@@ -89,6 +102,8 @@ Prompt source:
 | 07 | Umbrella finalization | complete | Accepted after Stage 01 public export fix-pass; Stages 01-13 accepted and docs synced/not required |
 | 08 | Adapted execution prompts | complete | generated prompts 04/05/06/07 |
 | urgent-agent-config-operator-ux | Post-finalization urgent fix stage TZ and prompt package | accepted and docs synced | `stages/urgent_stage_agent_config_operator_ux_fix.md`; `prompts/urgent_agent_config_operator_ux/*.md`; controlled AgentConfig operator UX |
+| urgent-release-evidence-requirements-ui | Post-finalization urgent Release Evidence Requirements UI stage TZ and prompt package | accepted and docs synced | `stages/urgent_stage_release_evidence_requirements_ui.md`; `prompts/urgent_release_evidence_requirements_ui/*.md`; existing `/tenants/:tenantId/agents/:agentId/releases` route |
+| urgent-release-retrieval-evidence-operator-flow | Post-finalization urgent Release Retrieval Evidence Operator Flow stage TZ and prompt package | created, ready for consistency review | `stages/urgent_stage_release_retrieval_evidence_operator_flow.md`; `prompts/urgent_release_retrieval_evidence_operator_flow/*.md`; existing `/tenants/:tenantId/agents/:agentId/releases` route |
 
 ## Accepted Decisions
 
@@ -334,6 +349,14 @@ Prompt source:
   correlation/request id and timestamp. Missing evidence gets explicit
   fallback text; frontend must not invent ids or infer backend-owned state from
   missing fields.
+- Urgent Release Evidence Requirements UI is a single post-finalization stage,
+  not `stage_14`. It may touch only the existing Releases route/module,
+  Releases-focused tests, i18n and docs/ledger unless prompt 03 documents a
+  narrow justified reuse need.
+- Release evidence requirements, smoke-case matrix, manual override rules and
+  publish evidence metadata are backend-owned read-model data. Frontend may
+  perform pre-submit completeness guards but must not duplicate release gates
+  or define a local smoke-case catalog.
 
 ## Current Baseline To Preserve
 
@@ -432,6 +455,9 @@ Prompt 08 availability:
 - The post-finalization urgent Agent Config UX fix has no backend-contract
   open question before consistency review. Prompt 03 must still verify that the
   urgent stage stays within accepted umbrella scope and Stage 07 ownership.
+- The post-finalization urgent Release Evidence Requirements UI stage has no
+  open pre-consistency question. Prompt 03 must verify that it stays within the
+  existing Releases route/module and Stage 10 ownership.
 
 ## Blocked Findings
 
@@ -442,6 +468,21 @@ Prompt 08 availability:
 - none.
 
 ## Changed Files
+
+Urgent Release Evidence Requirements UI stage and prompt package creation
+changed:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_RELEASE_EVIDENCE_REQUIREMENTS_UI_TZ.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_release_evidence_requirements_ui.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_evidence_requirements_ui/README.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_evidence_requirements_ui/03_urgent_release_evidence_requirements_ui_consistency_review_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_evidence_requirements_ui/04_urgent_release_evidence_requirements_ui_implementation_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_evidence_requirements_ui/05_urgent_release_evidence_requirements_ui_acceptance_review_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_evidence_requirements_ui/06_urgent_release_evidence_requirements_ui_docs_sync_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/README.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Prompt 03 urgent Release Evidence Requirements UI consistency review changed:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
 
 Prompt 03 urgent Agent Config operator UX consistency review changed:
 - `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_config_operator_ux_fix.md`
@@ -5170,6 +5211,166 @@ Blocked findings:
 Allowed next step is now:
 - `none`.
 
+## 2026-05-26 Release Runtime Provider Preflight UI Review Follow-Up
+
+Reason:
+- Addressed post-implementation review findings for release runtime provider
+  preflight UI after urgent release evidence docs sync.
+
+Fixes applied:
+- Publish availability now requires backend `runtimeProviderPreflight` to be
+  present and ready.
+- Publish availability now requires all backend-declared required publish
+  evidence fields to be filled before enabling `Publish`.
+- Publish disabled reason is shown next to the publish action, including
+  missing runtime preflight, not-ready runtime provider and missing required
+  publish evidence cases.
+- `runtime_provider_preflight` mapper now defaults missing backend payload to
+  unavailable/not-ready instead of optimistic ready.
+- Runtime provider states `ready`, `missing_credential`, `missing_secret`,
+  `invalid_credential_classification` and `metadata_unavailable` are localized
+  across portal locales.
+
+Changed runtime/test files:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/api/releasesApi.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/api/releasesApi.test.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/model/useReleasesManager.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/model/useReleasesManager.flow.test.tsx`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/ui/ReleasesView.tsx`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/ui/ReleasesView.test.tsx`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/core/i18n/messages.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/core/api/errors/getLocalizedApiErrorMessage.test.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Checks run:
+- `npm run test:admin -- Releases getLocalizedApiErrorMessage locales` passed:
+  6 files, 24 tests.
+- `npm run test:admin` passed: 68 files, 275 tests.
+- `npm run lint:admin` passed.
+- `npm run build:admin` passed.
+- `rg -n "apiClient|fetch\\(|axios" apps/admin-panel/src/modules/Releases -g '!**/api/**' -g '!**/*.test.ts' -g '!**/*.test.tsx'`
+  returned no matches.
+- `rg -n "api[_ -]?key|secret value|provider payload|provider console|direct provider|credential value|OPENAI_API_KEY|sk-" apps/admin-panel/src/modules/Releases apps/admin-panel/src/core/i18n/messages.ts`
+  returned only a negative UI test assertion.
+- `rg -n "release gate|policy engine|model-routing|pricing|invoice|tax|direct DB|vector" apps/admin-panel/src/modules/Releases`
+  returned no matches.
+- `git diff --check -- apps/admin-panel/src/modules/Releases apps/admin-panel/src/core/i18n/messages.ts apps/admin-panel/src/core/api/errors/getLocalizedApiErrorMessage.test.ts apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+  passed.
+
+Deferred items:
+- none.
+
+Blocked findings:
+- none.
+
+Current status remains:
+- `post-finalization-urgent-release-evidence-requirements-ui-docs-synced`.
+
+Allowed next step remains:
+- `none`.
+
+## 2026-05-27 TZ-SVC-8.4 Release Usage Evidence Candidate Frontend Handoff Completion
+
+Source handoff:
+- `/Volumes/Work/AI_Agents/ai_core/docs/productization/first-service-sales-support/tz/TZ-SVC-8_admin_panel_form_metadata_and_controlled_options/handoff.md`
+
+Decision:
+- No separate large frontend TZ was created. The handoff described a
+  completion/review pass over the existing `Releases` module, not a new route,
+  stage or backend contract.
+
+Implemented/verified behavior:
+- Existing release screen consumes
+  `/api/admin/v1/portal/tenants/{tenantId}/agents/{agentId}/release-usage-evidence-candidates`.
+- Runtime usage evidence candidates are displayed inside selected release
+  details after publish evidence fields and before publish actions.
+- Candidate selection remains backend-owned: UI displays safe metadata and
+  copies only `chat_id`, `conversation_turn_id` and `model_request_id` into
+  publish evidence fields.
+- Support reconstruction, billing export and release report fields are
+  preserved when applying a candidate.
+- No-candidate states are actionable and localized, including
+  `runtime_provider_not_ready`, `no_successful_widget_conversation`,
+  `usage_not_recorded`, `candidate_source_unavailable` and unknown reasons.
+- Runtime-provider blocker states now include only safe preflight fields when
+  available: provider id, credential key, state and required action.
+- Unknown no-candidate reasons keep the safe backend enum visible for
+  diagnostics.
+- Russian copy for the runtime usage candidate block was tightened to reduce
+  raw backend wording.
+
+Changed files:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/api/releasesApi.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/api/releasesApi.test.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/model/useReleasesManager.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/model/useReleasesManager.test.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/model/useReleasesManager.flow.test.tsx`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/model/usageEvidenceCandidates.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/model/usageEvidenceCandidates.test.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/ui/ReleasesView.tsx`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/ui/ReleasesView.test.tsx`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/core/i18n/messages.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Checks run:
+- `npm run test:admin -- Releases locales` passed: 6 files, 31 tests.
+- `npm run test:admin` passed: 71 files, 327 tests.
+- `npm run lint:admin` passed.
+- `npm run build:admin` passed.
+- `rg -n "apiClient|fetch\\(|axios" apps/admin-panel/src/modules/Releases -g '!**/api/**' -g '!**/*.test.ts' -g '!**/*.test.tsx'`
+  returned no matches.
+- `rg -n "prompt|transcript|provider payload|provider response|api[_ -]?key|secret value|credential value|OPENAI_API_KEY|sk-" apps/admin-panel/src/modules/Releases -g '!**/*.test.ts' -g '!**/*.test.tsx'`
+  returned no matches.
+- `rg -n "release gate|policy engine|model-routing|pricing|invoice|tax|direct DB|vector|provider console|debug API" apps/admin-panel/src/modules/Releases`
+  returned no matches.
+- `git diff --check -- apps/admin-panel/src/modules/Releases apps/admin-panel/src/core/i18n/messages.ts apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+  passed.
+
+Boundaries:
+- No backend code or backend API contract was changed.
+- No new route, release wizard or release-evidence page was added.
+- No DB/log/provider/debug/vector calls were introduced.
+- No prompt/transcript/provider payload, API key, credential value or secret is
+  rendered by runtime UI.
+- Publish remains backend-authoritative and still depends on existing release
+  gate, runtime preflight and required publish evidence fields.
+
+Deferred items:
+- none.
+
+Blocked findings:
+- none.
+
+Current status remains:
+- `post-finalization-urgent-release-evidence-requirements-ui-docs-synced`.
+
+Allowed next step remains:
+- `none`.
+
+## 2026-05-26 Release Runtime Provider Preflight UI Post-Sync Addendum
+
+Scope:
+- Lightweight frontend addendum requested after the urgent Release Evidence UI
+  docs sync. No new stage, route or provider-management scope was created.
+
+Result:
+- Runtime provider preflight is implemented as read-only display on the
+  existing Releases screen.
+- The backend-provided `runtime_provider_preflight` read model is displayed
+  without API keys, secret values, raw provider payloads, provider console
+  debug data or credential input controls.
+- Release readiness and publish validation remain backend-authoritative.
+
+Checks:
+- `npm run test:admin -- Releases getLocalizedApiErrorMessage locales` passed:
+  6 files, 21 tests.
+- `npm run test:admin` passed: 68 files, 272 tests.
+- `npm run lint:admin` passed.
+- `npm run build:admin` passed.
+
+Allowed next step remains:
+- `none`.
+
 ## 2026-05-14 Final Current Pipeline Head After Accepted Umbrella Finalization
 
 Current status:
@@ -5641,3 +5842,580 @@ Current status:
 
 Allowed next step is now:
 - `none`.
+
+## 2026-05-26 Urgent Release Evidence Requirements UI Consistency Review
+
+Prompt:
+- `03_urgent_release_evidence_requirements_ui_consistency_review_prompt.md`
+
+Gate result:
+- passed. The ledger allowed
+  `03_urgent_release_evidence_requirements_ui_consistency_review`, the
+  accepted 13-stage umbrella remains finalized, the urgent Agent Config stage
+  is accepted/docs-synced, and blocked findings were `none`.
+
+Consistency result:
+- accepted. The urgent stage is ready for implementation as a
+  post-finalization urgent fix, not as `stage_14`.
+
+Findings:
+- none.
+
+Coverage result:
+- `URGENT_RELEASE_EVIDENCE_REQUIREMENTS_UI_TZ.md` requirements are represented
+  in `stages/urgent_stage_release_evidence_requirements_ui.md`.
+- The backend handoff gap is represented: the current Releases module loads
+  readiness/list/detail only, does not load `release-evidence-requirements`,
+  builds only one `smoke_cases[]` item, and uses a hardcoded
+  `evidenceChangeKind`.
+- The stage covers the canonical endpoint, release setup/evidence fields,
+  smoke-case matrix, manual override metadata/defaults, publish evidence
+  requirements, neutral missing evidence text and required tests.
+
+Architecture and reuse result:
+- Scope remains on the existing
+  `/tenants/:tenantId/agents/:agentId/releases` route.
+- Runtime ownership remains in `src/modules/Releases/{api,model,pages,ui}` and
+  `src/core/i18n/messages.ts`; adjacent Policy, Sites/Widgets, Knowledge,
+  Capabilities, Agent Config and Agent Detail screens stay no-regression
+  boundaries.
+- DTO mapping remains assigned to the Releases API/model boundary; pages/UI do
+  not call transport directly.
+- The stage forbids local release readiness/gate calculation, local smoke-case
+  catalog, direct DB/vector/provider/internal backend calls and broad shared
+  extraction.
+
+Degradation-safety result:
+- Accepted auth/session/security and Stage 10 release baseline are preserved.
+- Backend release evidence requirements, create/publish validation, manual
+  override eligibility and publish evidence requirements remain source of
+  truth.
+- Failed releases are explicitly forbidden from becoming publishable through
+  the normal UI.
+- Missing optional backend evidence must use neutral fallback text, not fake
+  ids/statuses.
+
+Open questions:
+- none.
+
+Commands run during this consistency review:
+- `sed -n '1,220p' apps/admin-panel/docs/prompts/README.md`
+- `sed -n '1,240p' apps/admin-panel/docs/tz/admin-portal-frontend/prompts/README.md`
+- `sed -n '1,260p' apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_evidence_requirements_ui/README.md`
+- `sed -n '1,260p' apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+- `sed -n '1,280p' apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_RELEASE_EVIDENCE_REQUIREMENTS_UI_TZ.md`
+- `sed -n '280,430p' apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_RELEASE_EVIDENCE_REQUIREMENTS_UI_TZ.md`
+- `sed -n '1,320p' apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_release_evidence_requirements_ui.md`
+- `sed -n '1,320p' apps/admin-panel/docs/tz/admin-portal-frontend/stages/stage_10_sites_widgets_releases.md`
+- `sed -n '1,320p' /Volumes/Work/AI_Agents/ai_core/docs/productization/first-service-sales-support/tz/TZ-SVC-9_admin_portal_release_evidence_and_operator_flow_closure.md`
+- `sed -n '321,760p' /Volumes/Work/AI_Agents/ai_core/docs/productization/first-service-sales-support/tz/TZ-SVC-9_admin_portal_release_evidence_and_operator_flow_closure.md`
+- `sed -n '1,360p' /Volumes/Work/AI_Agents/ai_core/docs/productization/first-service-sales-support/tz/TZ-SVC-9_admin_portal_release_evidence_and_operator_flow_closure/handoff.md`
+- `sed -n '1,520p' apps/admin-panel/src/modules/Releases/api/releasesApi.ts`
+- `sed -n '1,360p' apps/admin-panel/src/modules/Releases/model/useReleasesManager.ts`
+- `sed -n '1,340p' apps/admin-panel/src/modules/Releases/ui/ReleasesView.tsx`
+- `sed -n '1,260p' apps/admin-panel/src/modules/Releases/ui/ReleasesView.test.tsx`
+- `rg -n "release-evidence-requirements|ReleaseEvidenceInput|toEvidencePayload|smokeCaseId|smoke_cases|required_change_kind|manual_override|publish_evidence" apps/admin-panel/src/modules/Releases apps/admin-panel/src/core/i18n/messages.ts`
+- `rg -n "release-evidence|smoke_cases|manual_override" apps/admin-panel/src/modules/Agents apps/admin-panel/src/modules/AgentPolicy apps/admin-panel/src/modules/SitesWidgets apps/admin-panel/src/modules/Knowledge apps/admin-panel/src/modules/AgentCapabilities apps/admin-panel/src/modules/AgentConfig`
+- `rg -n "readiness|release gate|policy engine|model-routing|pricing|invoice|tax|provider key|access token|refresh token|internal prompt" apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_release_evidence_requirements_ui.md apps/admin-panel/src/modules/Releases`
+- `rg -n "apiClient|fetch\\(|axios" apps/admin-panel/src/modules/Releases apps/admin-panel/src/modules/Agents apps/admin-panel/src/modules/AgentPolicy apps/admin-panel/src/modules/SitesWidgets apps/admin-panel/src/modules/Knowledge apps/admin-panel/src/modules/AgentCapabilities apps/admin-panel/src/modules/AgentConfig`
+- `git diff --check -- apps/admin-panel/docs/tz/admin-portal-frontend` passed.
+
+Changed files:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Current status:
+- `post-finalization-urgent-release-evidence-requirements-ui-consistency-accepted-ready-for-implementation`.
+
+Current blocked findings:
+- none.
+
+Allowed next step is now:
+- `04_urgent_release_evidence_requirements_ui_implementation`.
+
+## 2026-05-26 Urgent Release Evidence Requirements UI Implementation
+
+Prompt:
+- `04_urgent_release_evidence_requirements_ui_implementation_prompt.md`
+
+Gate result:
+- passed. The ledger allowed
+  `04_urgent_release_evidence_requirements_ui_implementation`, urgent prompt
+  03 consistency review was accepted, Stages 01-13 remain finalized, and
+  blocked findings were `none`.
+
+Implementation summary:
+- Releases API now loads backend-owned release evidence requirements from
+  `/api/admin/v1/portal/tenants/:tenantId/agents/:agentId/release-evidence-requirements`.
+- Releases API/model now maps typed release setup, required smoke cases,
+  manual override metadata/defaults, publish evidence requirements and owner
+  stage metadata inside the Releases boundary.
+- Create draft payload now submits backend-provided `required_change_kind`,
+  a stable evidence reference, all required `evidence.smoke_cases[]` rows and
+  allowed manual override fields.
+- Releases UI renders evidence requirements, smoke-case matrix, release setup
+  gate/blockers, stable-reference guidance, manual override state/defaults and
+  publish evidence requirements.
+- Create draft is disabled until backend release setup is ready and explicit
+  evidence or an allowed manual override is complete.
+- Publish is disabled for failed releases.
+- Known backend labels/statuses/description keys are localized, while unknown
+  backend keys are preserved through safe fallback.
+- Route tests assert that no separate release evidence route was added.
+
+Reuse and ownership decisions:
+- Reused existing `Releases` API/model/UI ownership and `EntityInfo` display
+  primitives.
+- Kept DTO mapping in `src/modules/Releases/api` and form orchestration in
+  `src/modules/Releases/model`.
+- Added only release-specific i18n entries in `src/core/i18n/messages.ts`.
+- No shared UI extraction was needed.
+
+Boundaries preserved:
+- No new route or global navigation item was added.
+- No release evidence logic was added to Agent Detail, Policy, Sites/Widgets,
+  Knowledge, Capabilities or Agent Config modules.
+- Pages/UI do not call `apiClient`, `fetch` or `axios` directly.
+- No frontend-local release readiness/gate, policy, billing, metering, pricing
+  or model-routing calculation was introduced.
+- No direct DB/vector/provider/internal backend calls were introduced.
+
+Changed files:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/api/releasesApi.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/api/releasesApi.test.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/model/useReleasesManager.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/model/useReleasesManager.test.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/ui/ReleasesView.tsx`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/ui/ReleasesView.test.tsx`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/core/i18n/messages.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/core/router/routes.test.tsx`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Commands run:
+- `npm run test:admin -- Releases` passed: 3 files, 12 tests.
+- `npm run test:admin` passed: 67 files, 268 tests.
+- `npm run lint:admin` passed.
+- `npm run build:admin` passed.
+- `rg -n "apiClient|fetch\\(|axios" apps/admin-panel/src/modules/Releases -g '!**/api/**' -g '!**/*.test.ts' -g '!**/*.test.tsx'` returned no matches.
+- `rg -n "release-evidence|smoke_cases|required_smoke_cases|manual_override" apps/admin-panel/src/modules/Agents apps/admin-panel/src/modules/AgentPolicy apps/admin-panel/src/modules/SitesWidgets apps/admin-panel/src/modules/Knowledge apps/admin-panel/src/modules/AgentCapabilities apps/admin-panel/src/modules/AgentConfig` returned no matches.
+- `rg -n "release gate|policy engine|model-routing|pricing|invoice|tax|provider key|access token|refresh token|internal prompt|direct DB|vector" apps/admin-panel/src/modules/Releases` returned no matches.
+
+Deferred items:
+- none.
+
+Blocked findings:
+- none.
+
+Current status:
+- `post-finalization-urgent-release-evidence-requirements-ui-implemented-ready-for-acceptance-review`.
+
+Allowed next step is now:
+- `05_urgent_release_evidence_requirements_ui_acceptance_review`.
+
+## 2026-05-26 Release Runtime Provider Preflight UI Addendum
+
+Scope:
+- Small frontend addendum inside the existing Release Evidence Requirements UI
+  work, covering the backend-provided
+  `runtime_provider_preflight` read model on the existing Releases screen.
+
+Implementation summary:
+- Releases API maps `runtime_provider_preflight.ready` and safe requirement
+  fields: `provider_id`, `credential_key`, `credential_configured`,
+  `secret_resolvable`, `state` and `required_action`.
+- Releases UI shows a compact ready state when runtime provider preflight is
+  ready.
+- Releases UI shows a warning/blocker state when runtime provider preflight is
+  not ready, including safe provider id, credential key, state and required
+  action.
+- Publish/evidence flow now explains that runtime smoke cannot produce usage
+  evidence while provider credentials are not ready.
+- Publish usage id fields now show a hint that values must come from
+  successful runtime usage and must not be arbitrary strings.
+- `credential_configuration_failure` is localized to a human-readable runtime
+  credential message.
+
+Security and boundary result:
+- No API key, secret value, raw provider payload, provider console/debug info
+  or credential input UI was added.
+- Frontend remains read-only for runtime provider preflight.
+- Release readiness/publish validation remains backend-authoritative.
+- No system credential, provider/model catalog, DB/provider/vector debug or
+  direct provider management UI was added.
+
+Changed files:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/api/releasesApi.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/api/releasesApi.test.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/ui/ReleasesView.tsx`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/ui/ReleasesView.test.tsx`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/core/i18n/messages.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/core/api/errors/getLocalizedApiErrorMessage.test.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Commands run:
+- `npm run test:admin -- Releases getLocalizedApiErrorMessage locales` passed:
+  6 files, 21 tests.
+- `npm run test:admin` passed: 68 files, 272 tests.
+- `npm run lint:admin` passed.
+- `npm run build:admin` passed.
+- `rg -n "apiClient|fetch\\(|axios" apps/admin-panel/src/modules/Releases -g '!**/api/**' -g '!**/*.test.ts' -g '!**/*.test.tsx'` returned no matches.
+- `rg -n "api[_ -]?key|secret value|provider payload|provider console|direct provider|credential value|OPENAI_API_KEY|sk-" apps/admin-panel/src/modules/Releases apps/admin-panel/src/core/i18n/messages.ts` returned only the negative assertion in `ReleasesView.test.tsx`.
+- `rg -n "release gate|policy engine|model-routing|pricing|invoice|tax|direct DB|vector" apps/admin-panel/src/modules/Releases` returned no matches.
+
+Current status:
+- `post-finalization-urgent-release-evidence-requirements-ui-fix-pass-ready-for-acceptance-review`.
+
+Allowed next step remains:
+- `05_urgent_release_evidence_requirements_ui_acceptance_review`.
+
+## 2026-05-26 Urgent Release Evidence Requirements UI Acceptance Review
+
+Prompt:
+- `05_urgent_release_evidence_requirements_ui_acceptance_review_prompt.md`
+
+Gate result:
+- passed. The ledger allowed
+  `05_urgent_release_evidence_requirements_ui_acceptance_review`, urgent stage
+  implementation notes, changed files and commands were recorded, and blocked
+  findings were `none`.
+
+Findings:
+- P1: initial release history never reaches UI state after `loadReleases`.
+  In
+  `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/model/useReleasesManager.ts`,
+  `loadReleases` fetches `nextReleases` and uses it to select the first
+  release, but does not call `setReleases(nextReleases)`. As a result the
+  existing `/tenants/:tenantId/agents/:agentId/releases` route can show the
+  selected release detail while the release history panel still renders
+  `releases.empty_list` until a later mutation refresh calls `setReleases`.
+  This violates the urgent stage requirement that the release screen continue
+  displaying release list/detail state and creates a half-wired initial
+  runtime view.
+
+Scope fit:
+- The reviewed runtime scope stays in the existing Releases route/module and
+  i18n. No new route/global nav was found.
+- No release evidence UI/state was found in Agent Detail, Policy,
+  Sites/Widgets, Knowledge, Capabilities or Agent Config.
+
+Architecture and responsibility result:
+- DTO mapping and endpoint calls remain in the Releases API/model boundary.
+- Pages/UI do not call transport directly.
+- No frontend-local release readiness/gate/policy/billing/metering/pricing or
+  model-routing calculation was found.
+- Backend remains the source of truth for release evidence requirements and
+  release gate decisions.
+
+Checks run during acceptance review:
+- `sed -n '1,140p' apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+- `sed -n '1,220p' apps/admin-panel/docs/prompts/README.md`
+- `sed -n '1,130p' apps/admin-panel/docs/tz/admin-portal-frontend/prompts/README.md`
+- `sed -n '1,120p' apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_evidence_requirements_ui/README.md`
+- `sed -n '1,320p' apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_release_evidence_requirements_ui.md`
+- `sed -n '1,260p' apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_RELEASE_EVIDENCE_REQUIREMENTS_UI_TZ.md`
+- `sed -n '1,220p' apps/admin-panel/docs/implemented-functionality-checklist.md`
+- `sed -n '5670,5865p' apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+- `sed -n '1,260p' apps/admin-panel/src/modules/Releases/api/releasesApi.ts`
+- `sed -n '261,620p' apps/admin-panel/src/modules/Releases/api/releasesApi.ts`
+- `sed -n '1,320p' apps/admin-panel/src/modules/Releases/model/useReleasesManager.ts`
+- `sed -n '321,760p' apps/admin-panel/src/modules/Releases/model/useReleasesManager.ts`
+- `sed -n '1,320p' apps/admin-panel/src/modules/Releases/ui/ReleasesView.tsx`
+- `sed -n '321,760p' apps/admin-panel/src/modules/Releases/ui/ReleasesView.tsx`
+- `sed -n '1,220p' apps/admin-panel/src/modules/Releases/pages/ReleasesPage.tsx`
+- `sed -n '1,260p' apps/admin-panel/src/modules/Releases/model/useReleasesManager.test.ts`
+- `sed -n '1,260p' apps/admin-panel/src/modules/Releases/api/releasesApi.test.ts`
+- `sed -n '1,320p' apps/admin-panel/src/modules/Releases/ui/ReleasesView.test.tsx`
+- `sed -n '220,280p' apps/admin-panel/src/core/router/routes.test.tsx`
+- `rg -n "release-evidence|releaseEvidence|smoke_cases|required_smoke_cases|manual_override|getEvidenceRequirements|apiClient|fetch\\(|axios" apps/admin-panel/src/modules/Agents apps/admin-panel/src/modules/AgentPolicy apps/admin-panel/src/modules/SitesWidgets apps/admin-panel/src/modules/Knowledge apps/admin-panel/src/modules/AgentCapabilities apps/admin-panel/src/modules/AgentConfig apps/admin-panel/src/modules/Releases apps/admin-panel/src/core/router apps/admin-panel/src/core/i18n/messages.ts`
+- `nl -ba apps/admin-panel/src/modules/Releases/model/useReleasesManager.ts | sed -n '190,235p'`
+- `nl -ba apps/admin-panel/src/modules/Releases/model/useReleasesManager.ts | sed -n '250,275p'`
+- `nl -ba apps/admin-panel/src/modules/Releases/ui/ReleasesView.tsx | sed -n '165,180p'`
+- `npm run test:admin -- Releases` passed: 3 files, 12 tests.
+
+Current blocked findings:
+- P1 initial release history state is not populated by `loadReleases`.
+
+Allowed next step is now:
+- `04_urgent_release_evidence_requirements_ui_implementation_fix_pass`.
+
+## 2026-05-26 Urgent Release Evidence Requirements UI Implementation Fix-Pass
+
+Prompt:
+- `04_urgent_release_evidence_requirements_ui_implementation_fix_pass`
+
+Gate result:
+- passed. The ledger allowed
+  `04_urgent_release_evidence_requirements_ui_implementation_fix_pass`, and
+  the acceptance review finding was scoped to the Releases model initial-load
+  state.
+
+Fix applied:
+- `loadReleases` now calls `setReleases(nextReleases)` during the initial
+  load pass before selecting the current/first release detail. This keeps the
+  release history list and selected release detail in sync on the first render
+  of `/tenants/:tenantId/agents/:agentId/releases`.
+
+Regression test added:
+- Added a `useReleasesManager` flow test proving that initial load populates
+  `manager.releases` and `manager.selectedRelease` from the same backend list
+  response.
+
+Changed files:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/model/useReleasesManager.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/model/useReleasesManager.flow.test.tsx`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Boundaries preserved:
+- Fix stayed inside `src/modules/Releases/model`.
+- No API contract, route/global navigation, adjacent module or UI transport
+  boundary changed.
+- No frontend-local release readiness/gate/policy/billing/metering/pricing or
+  model-routing calculation was introduced.
+
+Commands run:
+- `npm run test:admin -- Releases` passed: 4 files, 13 tests.
+- `npm run test:admin` passed: 68 files, 269 tests.
+- `npm run lint:admin` passed.
+- `npm run build:admin` passed.
+- `rg -n "apiClient|fetch\\(|axios" apps/admin-panel/src/modules/Releases -g '!**/api/**' -g '!**/*.test.ts' -g '!**/*.test.tsx'` returned no matches.
+- `rg -n "release-evidence|smoke_cases|required_smoke_cases|manual_override" apps/admin-panel/src/modules/Agents apps/admin-panel/src/modules/AgentPolicy apps/admin-panel/src/modules/SitesWidgets apps/admin-panel/src/modules/Knowledge apps/admin-panel/src/modules/AgentCapabilities apps/admin-panel/src/modules/AgentConfig` returned no matches.
+- `rg -n "release gate|policy engine|model-routing|pricing|invoice|tax|provider key|access token|refresh token|internal prompt|direct DB|vector" apps/admin-panel/src/modules/Releases` returned no matches.
+
+Deferred items:
+- none.
+
+Blocked findings:
+- none.
+
+Current status:
+- `post-finalization-urgent-release-evidence-requirements-ui-fix-pass-ready-for-acceptance-review`.
+
+Allowed next step is now:
+- `05_urgent_release_evidence_requirements_ui_acceptance_review`.
+
+## 2026-05-26 Urgent Release Evidence Requirements UI Acceptance Review After Fix-Pass
+
+Prompt:
+- `05_urgent_release_evidence_requirements_ui_acceptance_review_prompt.md`
+
+Gate result:
+- passed. The ledger allowed
+  `05_urgent_release_evidence_requirements_ui_acceptance_review`, the
+  fix-pass recorded changed files, implementation notes and commands, and
+  blocked findings were `none`.
+
+Findings:
+- none.
+
+Fix-pass verification:
+- The previous P1 finding is resolved. `loadReleases` now calls
+  `setReleases(nextReleases)` during initial load before selecting the current
+  or first release detail.
+- `useReleasesManager.flow.test.tsx` proves initial load populates both
+  `manager.releases` and `manager.selectedRelease` from the same backend list
+  response.
+
+Scope fit:
+- Only the urgent release evidence stage is implemented.
+- No new route/global navigation was added.
+- Release evidence UI/state remains in `src/modules/Releases`.
+- No release evidence UI/state was found in Agent Detail, Policy,
+  Sites/Widgets, Knowledge, Capabilities or Agent Config.
+- Accepted Stages 01-13 are not reopened or degraded.
+
+Release requirements contract:
+- The new portal endpoint is loaded through `releasesApi.getEvidenceRequirements`.
+- Evidence requirements fields, smoke cases, manual override metadata and
+  publish evidence requirements are mapped in the Releases API/model boundary.
+- Unknown backend values are preserved through safe fallback rendering.
+- Backend remains the release gate authority.
+
+Evidence UI/runtime:
+- Release setup blockers and evidence status render from backend data.
+- Smoke-case matrix comes from backend `required_smoke_cases`.
+- Empty smoke-case templates render neutral no-smoke-cases copy, not a
+  hardcoded sales/support matrix.
+- Stable reference guidance uses backend metadata.
+- Create is blocked unless backend setup is ready and complete explicit
+  evidence or an allowed manual override is present.
+- Failed releases cannot be published through the normal UI.
+
+Payload correctness:
+- `evidence.change_kind` uses backend `required_change_kind`.
+- All `evidence.smoke_cases[]` rows are submitted.
+- Manual override payload includes reason code, related missing/failed items
+  and optional comment when used.
+- Localized labels are display-only and are not submitted as backend values.
+
+Evidence/security:
+- Mutation evidence remains visible through the shared mutation result block.
+- Missing optional backend fields use neutral fallback behavior.
+- No token, secret, provider key, internal prompt or backend-internal payload
+  rendering was found.
+
+Architecture and frontend/backend responsibility:
+- Releases owns API/model/UI changes.
+- No shared UI extraction was added.
+- Pages/UI do not call transport directly.
+- No duplicate release readiness/gate source of truth was introduced.
+- No frontend-local release readiness/gate/policy/billing/metering/pricing or
+  model-routing calculation was introduced.
+- No direct DB/vector/provider/internal backend calls were found.
+
+Checks run during this repeat acceptance review:
+- `sed -n '1,140p' apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+- `sed -n '5840,5965p' apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+- `sed -n '1,120p' apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_evidence_requirements_ui/README.md`
+- `git diff -- apps/admin-panel/src/modules/Releases/model/useReleasesManager.ts apps/admin-panel/src/modules/Releases/model/useReleasesManager.test.ts apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+- `nl -ba apps/admin-panel/src/modules/Releases/model/useReleasesManager.ts | sed -n '200,230p'`
+- `sed -n '1,260p' apps/admin-panel/src/modules/Releases/model/useReleasesManager.flow.test.tsx`
+- `sed -n '1,360p' apps/admin-panel/src/modules/Releases/model/useReleasesManager.ts`
+- `rg -n "release-evidence|releaseEvidence|smoke_cases|required_smoke_cases|manual_override|getEvidenceRequirements" apps/admin-panel/src/modules/Agents apps/admin-panel/src/modules/AgentPolicy apps/admin-panel/src/modules/SitesWidgets apps/admin-panel/src/modules/Knowledge apps/admin-panel/src/modules/AgentCapabilities apps/admin-panel/src/modules/AgentConfig` returned no matches.
+- `sed -n '1,220p' apps/admin-panel/docs/architecture.md`
+- `sed -n '1,220p' apps/admin-panel/docs/development-guide.md`
+- `sed -n '1,220p' apps/admin-panel/docs/recipes.md`
+- `sed -n '1,260p' apps/admin-panel/docs/tz/admin-portal-frontend/ADMIN_PORTAL_FRONTEND_UMBRELLA_TZ.md`
+- `npm run test:admin -- Releases` passed: 4 files, 13 tests.
+- `git diff --check -- apps/admin-panel/src/modules/Releases apps/admin-panel/src/core/i18n/messages.ts apps/admin-panel/src/core/router/routes.test.tsx apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md` passed.
+- `rg -n "apiClient|fetch\\(|axios" apps/admin-panel/src/modules/Releases -g '!**/api/**' -g '!**/*.test.ts' -g '!**/*.test.tsx'` returned no matches.
+- `rg -n "release gate|policy engine|model-routing|pricing|invoice|tax|provider key|access token|refresh token|internal prompt|direct DB|vector" apps/admin-panel/src/modules/Releases` returned no matches.
+
+Fix-pass checks recorded before this review:
+- `npm run test:admin -- Releases` passed: 4 files, 13 tests.
+- `npm run test:admin` passed: 68 files, 269 tests.
+- `npm run lint:admin` passed.
+- `npm run build:admin` passed.
+
+Deferred items:
+- none.
+
+Blocked findings:
+- none.
+
+Current status:
+- `post-finalization-urgent-release-evidence-requirements-ui-accepted-pending-docs-sync`.
+
+Allowed next step is now:
+- `06_urgent_release_evidence_requirements_ui_docs_sync`.
+
+## 2026-05-26 Urgent Release Evidence Requirements UI Docs Sync
+
+Prompt:
+- `06_urgent_release_evidence_requirements_ui_docs_sync_prompt.md`
+
+Gate result:
+- passed. The ledger allowed
+  `06_urgent_release_evidence_requirements_ui_docs_sync`, the urgent stage was
+  accepted by prompt 05 after fix-pass, and blocked findings were `none`.
+
+Docs updated:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/implemented-functionality-checklist.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/overview.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/architecture.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/development-guide.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/recipes.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_RELEASE_EVIDENCE_REQUIREMENTS_UI_TZ.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_release_evidence_requirements_ui.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/README.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_evidence_requirements_ui/README.md`
+
+Docs sync result:
+- App checklist and app docs now describe only the accepted urgent release
+  behavior: the existing `/tenants/:tenantId/agents/:agentId/releases` route
+  loads backend release evidence requirements, renders backend smoke-case
+  evidence matrix and publish evidence metadata, blocks create without complete
+  explicit evidence or allowed manual override, submits backend canonical
+  values, and preserves backend release gate authority.
+- The urgent source TZ and urgent stage TZ statuses are recorded as
+  `accepted-docs-synced`.
+- The Admin Portal prompt README files now point to the synced urgent release
+  status and `allowed_next_step = none`.
+- The accepted 13-stage umbrella remains closed. No `stage_14` was created.
+- Root docs were not changed because workspace/package/multi-app rules did not
+  change.
+
+Checks recorded:
+- Prompt 05 accepted checks remain the runtime evidence for this docs sync:
+  `npm run test:admin -- Releases`, `npm run test:admin`,
+  `npm run lint:admin` and `npm run build:admin` passed during the accepted
+  fix-pass/review.
+- This docs sync changed docs only; no extra runtime checks were required.
+
+Deferred items:
+- none.
+
+Blocked findings:
+- none.
+
+Current status:
+- `post-finalization-urgent-release-evidence-requirements-ui-docs-synced`.
+
+Allowed next step is now:
+- `none`.
+
+## 2026-05-29 Urgent Release Retrieval Evidence Operator Flow Stage Package Creation
+
+Prompt:
+- user-requested post-finalization urgent stage package creation for backend
+  TZ-SVC-10 Release Retrieval Evidence Operator Flow.
+
+Decision:
+- Create a compact urgent frontend package rather than reopening the accepted
+  13-stage umbrella or creating `stage_14`.
+- Use the backend-provided frontend TZ as read-only contract source.
+- Keep implementation scope on the existing
+  `/tenants/:tenantId/agents/:agentId/releases` route and `Releases` module.
+
+Created files:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_RELEASE_RETRIEVAL_EVIDENCE_OPERATOR_FLOW_TZ.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_release_retrieval_evidence_operator_flow.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow/README.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow/03_urgent_release_retrieval_evidence_operator_flow_consistency_review_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow/04_urgent_release_retrieval_evidence_operator_flow_implementation_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow/05_urgent_release_retrieval_evidence_operator_flow_acceptance_review_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow/06_urgent_release_retrieval_evidence_operator_flow_docs_sync_prompt.md`
+
+Updated files:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/README.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/ADMIN_PORTAL_FRONTEND_UMBRELLA_TZ.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Stage package scope:
+- Add release retrieval evidence candidate read/create API support.
+- Add candidate-backed retrieval evidence block to the existing Releases
+  screen.
+- Disable free-text managed retrieval/support references in the normal path.
+- Fill release draft and publish forms from backend-approved retrieval
+  candidate/read model values.
+- Preserve the accepted runtime provider preflight and runtime usage evidence
+  candidate flow.
+
+Boundaries:
+- `Releases` owns API/model/UI changes.
+- Adjacent modules are no-regression boundary only.
+- No backend implementation, new route, global navigation, provider/secret UI,
+  direct DB/vector/provider/internal backend calls or frontend-local release
+  gate logic.
+- Implemented app docs intentionally remain unchanged until this urgent package
+  passes prompt 05 acceptance and prompt 06 docs sync. The umbrella TZ now
+  lists this as a post-finalization urgent package so the planned work is
+  visible without claiming it is already implemented.
+
+Commands run:
+- `sed -n` reviews of backend source TZ, previous urgent prompt package and
+  stage files.
+- `find`/`ls` reviews of prompt and stage directories.
+- `git status --short -- apps/admin-panel/docs/tz/admin-portal-frontend`
+  reviewed existing docs worktree state.
+
+Deferred items:
+- prompt 03 consistency review must run before implementation.
+
+Blocked findings:
+- none.
+
+Current status:
+- `post-finalization-urgent-release-retrieval-evidence-stage-created-ready-for-consistency-review`.
+
+Allowed next step is now:
+- `03_urgent_release_retrieval_evidence_operator_flow_consistency_review`.

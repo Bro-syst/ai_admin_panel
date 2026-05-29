@@ -5,6 +5,27 @@ import { defineConfig } from 'vitest/config'
 
 const appRoot = fileURLToPath(new URL('.', import.meta.url))
 const defaultDevApiTarget = 'http://127.0.0.1:8008'
+const defaultCoverageInclude = [
+  'src/modules/AgentConfig/api/agentConfigApi.ts',
+  'src/modules/AgentConfig/model/agentConfigOptions.ts',
+  'src/modules/AgentConfig/model/useAgentConfigManager.ts',
+  'src/modules/AgentConfig/ui/AgentConfigView.tsx',
+  'src/modules/Agents/ui/AgentDetailView.tsx',
+  'src/shared/ui/EntityInfo.tsx',
+]
+const coverageIncludeByScope: Record<string, string[]> = {
+  'tz-svc-8-2': ['src/modules/FormMetadata/api/formMetadataBridgeApi.ts'],
+  'tz-svc-8-3': [
+    'src/modules/AgentConfig/model/useAgentConfigManager.ts',
+    'src/modules/AgentConfig/ui/AgentConfigView.tsx',
+    'src/modules/FormMetadata/api/formMetadataBridgeApi.ts',
+  ],
+  'tz-svc-8-4': [
+    'src/modules/Releases/api/releasesApi.ts',
+    'src/modules/Releases/model/useReleasesManager.ts',
+    'src/modules/Releases/ui/ReleasesView.tsx',
+  ],
+}
 
 function normalizeSetCookieValues(setCookie: string | string[]) {
   const values = Array.isArray(setCookie) ? setCookie : [setCookie]
@@ -34,6 +55,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, appRoot, '')
   const devApiTarget = env.AI_ADMIN_DEV_API_TARGET?.trim() || defaultDevApiTarget
   const devApiTargetOrigin = new URL(devApiTarget).origin
+  const coverageInclude =
+    coverageIncludeByScope[process.env.AI_ADMIN_COVERAGE_SCOPE ?? ''] ?? defaultCoverageInclude
 
   return {
     plugins: [react()],
@@ -65,6 +88,17 @@ export default defineConfig(({ mode }) => {
       globals: true,
       environment: 'jsdom',
       setupFiles: ['./src/setupTests.ts'],
+      coverage: {
+        provider: 'v8',
+        reporter: ['text'],
+        include: coverageInclude,
+        thresholds: {
+          statements: 90,
+          branches: 90,
+          functions: 90,
+          lines: 90,
+        },
+      },
     },
   }
 })

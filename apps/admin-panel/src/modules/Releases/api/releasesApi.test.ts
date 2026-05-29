@@ -102,13 +102,13 @@ describe('releasesApi', () => {
         selectedConfigId: 'config_7',
         releaseCandidateId: null,
         evidence: {
-          changeKind: 'runtime_behavior',
+          changeKind: 'retrieval_behavior_future',
           stableReference: 'evidence_1',
           passed: true,
-          smokeCaseId: 'widget_smoke',
-          smokeCasePassed: true,
-          smokeCaseReference: 'smoke_1',
-          smokeCaseOutcome: 'accepted',
+          smokeCases: [
+            { caseId: 'widget_smoke', passed: true, stableReference: 'smoke_1', outcome: 'accepted' },
+            { caseId: 'unknown_fallback', passed: false, stableReference: null, outcome: 'rejected' },
+          ],
         },
         manualOverride: {
           reasonCode: 'business_approved',
@@ -122,19 +122,209 @@ describe('releasesApi', () => {
     })
 
     expect(postMock).toHaveBeenCalledWith('/api/admin/v1/tenants/tenant_1/agents/agent_1/releases', {
-      selected_config_id: 'config_7',
-      release_candidate_id: null,
-      evidence: {
-        change_kind: 'runtime_behavior',
+        selected_config_id: 'config_7',
+        release_candidate_id: null,
+        evidence: {
+        change_kind: 'retrieval_behavior_future',
         stable_reference: 'evidence_1',
         passed: true,
-        smoke_cases: [{ case_id: 'widget_smoke', passed: true, stable_reference: 'smoke_1', outcome: 'accepted' }],
+        smoke_cases: [
+          { case_id: 'widget_smoke', passed: true, stable_reference: 'smoke_1', outcome: 'accepted' },
+          { case_id: 'unknown_fallback', passed: false, stable_reference: null, outcome: 'rejected' },
+        ],
       },
       manual_override: {
         reason_code: 'business_approved',
         related_missing_or_failed_items: ['knowledge'],
         comment: 'Approved for first launch.',
       },
+    })
+  })
+
+  it('loads and maps release evidence requirements from the portal read model', async () => {
+    getMock.mockResolvedValue({
+      data: {
+        agent_id: 'agent_1',
+        template_id: 'sales_qualification_v1',
+        release_setup_ready: true,
+        release_setup_blocking_items: [{ item_id: 'knowledge', owner_area: 'knowledge', state: 'ready', blocking: false, detail: 'Ready', required_action: null }],
+        evidence_required: true,
+        evidence_status: 'missing_until_submitted',
+        required_change_kind: 'retrieval_behavior_future',
+        stable_reference_rule: 'knowledge_retrieval_run_required_for_grounded_cases',
+        stable_reference_prefix: 'knowledge-retrieval-run:',
+        required_smoke_cases: [{
+          case_id: 'sales_support.product_grounded',
+          required: true,
+          grounded_reference_required: true,
+          stable_reference_must_match_release_reference: true,
+          label_key: 'release.evidence.sales_support.product_grounded.label',
+          description_key: 'release.evidence.sales_support.product_grounded.description',
+        }],
+        manual_override: {
+          allowed: true,
+          blocked_reason: null,
+          default_reason_code: 'release_evidence_operator_approved_override',
+          related_missing_or_failed_items_default: ['evaluation_evidence'],
+        },
+        publish_evidence_requirements: [{
+          field: 'release_report_reference',
+          required: true,
+          label_key: 'release.publish.release_report_reference.label',
+          description_key: 'release.publish.release_report_reference.description',
+        }],
+        runtime_provider_preflight: {
+          ready: false,
+          requirements: [{
+            provider_id: 'openai',
+            credential_key: 'openai-primary',
+            credential_configured: false,
+            secret_resolvable: false,
+            state: 'missing_credential',
+            required_action: 'Register an active system service credential before running public widget smoke or publishing release evidence.',
+          }],
+        },
+        last_checked_at: '2026-05-25T00:00:00Z',
+        owner_stage: 'stage24_release_workflow',
+      },
+    })
+
+    await expect(releasesApi.getEvidenceRequirements('tenant_1', 'agent_1')).resolves.toMatchObject({
+      agentId: 'agent_1',
+      templateId: 'sales_qualification_v1',
+      requiredChangeKind: 'retrieval_behavior_future',
+      stableReferencePrefix: 'knowledge-retrieval-run:',
+      requiredSmokeCases: [{ caseId: 'sales_support.product_grounded', groundedReferenceRequired: true }],
+      manualOverride: { allowed: true, defaultReasonCode: 'release_evidence_operator_approved_override' },
+      publishEvidenceRequirements: [{ field: 'release_report_reference', required: true }],
+      runtimeProviderPreflight: {
+        available: true,
+        ready: false,
+        requirements: [{
+          providerId: 'openai',
+          credentialKey: 'openai-primary',
+          credentialConfigured: false,
+          secretResolvable: false,
+          state: 'missing_credential',
+          requiredAction: 'Register an active system service credential before running public widget smoke or publishing release evidence.',
+        }],
+      },
+    })
+
+    expect(getMock).toHaveBeenCalledWith('/api/admin/v1/portal/tenants/tenant_1/agents/agent_1/release-evidence-requirements')
+  })
+
+  it('treats missing runtime provider preflight as unavailable and not ready', async () => {
+    getMock.mockResolvedValue({
+      data: {
+        agent_id: 'agent_1',
+        template_id: 'sales_qualification_v1',
+        release_setup_ready: true,
+        release_setup_blocking_items: [],
+        evidence_required: true,
+        evidence_status: 'submitted',
+        required_change_kind: 'retrieval_behavior_future',
+        stable_reference_rule: null,
+        stable_reference_prefix: null,
+        required_smoke_cases: [],
+        manual_override: null,
+        publish_evidence_requirements: [],
+        last_checked_at: null,
+        owner_stage: 'stage24_release_workflow',
+      },
+    })
+
+    await expect(releasesApi.getEvidenceRequirements('tenant_1', 'agent_1')).resolves.toMatchObject({
+      runtimeProviderPreflight: {
+        available: false,
+        ready: false,
+        requirements: [],
+      },
+    })
+  })
+
+  it('loads backend-provided usage evidence candidates without deriving publish ids', async () => {
+    getMock.mockResolvedValue({
+      data: {
+        items: [{
+          chat_id: 'chat_1',
+          conversation_turn_id: 'turn_1',
+          model_request_id: 'model_request_1',
+          created_at: '2026-05-27T10:00:00Z',
+          turn_status: 'response_rendered',
+          model_request_state: 'completed',
+          usage_recorded: true,
+          agent_id: 'agent_1',
+          agent_config_id: 'config_1',
+          widget_key: 'sales-widget',
+          channel: 'public_widget',
+          display_label: '2026-05-27 public widget smoke',
+          prompt: 'must-not-leak',
+          transcript: 'must-not-leak',
+        }],
+        summary: {
+          candidate_count: 1,
+          ready: true,
+          no_candidate_reason: null,
+          message: 'Candidate is ready.',
+        },
+        no_candidate_reason: null,
+        generated_at: '2026-05-27T10:01:00Z',
+      },
+    })
+
+    await expect(releasesApi.getUsageEvidenceCandidates('tenant_1', 'agent_1')).resolves.toEqual({
+      items: [{
+        chatId: 'chat_1',
+        conversationTurnId: 'turn_1',
+        modelRequestId: 'model_request_1',
+        createdAt: '2026-05-27T10:00:00Z',
+        turnStatus: 'response_rendered',
+        modelRequestState: 'completed',
+        usageRecorded: true,
+        agentId: 'agent_1',
+        agentConfigId: 'config_1',
+        widgetKey: 'sales-widget',
+        channel: 'public_widget',
+        displayLabel: '2026-05-27 public widget smoke',
+      }],
+      summary: {
+        candidateCount: 1,
+        ready: true,
+        noCandidateReason: null,
+        message: 'Candidate is ready.',
+      },
+      noCandidateReason: null,
+      generatedAt: '2026-05-27T10:01:00Z',
+    })
+
+    expect(getMock).toHaveBeenCalledWith('/api/admin/v1/portal/tenants/tenant_1/agents/agent_1/release-usage-evidence-candidates')
+  })
+
+  it('maps usage evidence unavailability without partial candidates', async () => {
+    getMock.mockResolvedValue({
+      data: {
+        items: [],
+        summary: {
+          candidate_count: 0,
+          ready: false,
+          no_candidate_reason: 'candidate_source_unavailable',
+          message: 'Usage source unavailable.',
+        },
+        no_candidate_reason: 'candidate_source_unavailable',
+        generated_at: null,
+      },
+    })
+
+    await expect(releasesApi.getUsageEvidenceCandidates('tenant_1', 'agent_1')).resolves.toMatchObject({
+      items: [],
+      summary: {
+        candidateCount: 0,
+        ready: false,
+        noCandidateReason: 'candidate_source_unavailable',
+      },
+      noCandidateReason: 'candidate_source_unavailable',
+      generatedAt: null,
     })
   })
 
