@@ -44,11 +44,11 @@ evidence is implemented, accepted and docs-synced.
 A post-finalization urgent stage for Release Evidence Requirements UI has also
 been implemented, accepted and docs-synced.
 
-A new post-finalization urgent stage package for Release Retrieval Evidence
-Operator Flow has been created and is ready for consistency review:
+A post-finalization urgent stage for Release Retrieval Evidence Operator Flow
+has also been implemented, accepted and docs-synced:
 
-- current status: `post-finalization-urgent-release-retrieval-evidence-stage-created-ready-for-consistency-review`
-- allowed next step: `03_urgent_release_retrieval_evidence_operator_flow_consistency_review`
+- current status: `post-finalization-urgent-release-retrieval-evidence-docs-synced`
+- allowed next step: `none`
 - optional next step: `none`
 - state ledger:
   `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
@@ -60,11 +60,6 @@ Operator Flow has been created and is ready for consistency review:
   `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_RELEASE_RETRIEVAL_EVIDENCE_OPERATOR_FLOW_TZ.md`
 - urgent prompt package:
   `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow`
-- consistency review:
-  `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/ADMIN_PORTAL_STAGE_TZ_CONSISTENCY_REVIEW.md`
-- generated execution prompts:
-  `04_stage_implementation_prompt.md`, `05_stage_acceptance_review_prompt.md`,
-  `06_stage_docs_sync_prompt.md`, `07_umbrella_finalization_prompt.md`
 
 Both urgent release packages stay on the existing
 `/tenants/:tenantId/agents/:agentId/releases` route and do not reopen the

@@ -328,6 +328,105 @@ describe('releasesApi', () => {
     })
   })
 
+  it('loads retrieval evidence candidates through canonical portal endpoint without raw payload leakage', async () => {
+    getMock.mockResolvedValue({
+      data: {
+        items: [{
+          candidate_id: 'candidate_1',
+          release_candidate_id: 'release_candidate_1',
+          retrieval_run_id: 'retrieval_run_1',
+          stable_reference: 'knowledge-retrieval-run:run_1',
+          support_reconstruction_reference: 'support-reconstruction:run_1',
+          selected_config_id: 'config_7',
+          outcome: 'passed',
+          source_ids: ['source_1'],
+          index_id: 'index_1',
+          index_version_id: 'index_version_1',
+          source_set_key: 'approved_faq',
+          source_set_readiness_marker: 'ready',
+          selected_chunk_count: 3,
+          citation_count: 2,
+          created_at: '2026-05-28T10:00:00Z',
+          status: 'ready',
+          problems: [],
+          raw_query: 'must-not-map',
+          chunks: [{ text: 'must-not-map' }],
+        }],
+        summary: {
+          candidate_count: 1,
+          ready: true,
+          no_candidate_reason: null,
+          required_action: null,
+          problems: [],
+        },
+        no_candidate_reason: null,
+        generated_at: '2026-05-28T10:01:00Z',
+      },
+    })
+
+    await expect(releasesApi.getRetrievalEvidenceCandidates('tenant_1', 'agent_1')).resolves.toEqual({
+      items: [{
+        candidateId: 'candidate_1',
+        releaseCandidateId: 'release_candidate_1',
+        retrievalRunId: 'retrieval_run_1',
+        stableReference: 'knowledge-retrieval-run:run_1',
+        supportReconstructionReference: 'support-reconstruction:run_1',
+        selectedConfigId: 'config_7',
+        outcome: 'passed',
+        sourceIds: ['source_1'],
+        indexId: 'index_1',
+        indexVersionId: 'index_version_1',
+        sourceSetKey: 'approved_faq',
+        sourceSetReadinessMarker: 'ready',
+        selectedChunkCount: 3,
+        citationCount: 2,
+        createdAt: '2026-05-28T10:00:00Z',
+        status: 'ready',
+        problems: [],
+      }],
+      summary: {
+        candidateCount: 1,
+        ready: true,
+        noCandidateReason: null,
+        requiredAction: null,
+        problems: [],
+      },
+      noCandidateReason: null,
+      generatedAt: '2026-05-28T10:01:00Z',
+    })
+
+    expect(getMock).toHaveBeenCalledWith('/api/admin/v1/portal/tenants/tenant_1/agents/agent_1/release-retrieval-evidence-candidates')
+  })
+
+  it('creates retrieval evidence candidates with backend-owned ids and idempotency key', async () => {
+    postMock.mockResolvedValue({
+      data: {
+        items: [],
+        summary: {
+          candidate_count: 0,
+          ready: false,
+          no_candidate_reason: 'candidate_generation_failed',
+          required_action: 'Retry after retrieval run is available.',
+          problems: [],
+        },
+        no_candidate_reason: 'candidate_generation_failed',
+        generated_at: null,
+      },
+    })
+
+    await releasesApi.createRetrievalEvidenceCandidate('tenant_1', 'agent_1', {
+      selectedConfigId: 'config_7',
+      releaseCandidateId: 'release_candidate_1',
+      idempotencyKey: 'release_retrieval_evidence_1',
+    })
+
+    expect(postMock).toHaveBeenCalledWith('/api/admin/v1/tenants/tenant_1/agents/agent_1/release-retrieval-evidence-candidates', {
+      selected_config_id: 'config_7',
+      release_candidate_id: 'release_candidate_1',
+      idempotency_key: 'release_retrieval_evidence_1',
+    })
+  })
+
   it('publishes, rolls back and disables release mutations through explicit endpoints', async () => {
     postMock.mockResolvedValue({ data: { resource: releasePayload, result: mutationResult } })
 

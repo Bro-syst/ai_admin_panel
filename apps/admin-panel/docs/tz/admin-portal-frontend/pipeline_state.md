@@ -1,13 +1,13 @@
 # Admin Portal Frontend Pipeline State
 
-Status: `post-finalization-urgent-release-retrieval-evidence-stage-created-ready-for-consistency-review`
+Status: `post-finalization-urgent-release-retrieval-evidence-docs-synced`
 
-current_step: `urgent_release_retrieval_evidence_operator_flow_stage_package_created`
-allowed_next_step: `03_urgent_release_retrieval_evidence_operator_flow_consistency_review`
+current_step: `urgent_release_retrieval_evidence_operator_flow_docs_sync_complete`
+allowed_next_step: `none`
 optional_next_step: `none`
 
 Last updated: `2026-05-29`
-Last refresh type: `post-finalization urgent release retrieval evidence stage package creation`
+Last refresh type: `post-finalization urgent release retrieval evidence docs sync`
 
 ## Paths
 
@@ -103,7 +103,7 @@ Prompt source:
 | 08 | Adapted execution prompts | complete | generated prompts 04/05/06/07 |
 | urgent-agent-config-operator-ux | Post-finalization urgent fix stage TZ and prompt package | accepted and docs synced | `stages/urgent_stage_agent_config_operator_ux_fix.md`; `prompts/urgent_agent_config_operator_ux/*.md`; controlled AgentConfig operator UX |
 | urgent-release-evidence-requirements-ui | Post-finalization urgent Release Evidence Requirements UI stage TZ and prompt package | accepted and docs synced | `stages/urgent_stage_release_evidence_requirements_ui.md`; `prompts/urgent_release_evidence_requirements_ui/*.md`; existing `/tenants/:tenantId/agents/:agentId/releases` route |
-| urgent-release-retrieval-evidence-operator-flow | Post-finalization urgent Release Retrieval Evidence Operator Flow stage TZ and prompt package | created, ready for consistency review | `stages/urgent_stage_release_retrieval_evidence_operator_flow.md`; `prompts/urgent_release_retrieval_evidence_operator_flow/*.md`; existing `/tenants/:tenantId/agents/:agentId/releases` route |
+| urgent-release-retrieval-evidence-operator-flow | Post-finalization urgent Release Retrieval Evidence Operator Flow stage TZ and prompt package | accepted and docs synced | `stages/urgent_stage_release_retrieval_evidence_operator_flow.md`; `prompts/urgent_release_retrieval_evidence_operator_flow/*.md`; existing `/tenants/:tenantId/agents/:agentId/releases` route |
 
 ## Accepted Decisions
 
@@ -357,6 +357,17 @@ Prompt source:
   publish evidence metadata are backend-owned read-model data. Frontend may
   perform pre-submit completeness guards but must not duplicate release gates
   or define a local smoke-case catalog.
+- Urgent Release Retrieval Evidence Operator Flow consistency review is
+  accepted as a post-finalization urgent stage, not `stage_14`. Implementation
+  may touch only the existing Releases route/module, Releases-focused tests,
+  i18n and docs/ledger unless a narrow no-regression router test is needed.
+- Backend TZ-SVC-10 is the contract source for release retrieval evidence
+  candidate endpoints; the general Admin Portal API README remains read-only
+  thin-client boundary context.
+- Release retrieval evidence candidates are backend-owned. Frontend must not
+  invent retrieval/support references, must not make historical failed releases
+  publishable through fake refs, and must keep runtime usage candidate flow as
+  a separate accepted evidence source.
 
 ## Current Baseline To Preserve
 
@@ -458,6 +469,8 @@ Prompt 08 availability:
 - The post-finalization urgent Release Evidence Requirements UI stage has no
   open pre-consistency question. Prompt 03 must verify that it stays within the
   existing Releases route/module and Stage 10 ownership.
+- The post-finalization urgent Release Retrieval Evidence Operator Flow
+  implementation has no open blockers before acceptance review.
 
 ## Blocked Findings
 
@@ -468,6 +481,35 @@ Prompt 08 availability:
 - none.
 
 ## Changed Files
+
+Prompt 06 urgent Release Retrieval Evidence Operator Flow docs sync changed:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/implemented-functionality-checklist.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/overview.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/architecture.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/development-guide.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/recipes.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/ADMIN_PORTAL_FRONTEND_UMBRELLA_TZ.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_RELEASE_RETRIEVAL_EVIDENCE_OPERATOR_FLOW_TZ.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_release_retrieval_evidence_operator_flow.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/README.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow/README.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Prompt 04 urgent Release Retrieval Evidence Operator Flow implementation
+changed:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/api/releasesApi.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/api/releasesApi.test.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/model/useReleasesManager.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/model/useReleasesManager.test.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/model/useReleasesManager.flow.test.tsx`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/ui/ReleasesView.tsx`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Releases/ui/ReleasesView.test.tsx`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/core/i18n/messages.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Prompt 03 urgent Release Retrieval Evidence Operator Flow consistency review
+changed:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
 
 Urgent Release Evidence Requirements UI stage and prompt package creation
 changed:
@@ -930,6 +972,52 @@ Prompt 01 discovery/refresh changed:
 - `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/prompts/*`
 
 ## Commands Run
+
+Prompt 06 urgent Release Retrieval Evidence Operator Flow docs sync:
+- `sed -n` reviews of prompt READMEs, urgent TZ files, app docs and pipeline
+  state.
+- `rg -n "Release|release|retrieval|evidence|Releases|релиз" apps/admin-panel/docs/implemented-functionality-checklist.md apps/admin-panel/docs/overview.md apps/admin-panel/docs/architecture.md apps/admin-panel/docs/development-guide.md apps/admin-panel/docs/recipes.md`
+- `rg -n "urgent|Release Retrieval|Retrieval Evidence|release retrieval" apps/admin-panel/docs/tz/admin-portal-frontend/ADMIN_PORTAL_FRONTEND_UMBRELLA_TZ.md`
+- `rg -n 'post-finalization-urgent-release-retrieval-evidence|allowed next step|accepted-docs-synced|Release Retrieval Evidence Operator Flow' apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md apps/admin-panel/docs/tz/admin-portal-frontend/prompts/README.md apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow/README.md apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_RELEASE_RETRIEVAL_EVIDENCE_OPERATOR_FLOW_TZ.md apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_release_retrieval_evidence_operator_flow.md apps/admin-panel/docs/tz/admin-portal-frontend/ADMIN_PORTAL_FRONTEND_UMBRELLA_TZ.md`
+- `git diff --check -- apps/admin-panel/docs/implemented-functionality-checklist.md apps/admin-panel/docs/overview.md apps/admin-panel/docs/architecture.md apps/admin-panel/docs/development-guide.md apps/admin-panel/docs/recipes.md apps/admin-panel/docs/tz/admin-portal-frontend/ADMIN_PORTAL_FRONTEND_UMBRELLA_TZ.md apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_RELEASE_RETRIEVAL_EVIDENCE_OPERATOR_FLOW_TZ.md apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_release_retrieval_evidence_operator_flow.md apps/admin-panel/docs/tz/admin-portal-frontend/prompts/README.md apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow/README.md apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+- No runtime code was changed.
+
+Prompt 04 urgent Release Retrieval Evidence Operator Flow implementation:
+- `sed -n '1,260p' apps/admin-panel/src/modules/Releases/api/releasesApi.ts`
+- `sed -n '260,980p' apps/admin-panel/src/modules/Releases/api/releasesApi.ts`
+- `sed -n '1,860p' apps/admin-panel/src/modules/Releases/model/useReleasesManager.ts`
+- `sed -n '1,920p' apps/admin-panel/src/modules/Releases/ui/ReleasesView.tsx`
+- `sed -n '1,620p' apps/admin-panel/src/modules/Releases/ui/ReleasesView.test.tsx`
+- `sed -n '1260,1405p' apps/admin-panel/src/core/i18n/messages.ts`
+- `sed -n '2720,2865p' apps/admin-panel/src/core/i18n/messages.ts`
+- `sed -n '3320,3450p' apps/admin-panel/src/core/i18n/messages.ts`
+- `sed -n '3720,3845p' apps/admin-panel/src/core/i18n/messages.ts`
+- `rg -n "mapReleaseUsageEvidenceCandidates|mapReleaseEvidenceRequirements|createRelease|releasesApi" apps/admin-panel/src/modules/Releases -g '*test*'`
+- `rg -n "useReleasesManager|buildReleaseDraftInput|hasCompleteExplicitEvidence|canPublishSelected" apps/admin-panel/src/modules/Releases -g '*test*'`
+- `npm run test:admin -- Releases`
+- `npm run test:admin`
+- `npm run lint:admin`
+- `npm run build:admin`
+- `rg -n "api_key|secret|credential|OPENAI|provider payload|transcript|raw chunk" apps/admin-panel/src/modules/Releases`
+- `rg -n "127\\.0\\.0\\.1|26f29c4f|0ab91c81|sales-support-manual-smoke" apps/admin-panel/src/modules/Releases`
+- `rg -n "debug|vector|database|pgvector|opensearch" apps/admin-panel/src/modules/Releases`
+- `rg -n "release-retrieval-evidence|retrieval evidence|support_reconstruction" apps/admin-panel/src/modules/Agents apps/admin-panel/src/modules/AgentPolicy apps/admin-panel/src/modules/SitesWidgets apps/admin-panel/src/modules/Knowledge apps/admin-panel/src/modules/AgentCapabilities apps/admin-panel/src/modules/AgentConfig`
+- `git diff --check -- apps/admin-panel/src/modules/Releases apps/admin-panel/src/core/i18n/messages.ts apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Prompt 03 urgent Release Retrieval Evidence Operator Flow consistency review:
+- `sed -n '1,240p' apps/admin-panel/docs/prompts/README.md`
+- `sed -n '1,260p' apps/admin-panel/docs/tz/admin-portal-frontend/prompts/README.md`
+- `sed -n '1,240p' apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow/README.md`
+- `sed -n '1,220p' apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+- `sed -n '1,320p' apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_release_retrieval_evidence_operator_flow.md`
+- `sed -n '1,260p' apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_RELEASE_RETRIEVAL_EVIDENCE_OPERATOR_FLOW_TZ.md`
+- `sed -n '80,360p' /Volumes/Work/AI_Agents/ai_core/docs/productization/first-service-sales-support/tz/TZ-SVC-10_release_retrieval_evidence_operator_flow/FRONTEND_RELEASE_SCREEN_RETRIEVAL_EVIDENCE_TZ.md`
+- `sed -n '580,720p' /Volumes/Work/AI_Agents/ai_core/docs/productization/first-service-sales-support/tz/TZ-SVC-10_release_retrieval_evidence_operator_flow/FRONTEND_RELEASE_SCREEN_RETRIEVAL_EVIDENCE_TZ.md`
+- `rg -n "release-retrieval-evidence|retrievalEvidence|supportReconstruction|releaseCandidateId|evidenceStableReference|usageEvidenceCandidates" apps/admin-panel/src/modules/Releases apps/admin-panel/src/core/i18n/messages.ts`
+- `rg -n "release-retrieval-evidence|retrieval evidence|support_reconstruction" apps/admin-panel/src/modules/Agents apps/admin-panel/src/modules/AgentPolicy apps/admin-panel/src/modules/SitesWidgets apps/admin-panel/src/modules/Knowledge apps/admin-panel/src/modules/AgentCapabilities apps/admin-panel/src/modules/AgentConfig`
+- `rg -n "api_key|secret|credential|OPENAI|provider payload|transcript|raw chunk|debug|vector|database|pgvector|opensearch" apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_release_retrieval_evidence_operator_flow.md apps/admin-panel/src/modules/Releases`
+- `git diff --check -- apps/admin-panel/docs/tz/admin-portal-frontend`
+- no runtime code changed.
 
 Prompt 02 urgent stage TZ creation:
 - `tail -n 140 apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
@@ -6419,3 +6507,259 @@ Current status:
 
 Allowed next step is now:
 - `03_urgent_release_retrieval_evidence_operator_flow_consistency_review`.
+
+## 2026-05-29 Urgent Release Retrieval Evidence Operator Flow Consistency Review
+
+Prompt:
+- `03_urgent_release_retrieval_evidence_operator_flow_consistency_review_prompt.md`.
+
+Gate result:
+- passed. `allowed_next_step` was
+  `03_urgent_release_retrieval_evidence_operator_flow_consistency_review`.
+- The urgent source TZ and urgent stage TZ paths matched this prompt.
+- Stages 01-13 are accepted and docs-synced/not required.
+- Umbrella finalization is accepted.
+- Urgent Release Evidence Requirements UI is accepted and docs-synced.
+- Blocked findings remained `none`.
+
+Findings:
+- none.
+
+Consistency result:
+- Source urgent TZ and stage TZ are aligned: the stage is a post-finalization
+  urgent fix, not `stage_14`, and keeps the existing
+  `/tenants/:tenantId/agents/:agentId/releases` route.
+- Backend TZ-SVC-10 retrieval evidence candidate contracts are represented:
+  canonical read/create endpoints, safe candidate fields, summary fields,
+  create input, candidate-backed draft creation and support reconstruction
+  publish behavior are all captured.
+- The stage preserves the accepted Stage 10 release baseline, urgent Release
+  Evidence Requirements UI, runtime provider preflight and runtime usage
+  candidate evidence flow.
+- Adjacent Agent, Policy, Sites/Widgets, Knowledge, Capabilities and Agent
+  Config modules remain no-regression boundary only.
+- Runtime safety boundaries are explicit: no frontend-local release gate,
+  readiness, policy, billing, metering, pricing, model-routing, DB/vector/
+  provider/internal calls, fake retrieval references or historical failed
+  release patching.
+- Security boundaries are explicit: candidate cards may show only safe
+  ids/evidence values and must not render tokens, secrets, provider keys,
+  internal prompts, raw chunks, source text, transcripts, provider payloads or
+  backend-internal debug payloads.
+
+API doc note:
+- `/Volumes/Work/AI_Agents/ai_core/docs/api/portals/admin/README.md` is a
+  general Admin Portal thin-client boundary reference and does not enumerate
+  the new TZ-SVC-10 endpoints. The backend TZ-SVC-10 frontend contract is the
+  endpoint source for this urgent implementation package.
+
+Updated files:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Deferred items:
+- none.
+
+Blocked findings:
+- none.
+
+Current status:
+- `post-finalization-urgent-release-retrieval-evidence-consistency-accepted-ready-for-implementation`.
+
+Allowed next step is now:
+- `04_urgent_release_retrieval_evidence_operator_flow_implementation`.
+
+## 2026-05-29 Urgent Release Retrieval Evidence Operator Flow Implementation
+
+Prompt:
+- `04_urgent_release_retrieval_evidence_operator_flow_implementation_prompt.md`.
+
+Gate result:
+- passed. `allowed_next_step` was
+  `04_urgent_release_retrieval_evidence_operator_flow_implementation`.
+- Urgent prompt 03 consistency review was complete and accepted.
+- Stages 01-13 remain accepted/finalized.
+- Urgent Release Evidence Requirements UI remains accepted and docs-synced.
+- Blocked findings remained `none`.
+
+Implementation summary:
+- Added typed Release retrieval evidence candidate API mapping and canonical
+  `GET /portal/.../release-retrieval-evidence-candidates` plus
+  `POST /tenants/.../release-retrieval-evidence-candidates`.
+- Added Releases model state for retrieval candidates, newest-compatible
+  default selection, generation, candidate-backed draft evidence application
+  and support reconstruction publish autofill.
+- Kept managed retrieval evidence fail-closed: create requires a selected
+  candidate for explicit knowledge evidence, and publish requires compatible
+  support reconstruction evidence for the selected release.
+- Added the `Retrieval evidence релиза` UI block between release evidence
+  requirements and release history/draft controls.
+- Candidate cards render only safe ids, counts, references, status/outcome and
+  metadata returned by backend; raw queries, chunks, transcripts, provider
+  payloads, tokens and secrets are not rendered.
+- Localized known retrieval candidate labels, status/outcome values and
+  no-candidate reasons in all portal locales.
+
+Reuse/new ownership decisions:
+- `Releases/api` owns endpoint DTO mapping and payload shaping.
+- `Releases/model` owns release-page orchestration, candidate selection,
+  candidate-backed draft/publish state and disabled reasons.
+- `Releases/ui` owns display, candidate selection controls and read-only
+  managed reference fields.
+- `core/i18n/messages.ts` owns localized labels/reasons.
+- No new routes, global navigation, shared abstractions or adjacent feature
+  ownership changes were introduced.
+
+Commands run:
+- `npm run test:admin -- Releases` passed: 5 files, 36 tests.
+- `npm run test:admin` passed: 71 files, 334 tests.
+- `npm run lint:admin` passed.
+- `npm run build:admin` passed.
+- Boundary searches for hardcoded local ids, DB/vector/debug/provider internals
+  and cross-module release retrieval ownership completed. The only no-regression
+  adjacent hit was existing Knowledge support reconstruction UI.
+- `git diff --check -- apps/admin-panel/src/modules/Releases apps/admin-panel/src/core/i18n/messages.ts apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md` passed.
+
+Deferred items:
+- none.
+
+Blocked findings:
+- none.
+
+Current status:
+- `post-finalization-urgent-release-retrieval-evidence-implementation-ready-for-acceptance-review`.
+
+Allowed next step is now:
+- `05_urgent_release_retrieval_evidence_operator_flow_acceptance_review`.
+
+## 2026-05-29 Urgent Release Retrieval Evidence Operator Flow Acceptance Review
+
+Prompt:
+- `05_urgent_release_retrieval_evidence_operator_flow_acceptance_review_prompt.md`.
+
+Gate result:
+- passed. `allowed_next_step` was
+  `05_urgent_release_retrieval_evidence_operator_flow_acceptance_review`.
+- Urgent stage was recorded as implementation complete and ready for acceptance
+  review.
+- Changed files, commands run and implementation notes were recorded.
+- Blocked findings remained `none`.
+
+Findings:
+- none.
+
+Acceptance result:
+- Urgent stage is accepted. Implementation is scoped to the existing
+  `/tenants/:tenantId/agents/:agentId/releases` route and the `Releases`
+  module.
+- No new route, global navigation item, adjacent-module release evidence
+  ownership move or `stage_14` was introduced.
+- Canonical retrieval evidence candidate GET/POST endpoints are owned by
+  `Releases/api` and mapped at the API/model boundary.
+- Candidate-backed release draft state uses backend `release_candidate_id` and
+  stable references; localized labels are not submitted as backend values.
+- Managed retrieval evidence references are read-only in the normal operator
+  path and must come from a selected backend candidate.
+- Publish support reconstruction evidence is filled from the backend candidate
+  or release read model where required.
+- Failed releases remain non-publishable through the normal UI.
+- Candidate cards expose only safe ids/evidence values and metadata; tokens,
+  secrets, provider keys, internal prompts, raw queries, chunks, transcripts,
+  provider payloads, DB/vector/debug payloads and local smoke fixtures are not
+  rendered.
+- Runtime usage candidate flow remains separate and still fills only usage IDs.
+
+Architecture result:
+- `Releases/api` owns endpoint DTO mapping and payload shaping.
+- `Releases/model` owns release-page orchestration, candidate generation,
+  candidate selection and candidate-backed draft/publish state.
+- `Releases/ui` owns display and controls for the existing Releases screen.
+- Shared UI extraction was not introduced.
+- Pages/UI do not call transport directly.
+- Backend remains the source of truth for candidate eligibility, release create
+  and publish gates.
+
+Checks run during this acceptance review:
+- `rg -n "apiClient|fetch\\(|axios|release-retrieval-evidence|supportReconstruction|releaseCandidateId|evidenceStableReference|usageEvidenceCandidates" apps/admin-panel/src/modules/Releases apps/admin-panel/src/core/i18n/messages.ts`
+- `rg -n "release-retrieval-evidence|retrieval evidence|support_reconstruction|releaseCandidateId" apps/admin-panel/src/modules/Agents apps/admin-panel/src/modules/AgentPolicy apps/admin-panel/src/modules/SitesWidgets apps/admin-panel/src/modules/Knowledge apps/admin-panel/src/modules/AgentCapabilities apps/admin-panel/src/modules/AgentConfig`
+- `rg -n "api_key|secret|credential|OPENAI|provider payload|transcript|raw chunk|debug|vector|database|pgvector|opensearch" apps/admin-panel/src/modules/Releases apps/admin-panel/src/core/i18n/messages.ts`
+- `git diff --check -- apps/admin-panel/src/modules/Releases apps/admin-panel/src/core/i18n/messages.ts apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+- `npm run test:admin -- Releases` passed: 5 files, 36 tests.
+
+Previously recorded prompt 04 checks remain valid:
+- `npm run test:admin` passed: 71 files, 334 tests.
+- `npm run lint:admin` passed.
+- `npm run build:admin` passed.
+
+Updated files:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Deferred items:
+- none.
+
+Blocked findings:
+- none.
+
+Current status:
+- `post-finalization-urgent-release-retrieval-evidence-accepted-ready-for-docs-sync`.
+
+Allowed next step is now:
+- `06_urgent_release_retrieval_evidence_operator_flow_docs_sync`.
+
+## 2026-05-29 Urgent Release Retrieval Evidence Operator Flow Docs Sync
+
+Prompt:
+- `06_urgent_release_retrieval_evidence_operator_flow_docs_sync_prompt.md`.
+
+Gate result:
+- passed. `allowed_next_step` was
+  `06_urgent_release_retrieval_evidence_operator_flow_docs_sync`.
+- Urgent stage was accepted with blocked findings `none`.
+- No unresolved urgent blockers remained.
+
+Docs updated:
+- Implemented functionality checklist now records backend-approved release
+  retrieval evidence candidates, candidate-backed draft evidence, managed
+  stable references, backend `release_candidate_id`, grounded smoke-case
+  reference fill, support reconstruction publish evidence and historical
+  release fail-closed guidance.
+- App overview now describes the Releases page as owning retrieval evidence
+  candidate-backed draft/publish evidence.
+- App architecture now maps retrieval evidence candidates to
+  `src/modules/Releases` API/model ownership and keeps backend release evidence
+  as source of truth.
+- App development guide and recipes now record the repeatable rule: managed
+  knowledge release evidence uses backend-approved retrieval evidence
+  candidates for `release_candidate_id`, stable references and support
+  reconstruction references; operators must not invent these values in the
+  normal path.
+- Umbrella post-finalization urgent package table now marks Release Retrieval
+  Evidence Operator Flow as accepted and docs-synced.
+- Urgent source TZ and urgent stage TZ statuses are now
+  `accepted-docs-synced`.
+- Urgent prompt READMEs now point to the synced status and
+  `allowed_next_step = none`.
+
+Docs not changed:
+- Root docs were not changed because workspace/package/multi-app rules did not
+  change.
+- Backend docs were not edited.
+- Runtime code was not edited in this docs sync.
+
+Checks recorded:
+- Prompt 05 accepted checks remain the runtime evidence for this docs sync:
+  `npm run test:admin -- Releases` passed during acceptance review, and
+  prompt 04 recorded `npm run test:admin`, `npm run lint:admin` and
+  `npm run build:admin` passing.
+- This docs sync changed docs only; no additional runtime checks were required.
+
+Deferred items:
+- none.
+
+Blocked findings:
+- none.
+
+Current status:
+- `post-finalization-urgent-release-retrieval-evidence-docs-synced`.
+
+Allowed next step is now:
+- `none`.

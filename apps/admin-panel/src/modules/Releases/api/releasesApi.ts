@@ -84,7 +84,9 @@ export type ReleaseDetail = {
   createdAt: string
   updatedAt: string
   selectedConfigVersion: number | null
+  releaseCandidateId: string | null
   evidenceReference: string | null
+  supportReconstructionReference: string | null
   evidencePassed: boolean | null
   manualOverride: ReleaseManualOverride | null
   readinessItems: ReleaseReadinessItem[]
@@ -165,6 +167,50 @@ export type ReleaseUsageEvidenceCandidates = {
   generatedAt: string | null
 }
 
+export type ReleaseRetrievalEvidenceNoCandidateReason =
+  | 'missing_selected_config'
+  | 'managed_knowledge_not_required'
+  | 'managed_knowledge_not_ready'
+  | 'no_retrieval_evidence_candidate'
+  | 'candidate_generation_failed'
+  | 'candidate_source_unavailable'
+  | string
+
+export type ReleaseRetrievalEvidenceCandidate = {
+  candidateId: string
+  releaseCandidateId: string
+  retrievalRunId: string
+  stableReference: string
+  supportReconstructionReference: string
+  selectedConfigId: string
+  outcome: string
+  sourceIds: string[]
+  indexId: string | null
+  indexVersionId: string | null
+  sourceSetKey: string | null
+  sourceSetReadinessMarker: string | null
+  selectedChunkCount: number
+  citationCount: number
+  createdAt: string
+  status: string
+  problems: string[]
+}
+
+export type ReleaseRetrievalEvidenceCandidateSummary = {
+  candidateCount: number
+  ready: boolean
+  noCandidateReason: ReleaseRetrievalEvidenceNoCandidateReason | null
+  requiredAction: string | null
+  problems: string[]
+}
+
+export type ReleaseRetrievalEvidenceCandidates = {
+  items: ReleaseRetrievalEvidenceCandidate[]
+  summary: ReleaseRetrievalEvidenceCandidateSummary
+  noCandidateReason: ReleaseRetrievalEvidenceNoCandidateReason | null
+  generatedAt: string | null
+}
+
 export type ReleaseEvidenceRequirements = {
   agentId: string
   templateId: string
@@ -208,6 +254,12 @@ export type ReleaseCreateInput = {
   releaseCandidateId: string | null
   evidence: ReleaseEvidenceInput | null
   manualOverride: ReleaseManualOverrideInput | null
+}
+
+export type CreateReleaseRetrievalEvidenceCandidateInput = {
+  selectedConfigId: string
+  releaseCandidateId: string | null
+  idempotencyKey: string
 }
 
 export type PublishEvidenceInput = {
@@ -290,11 +342,20 @@ type ReleaseDetailPayload = {
   status?: string
   gate_mode?: string
   active?: boolean
+  release_candidate_id?: string | null
+  support_reconstruction_reference?: string | null
   created_at?: string
   updated_at?: string
   snapshot?: {
     selected_config?: { version?: number | null }
-    evaluation_evidence?: { stable_reference?: string | null; passed?: boolean | null } | null
+    release_candidate_id?: string | null
+    support_reconstruction_reference?: string | null
+    evaluation_evidence?: {
+      stable_reference?: string | null
+      passed?: boolean | null
+      release_candidate_id?: string | null
+      support_reconstruction_reference?: string | null
+    } | null
     manual_override?: ReleaseManualOverridePayload | null
     readiness_checklist?: {
       items?: ReadinessItemPayload[]
@@ -365,6 +426,41 @@ type ReleaseUsageEvidenceCandidateSummaryPayload = {
 type ReleaseUsageEvidenceCandidatesPayload = {
   items?: ReleaseUsageEvidenceCandidatePayload[]
   summary?: ReleaseUsageEvidenceCandidateSummaryPayload
+  no_candidate_reason?: string | null
+  generated_at?: string | null
+}
+
+type ReleaseRetrievalEvidenceCandidatePayload = {
+  candidate_id?: string
+  release_candidate_id?: string
+  retrieval_run_id?: string
+  stable_reference?: string
+  support_reconstruction_reference?: string
+  selected_config_id?: string
+  outcome?: string
+  source_ids?: string[]
+  index_id?: string | null
+  index_version_id?: string | null
+  source_set_key?: string | null
+  source_set_readiness_marker?: string | null
+  selected_chunk_count?: number
+  citation_count?: number
+  created_at?: string
+  status?: string
+  problems?: string[]
+}
+
+type ReleaseRetrievalEvidenceCandidateSummaryPayload = {
+  candidate_count?: number
+  ready?: boolean
+  no_candidate_reason?: string | null
+  required_action?: string | null
+  problems?: string[]
+}
+
+type ReleaseRetrievalEvidenceCandidatesPayload = {
+  items?: ReleaseRetrievalEvidenceCandidatePayload[]
+  summary?: ReleaseRetrievalEvidenceCandidateSummaryPayload
   no_candidate_reason?: string | null
   generated_at?: string | null
 }
@@ -509,6 +605,12 @@ function mapListItem(payload: ReleaseListItemPayload = {}): ReleaseListItem {
 }
 
 export function mapReleaseDetail(payload: ReleaseDetailPayload = {}): ReleaseDetail {
+  const releaseCandidateId = readNullableString(payload.release_candidate_id)
+    ?? readNullableString(payload.snapshot?.release_candidate_id)
+    ?? readNullableString(payload.snapshot?.evaluation_evidence?.release_candidate_id)
+  const supportReconstructionReference = readNullableString(payload.support_reconstruction_reference)
+    ?? readNullableString(payload.snapshot?.support_reconstruction_reference)
+    ?? readNullableString(payload.snapshot?.evaluation_evidence?.support_reconstruction_reference)
   return {
     releaseId: readString(payload.release_id),
     tenantId: readString(payload.tenant_id),
@@ -520,7 +622,9 @@ export function mapReleaseDetail(payload: ReleaseDetailPayload = {}): ReleaseDet
     createdAt: readString(payload.created_at),
     updatedAt: readString(payload.updated_at),
     selectedConfigVersion: readNullableNumber(payload.snapshot?.selected_config?.version),
+    releaseCandidateId,
     evidenceReference: readNullableString(payload.snapshot?.evaluation_evidence?.stable_reference),
+    supportReconstructionReference,
     evidencePassed: readNullableBoolean(payload.snapshot?.evaluation_evidence?.passed),
     manualOverride: mapManualOverride(payload.snapshot?.manual_override),
     readinessItems: payload.snapshot?.readiness_checklist?.items?.map(mapReadinessItem) ?? [],
@@ -607,6 +711,43 @@ export function mapReleaseUsageEvidenceCandidates(payload: ReleaseUsageEvidenceC
   }
 }
 
+function mapReleaseRetrievalEvidenceCandidate(payload: ReleaseRetrievalEvidenceCandidatePayload = {}): ReleaseRetrievalEvidenceCandidate {
+  return {
+    candidateId: readString(payload.candidate_id),
+    releaseCandidateId: readString(payload.release_candidate_id),
+    retrievalRunId: readString(payload.retrieval_run_id),
+    stableReference: readString(payload.stable_reference),
+    supportReconstructionReference: readString(payload.support_reconstruction_reference),
+    selectedConfigId: readString(payload.selected_config_id),
+    outcome: readString(payload.outcome),
+    sourceIds: readStringArray(payload.source_ids),
+    indexId: readNullableString(payload.index_id),
+    indexVersionId: readNullableString(payload.index_version_id),
+    sourceSetKey: readNullableString(payload.source_set_key),
+    sourceSetReadinessMarker: readNullableString(payload.source_set_readiness_marker),
+    selectedChunkCount: readNumber(payload.selected_chunk_count),
+    citationCount: readNumber(payload.citation_count),
+    createdAt: readString(payload.created_at),
+    status: readString(payload.status),
+    problems: readStringArray(payload.problems),
+  }
+}
+
+export function mapReleaseRetrievalEvidenceCandidates(payload: ReleaseRetrievalEvidenceCandidatesPayload = {}): ReleaseRetrievalEvidenceCandidates {
+  return {
+    items: payload.items?.map(mapReleaseRetrievalEvidenceCandidate) ?? [],
+    summary: {
+      candidateCount: readNumber(payload.summary?.candidate_count),
+      ready: readBoolean(payload.summary?.ready),
+      noCandidateReason: readNullableString(payload.summary?.no_candidate_reason),
+      requiredAction: readNullableString(payload.summary?.required_action),
+      problems: readStringArray(payload.summary?.problems),
+    },
+    noCandidateReason: readNullableString(payload.no_candidate_reason),
+    generatedAt: readNullableString(payload.generated_at),
+  }
+}
+
 export function mapReleaseEvidenceRequirements(payload: ReleaseEvidenceRequirementsPayload = {}): ReleaseEvidenceRequirements {
   return {
     agentId: readString(payload.agent_id),
@@ -677,6 +818,23 @@ export const releasesApi = {
   async getUsageEvidenceCandidates(tenantId: string, agentId: string): Promise<ReleaseUsageEvidenceCandidates> {
     const response = await apiClient.get<ReleaseUsageEvidenceCandidatesPayload>(`${PORTAL_PREFIX}/tenants/${tenantId}/agents/${agentId}/release-usage-evidence-candidates`)
     return mapReleaseUsageEvidenceCandidates(response.data)
+  },
+
+  async getRetrievalEvidenceCandidates(tenantId: string, agentId: string): Promise<ReleaseRetrievalEvidenceCandidates> {
+    const response = await apiClient.get<ReleaseRetrievalEvidenceCandidatesPayload>(`${PORTAL_PREFIX}/tenants/${tenantId}/agents/${agentId}/release-retrieval-evidence-candidates`)
+    return mapReleaseRetrievalEvidenceCandidates(response.data)
+  },
+
+  async createRetrievalEvidenceCandidate(tenantId: string, agentId: string, input: CreateReleaseRetrievalEvidenceCandidateInput): Promise<ReleaseRetrievalEvidenceCandidates> {
+    const response = await apiClient.post<ReleaseRetrievalEvidenceCandidatesPayload>(
+      `${ADMIN_PREFIX}/tenants/${tenantId}/agents/${agentId}/release-retrieval-evidence-candidates`,
+      {
+        selected_config_id: input.selectedConfigId,
+        release_candidate_id: input.releaseCandidateId,
+        idempotency_key: input.idempotencyKey,
+      },
+    )
+    return mapReleaseRetrievalEvidenceCandidates(response.data)
   },
 
   async listReleases(tenantId: string, agentId: string): Promise<ReleaseListItem[]> {

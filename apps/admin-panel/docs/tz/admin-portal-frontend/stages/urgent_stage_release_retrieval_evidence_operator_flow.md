@@ -1,6 +1,6 @@
 # Urgent Stage: Release Retrieval Evidence Operator Flow
 
-Status: `ready-for-consistency-review`
+Status: `accepted-docs-synced`
 
 ## Goal
 

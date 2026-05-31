@@ -37,8 +37,8 @@ The project is considered clean when it contains:
   baseline;
 - `src/modules/SitesWidgets` as the tenant-scoped sites/widgets, install
   guidance and public smoke evidence baseline;
-- `src/modules/Releases` as the tenant-scoped release readiness, evidence and
-  release management baseline;
+- `src/modules/Releases` as the tenant-scoped release readiness, evidence,
+  retrieval evidence candidate and release management baseline;
 - `src/modules/Conversations` as the tenant-scoped support-safe conversation
   runtime inspection baseline;
 - `src/modules/UsageBilling` as the tenant-scoped usage, metering and billing
@@ -278,19 +278,25 @@ For SitesWidgets/Releases-style tenant-scoped publication flows:
 - render install guidance from backend portal binding values such as widget
   key, site hostname, site id, widget id, allowed origin counts and binding
   readiness; do not invent runtime config locally;
-- keep release readiness, release evidence requirements, release list/detail,
-  draft/manual override, publish, rollback and disable endpoint calls and DTO
-  mapping in
+- keep release readiness, release evidence requirements, retrieval evidence
+  candidates, release list/detail, draft/manual override, publish, rollback
+  and disable endpoint calls and DTO mapping in
   `src/modules/Releases/api`;
-- keep release draft payload building, selected release state, smoke-case
+- keep release draft payload building, selected release state, retrieval
+  evidence candidate selection/generation/application state, smoke-case
   evidence matrix state, publish evidence state, backend action gating and
   mutation result feedback in `src/modules/Releases/model`;
 - treat backend readiness, evidence requirements, release gates, manual
-  override fields, evidence, active/latest release snapshots and supported
-  mutation actions as authoritative;
+  override fields, retrieval evidence candidates, release evidence,
+  active/latest release snapshots and supported mutation actions as
+  authoritative;
 - submit release evidence using backend-provided `required_change_kind` and
   every backend-required `evidence.smoke_cases[]` row; localized labels must
   stay display-only;
+- for managed knowledge release evidence, use backend-approved retrieval
+  evidence candidates for `release_candidate_id`, stable references and
+  support reconstruction references; do not let operators invent those values
+  in the normal path;
 - require confirmation for release publish, rollback and disable actions and
   include release version/status/gate/active context in the confirmation;
 - do not calculate release readiness, policy, billing or pricing locally, and

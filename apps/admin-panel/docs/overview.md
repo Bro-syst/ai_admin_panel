@@ -50,8 +50,9 @@ The portal currently includes:
 - tenant-scoped Releases page
   `/tenants/:tenantId/agents/:agentId/releases` for backend-owned release
   readiness, release evidence requirements, backend-provided smoke-case
-  evidence matrix, draft creation, manual override, publish, rollback and
-  disable actions;
+  evidence matrix, backend-approved retrieval evidence candidates,
+  candidate-backed draft evidence, manual override, publish support
+  reconstruction evidence, rollback and disable actions;
 - tenant-scoped Conversations page `/tenants/:tenantId/conversations` for
   support-safe runtime summary, chat/message/turn/current-memory inspection,
   support evidence refs and approved close action;
@@ -127,8 +128,9 @@ This is intentional. New AI Core admin sections should not appear as placeholder
   install guidance and isolated public widget smoke orchestration.
 - `Releases` - protected tenant-scoped Releases page plus backend-owned
   release readiness, release evidence requirements mapping, smoke-case
-  evidence matrix state, release history/detail mapping, draft/manual
-  override, publish, rollback and disable orchestration.
+  evidence matrix state, retrieval evidence candidate mapping/state, release
+  history/detail mapping, draft/manual override, publish, rollback and disable
+  orchestration.
 - `Conversations` - protected tenant-scoped Conversations page plus runtime
   summary read model, chat/message/turn/current-memory drill-down mapping,
   support-safe redaction handling, evidence refs and approved close

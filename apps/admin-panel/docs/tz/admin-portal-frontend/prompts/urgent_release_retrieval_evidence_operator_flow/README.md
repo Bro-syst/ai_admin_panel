@@ -38,9 +38,9 @@ Backend source TZ, read-only:
 ## Current Expected State
 
 - current status:
-  `post-finalization-urgent-release-retrieval-evidence-stage-created-ready-for-consistency-review`
+  `post-finalization-urgent-release-retrieval-evidence-docs-synced`
 - allowed next step:
-  `03_urgent_release_retrieval_evidence_operator_flow_consistency_review`
+  `none`
 - optional next step:
   `none`
 - state ledger:
@@ -50,3 +50,7 @@ Backend source TZ, read-only:
 
 The accepted 13-stage umbrella remains closed; this urgent package must not
 create `stage_14`.
+
+The urgent Release Retrieval Evidence Operator Flow stage has been
+implemented, accepted and docs-synced. Reopen it only through a new explicit
+urgent package or a scoped fix-pass recorded in `pipeline_state.md`.

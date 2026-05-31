@@ -25,6 +25,8 @@ vi.mock('@/modules/Releases/api/releasesApi', () => ({
     getReadiness: vi.fn(),
     getEvidenceRequirements: vi.fn(),
     getUsageEvidenceCandidates: vi.fn(),
+    getRetrievalEvidenceCandidates: vi.fn(),
+    createRetrievalEvidenceCandidate: vi.fn(),
     listReleases: vi.fn(),
     getRelease: vi.fn(),
   },
@@ -34,6 +36,7 @@ const getPortalAgentDetailMock = agentsApi.getPortalAgentDetail as unknown as Re
 const getReadinessMock = releasesApi.getReadiness as unknown as ReturnType<typeof vi.fn>
 const getEvidenceRequirementsMock = releasesApi.getEvidenceRequirements as unknown as ReturnType<typeof vi.fn>
 const getUsageEvidenceCandidatesMock = releasesApi.getUsageEvidenceCandidates as unknown as ReturnType<typeof vi.fn>
+const getRetrievalEvidenceCandidatesMock = releasesApi.getRetrievalEvidenceCandidates as unknown as ReturnType<typeof vi.fn>
 const listReleasesMock = releasesApi.listReleases as unknown as ReturnType<typeof vi.fn>
 const getReleaseMock = releasesApi.getRelease as unknown as ReturnType<typeof vi.fn>
 
@@ -49,7 +52,10 @@ function TestReleasesManager() {
       <span data-testid="publish-disabled-reason">{manager.publishDisabledReason ?? 'none'}</span>
       <span data-testid="usage-candidate-count">{String(manager.usageEvidenceCandidates?.items.length ?? 0)}</span>
       <span data-testid="selected-usage-candidate">{manager.selectedUsageEvidenceCandidateId || 'none'}</span>
+      <span data-testid="retrieval-candidate-count">{String(manager.retrievalEvidenceCandidates?.items.length ?? 0)}</span>
+      <span data-testid="selected-retrieval-candidate">{manager.selectedRetrievalEvidenceCandidateId || 'none'}</span>
       <span data-testid="publish-usage-chat-id">{manager.publishForm.usageChatId || 'none'}</span>
+      <span data-testid="publish-support-reference">{manager.publishForm.supportReconstructionReference || 'none'}</span>
       <span data-testid="publish-usage-turn-id">{manager.publishForm.usageConversationTurnId || 'none'}</span>
       <span data-testid="publish-usage-model-request-id">{manager.publishForm.usageModelRequestId || 'none'}</span>
       <button type="button" onClick={manager.applyUsageEvidenceCandidateToPublishForm}>apply usage candidate</button>
@@ -71,6 +77,7 @@ describe('useReleasesManager flow', () => {
     getReadinessMock.mockReset()
     getEvidenceRequirementsMock.mockReset()
     getUsageEvidenceCandidatesMock.mockReset()
+    getRetrievalEvidenceCandidatesMock.mockReset()
     listReleasesMock.mockReset()
     getReleaseMock.mockReset()
     getUsageEvidenceCandidatesMock.mockResolvedValue({
@@ -83,6 +90,36 @@ describe('useReleasesManager flow', () => {
       },
       noCandidateReason: 'no_successful_widget_conversation',
       generatedAt: '2026-05-27T10:00:00Z',
+    })
+    getRetrievalEvidenceCandidatesMock.mockResolvedValue({
+      items: [{
+        candidateId: 'candidate_1',
+        releaseCandidateId: 'release_candidate_1',
+        retrievalRunId: 'retrieval_run_1',
+        stableReference: 'knowledge-retrieval-run:run_1',
+        supportReconstructionReference: 'support_reconstruction_1',
+        selectedConfigId: 'config_1',
+        outcome: 'passed',
+        sourceIds: ['source_1'],
+        indexId: 'index_1',
+        indexVersionId: 'index_version_1',
+        sourceSetKey: 'source_set_1',
+        sourceSetReadinessMarker: 'ready',
+        selectedChunkCount: 2,
+        citationCount: 1,
+        createdAt: '2026-05-27T09:00:00Z',
+        status: 'ready',
+        problems: [],
+      }],
+      summary: {
+        candidateCount: 1,
+        ready: true,
+        noCandidateReason: null,
+        requiredAction: null,
+        problems: [],
+      },
+      noCandidateReason: null,
+      generatedAt: '2026-05-27T09:01:00Z',
     })
   })
 
@@ -180,7 +217,9 @@ describe('useReleasesManager flow', () => {
       createdAt: '2026-05-26T00:00:00Z',
       updatedAt: '2026-05-26T00:00:00Z',
       selectedConfigVersion: 1,
+      releaseCandidateId: 'release_candidate_1',
       evidenceReference: 'knowledge-retrieval-run:run_1',
+      supportReconstructionReference: 'support_reconstruction_1',
       evidencePassed: true,
       manualOverride: null,
       readinessItems: [],
@@ -196,6 +235,7 @@ describe('useReleasesManager flow', () => {
     expect(screen.getByTestId('can-publish')).toHaveTextContent('true')
     expect(getReleaseMock).toHaveBeenCalledWith('tenant_1', 'agent_1', 'release_1')
     expect(getUsageEvidenceCandidatesMock).toHaveBeenCalledWith('tenant_1', 'agent_1')
+    expect(getRetrievalEvidenceCandidatesMock).toHaveBeenCalledWith('tenant_1', 'agent_1')
   })
 
   it('loads backend usage evidence candidates and copies selected ids into publish form', async () => {
@@ -297,7 +337,9 @@ describe('useReleasesManager flow', () => {
       createdAt: '2026-05-26T00:00:00Z',
       updatedAt: '2026-05-26T00:00:00Z',
       selectedConfigVersion: 1,
+      releaseCandidateId: 'release_candidate_1',
       evidenceReference: 'knowledge-retrieval-run:run_1',
+      supportReconstructionReference: 'support_reconstruction_1',
       evidencePassed: true,
       manualOverride: null,
       readinessItems: [],
@@ -334,6 +376,8 @@ describe('useReleasesManager flow', () => {
     await waitFor(() => expect(screen.getByTestId('usage-candidate-count')).toHaveTextContent('1'))
 
     expect(screen.getByTestId('selected-usage-candidate')).toHaveTextContent('turn_1')
+    expect(screen.getByTestId('selected-retrieval-candidate')).toHaveTextContent('candidate_1')
+    expect(screen.getByTestId('publish-support-reference')).toHaveTextContent('support_reconstruction_1')
 
     fireEvent.click(screen.getByRole('button', { name: 'apply usage candidate' }))
 
@@ -442,7 +486,9 @@ describe('useReleasesManager flow', () => {
       createdAt: '2026-05-26T00:00:00Z',
       updatedAt: '2026-05-26T00:00:00Z',
       selectedConfigVersion: 1,
+      releaseCandidateId: 'release_candidate_1',
       evidenceReference: 'knowledge-retrieval-run:run_1',
+      supportReconstructionReference: 'support_reconstruction_1',
       evidencePassed: true,
       manualOverride: null,
       readinessItems: [],

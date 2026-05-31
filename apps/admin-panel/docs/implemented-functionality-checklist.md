@@ -6,7 +6,7 @@ Use this checklist to verify the current functional composition of
 `apps/admin-panel`. It describes what is already implemented and accepted in
 the Admin Portal after umbrella frontend finalization and the accepted urgent
 Agent Config operator UX fix plus the urgent Release Evidence Requirements UI
-stage.
+and Release Retrieval Evidence Operator Flow stages.
 
 ## Product Boundary
 
@@ -271,6 +271,22 @@ stage.
   or backend metadata allows a manual override path.
 - [x] Release evidence payload submits backend `required_change_kind`, stable
   reference, pass/fail state and every `evidence.smoke_cases[]` row.
+- [x] Release retrieval evidence candidates are loaded from the backend portal
+  read model on the existing Releases route.
+- [x] Operators can generate/select backend-approved retrieval evidence
+  candidates for managed knowledge release evidence.
+- [x] Managed retrieval evidence stable references are read-only/candidate-
+  backed in the normal release draft path.
+- [x] Release draft payload includes backend `release_candidate_id` when a
+  retrieval evidence candidate is applied.
+- [x] Grounded smoke-case stable references use the selected backend retrieval
+  evidence candidate where backend rules require a stable release reference
+  match.
+- [x] Publish support reconstruction evidence is filled from a compatible
+  backend retrieval candidate or release read model when managed retrieval
+  evidence is required.
+- [x] Historical releases without compatible retrieval evidence show operator
+  guidance and remain fail-closed.
 - [x] Manual override payload includes backend/default reason code, related
   missing or failed items and optional comment when used.
 - [x] Publish action with confirmation.

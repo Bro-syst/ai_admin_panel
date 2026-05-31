@@ -87,7 +87,9 @@ function renderView(manager: Partial<ReleasesManager> = {}) {
       createdAt: '2026-05-13T10:00:00Z',
       updatedAt: '2026-05-13T10:00:00Z',
       selectedConfigVersion: 7,
+      releaseCandidateId: 'release_candidate_1',
       evidenceReference: 'evidence_1',
+      supportReconstructionReference: 'support_1',
       evidencePassed: true,
       manualOverride: { used: false, status: null, reasonCode: null, approvalActorId: null, correlationId: null, relatedMissingOrFailedItems: [], comment: null },
       readinessItems: [{ itemId: 'config', ownerArea: 'config', state: 'ready', blocking: true, detail: 'Config ready', requiredAction: null }],
@@ -136,6 +138,59 @@ function renderView(manager: Partial<ReleasesManager> = {}) {
     },
     selectedUsageEvidenceCandidateId: '',
     selectedUsageEvidenceCandidate: null,
+    retrievalEvidenceCandidates: {
+      items: [{
+        candidateId: 'candidate_1',
+        releaseCandidateId: 'release_candidate_1',
+        retrievalRunId: 'retrieval_run_1',
+        stableReference: 'evidence_1',
+        supportReconstructionReference: 'support_1',
+        selectedConfigId: 'config_7',
+        outcome: 'passed',
+        sourceIds: ['source_1'],
+        indexId: 'index_1',
+        indexVersionId: 'index_version_1',
+        sourceSetKey: 'source_set_1',
+        sourceSetReadinessMarker: 'ready',
+        selectedChunkCount: 3,
+        citationCount: 2,
+        createdAt: '2026-05-27T09:00:00Z',
+        status: 'ready',
+        problems: [],
+      }],
+      summary: {
+        candidateCount: 1,
+        ready: true,
+        noCandidateReason: null,
+        requiredAction: null,
+        problems: [],
+      },
+      noCandidateReason: null,
+      generatedAt: '2026-05-27T09:01:00Z',
+    },
+    selectedRetrievalEvidenceCandidateId: 'candidate_1',
+    selectedRetrievalEvidenceCandidate: {
+      candidateId: 'candidate_1',
+      releaseCandidateId: 'release_candidate_1',
+      retrievalRunId: 'retrieval_run_1',
+      stableReference: 'evidence_1',
+      supportReconstructionReference: 'support_1',
+      selectedConfigId: 'config_7',
+      outcome: 'passed',
+      sourceIds: ['source_1'],
+      indexId: 'index_1',
+      indexVersionId: 'index_version_1',
+      sourceSetKey: 'source_set_1',
+      sourceSetReadinessMarker: 'ready',
+      selectedChunkCount: 3,
+      citationCount: 2,
+      createdAt: '2026-05-27T09:00:00Z',
+      status: 'ready',
+      problems: [],
+    },
+    compatibleRetrievalEvidenceCandidateForSelectedRelease: null,
+    managedRetrievalEvidenceRequired: true,
+    selectedReleaseMissingRetrievalEvidence: false,
     mutationResult: null,
     canManageReleases: true,
     canCreateRelease: true,
@@ -155,18 +210,25 @@ function renderView(manager: Partial<ReleasesManager> = {}) {
     },
     isLoading: false,
     isLoadingUsageEvidenceCandidates: false,
+    isLoadingRetrievalEvidenceCandidates: false,
+    isGeneratingRetrievalEvidenceCandidate: false,
     isMutating: false,
     errorMessage: null,
     usageEvidenceCandidatesError: null,
+    retrievalEvidenceCandidatesError: null,
     formError: null,
     notice: null,
     loadReleases: vi.fn(),
     loadUsageEvidenceCandidates: vi.fn(),
+    loadRetrievalEvidenceCandidates: vi.fn(),
     selectRelease: vi.fn(),
     setDraftForm: vi.fn(),
     setPublishForm: vi.fn(),
     setSelectedUsageEvidenceCandidateId: vi.fn(),
+    setSelectedRetrievalEvidenceCandidateId: vi.fn(),
     applyEvidenceReferenceToGroundedCases: vi.fn(),
+    applyRetrievalEvidenceCandidateToDraftForm: vi.fn(),
+    generateRetrievalEvidenceCandidate: vi.fn(),
     applyUsageEvidenceCandidateToPublishForm: vi.fn(),
     fillDefaultSmokeOutcomes: vi.fn(),
     createRelease: vi.fn(),
@@ -482,6 +544,159 @@ describe('ReleasesView', () => {
 
     expect(setSelectedUsageEvidenceCandidateId).toHaveBeenCalledWith('turn_2')
     expect(applyUsageEvidenceCandidateToPublishForm).toHaveBeenCalled()
+  })
+
+  it('renders retrieval evidence candidates safely and applies the selected candidate to draft evidence', async () => {
+    const user = userEvent.setup()
+    const setSelectedRetrievalEvidenceCandidateId = vi.fn()
+    const applyRetrievalEvidenceCandidateToDraftForm = vi.fn()
+
+    renderView({
+      retrievalEvidenceCandidates: {
+        items: [{
+          candidateId: 'candidate_1',
+          releaseCandidateId: 'release_candidate_1',
+          retrievalRunId: 'retrieval_run_1',
+          stableReference: 'knowledge-retrieval-run:run_1',
+          supportReconstructionReference: 'support-reconstruction:run_1',
+          selectedConfigId: 'config_7',
+          outcome: 'passed',
+          sourceIds: ['source_1'],
+          indexId: 'index_1',
+          indexVersionId: 'index_version_1',
+          sourceSetKey: 'approved_faq',
+          sourceSetReadinessMarker: 'ready',
+          selectedChunkCount: 3,
+          citationCount: 2,
+          createdAt: '2026-05-28T10:00:00Z',
+          status: 'ready',
+          problems: [],
+          rawQuery: 'must-not-leak',
+          chunks: [{ text: 'must-not-leak' }],
+        }, {
+          candidateId: 'candidate_2',
+          releaseCandidateId: 'release_candidate_2',
+          retrievalRunId: 'retrieval_run_2',
+          stableReference: 'knowledge-retrieval-run:run_2',
+          supportReconstructionReference: 'support-reconstruction:run_2',
+          selectedConfigId: 'config_7',
+          outcome: 'passed',
+          sourceIds: ['source_2'],
+          indexId: 'index_2',
+          indexVersionId: 'index_version_2',
+          sourceSetKey: 'approved_support',
+          sourceSetReadinessMarker: 'ready',
+          selectedChunkCount: 2,
+          citationCount: 1,
+          createdAt: '2026-05-28T11:00:00Z',
+          status: 'ready',
+          problems: [],
+        }],
+        summary: {
+          candidateCount: 2,
+          ready: true,
+          noCandidateReason: null,
+          requiredAction: null,
+          problems: [],
+        },
+        noCandidateReason: null,
+        generatedAt: '2026-05-28T11:01:00Z',
+      },
+      selectedRetrievalEvidenceCandidateId: 'candidate_1',
+      setSelectedRetrievalEvidenceCandidateId,
+      applyRetrievalEvidenceCandidateToDraftForm,
+    } as Partial<ReleasesManager>)
+
+    expect(screen.getByText('Release retrieval evidence')).toBeInTheDocument()
+    expect(screen.getByText('Stable reference: knowledge-retrieval-run:run_1')).toBeInTheDocument()
+    expect(screen.getByText('Support reconstruction reference: support-reconstruction:run_1')).toBeInTheDocument()
+    expect(screen.getAllByText('Retrieval run ID').length).toBeGreaterThan(0)
+    expect(screen.getByText('retrieval_run_1')).toBeInTheDocument()
+    expect(screen.queryByText('must-not-leak')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('radio', { name: /knowledge-retrieval-run:run_2/i }))
+    await user.click(screen.getAllByRole('button', { name: 'Apply retrieval evidence to knowledge checks' })[0])
+
+    expect(setSelectedRetrievalEvidenceCandidateId).toHaveBeenCalledWith('candidate_2')
+    expect(applyRetrievalEvidenceCandidateToDraftForm).toHaveBeenCalled()
+  })
+
+  it('shows retrieval no-candidate reasons and generation action without inventing references', async () => {
+    const user = userEvent.setup()
+    const generateRetrievalEvidenceCandidate = vi.fn()
+
+    renderView({
+      retrievalEvidenceCandidates: {
+        items: [],
+        summary: {
+          candidateCount: 0,
+          ready: false,
+          noCandidateReason: 'managed_knowledge_not_ready',
+          requiredAction: 'Finish knowledge indexing.',
+          problems: ['source_set_pending'],
+        },
+        noCandidateReason: 'managed_knowledge_not_ready',
+        generatedAt: '2026-05-28T11:01:00Z',
+      },
+      selectedRetrievalEvidenceCandidate: null,
+      selectedRetrievalEvidenceCandidateId: '',
+      draftForm: {
+        selectedConfigId: 'config_7',
+        releaseCandidateId: '',
+        evidenceStableReference: '',
+        evidenceChangeKind: 'retrieval_behavior_future',
+        evidencePassed: true,
+        smokeCases: [{
+          caseId: 'sales_support.product_grounded',
+          required: true,
+          groundedReferenceRequired: true,
+          stableReferenceMustMatchReleaseReference: true,
+          labelKey: 'release.evidence.sales_support.product_grounded.label',
+          descriptionKey: 'release.evidence.sales_support.product_grounded.description',
+          passed: false,
+          stableReference: '',
+          outcome: '',
+        }],
+        manualOverrideSelected: false,
+        manualOverrideReasonCode: '',
+        manualOverrideItemsText: '',
+        manualOverrideComment: '',
+      },
+      canCreateRelease: false,
+      createDisabledReason: 'Retrieval evidence is required. Generate and apply a backend candidate before creating a release.',
+      generateRetrievalEvidenceCandidate,
+    })
+
+    expect(screen.getByText('Knowledge indexing or retrieval readiness is not complete yet. Finish knowledge setup, then retry candidate generation.')).toBeInTheDocument()
+    expect(screen.getByText('Required action: Finish knowledge indexing.')).toBeInTheDocument()
+    expect(screen.getByText('source_set_pending')).toBeInTheDocument()
+    expect(screen.getByLabelText('Evidence reference')).toBeDisabled()
+    expect(screen.getByLabelText('Product answer is grounded Stable reference')).toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: 'Generate retrieval evidence' }))
+
+    expect(generateRetrievalEvidenceCandidate).toHaveBeenCalled()
+  })
+
+  it('keeps support reconstruction reference read-only for managed retrieval evidence and warns on historical releases', () => {
+    renderView({
+      selectedReleaseMissingRetrievalEvidence: true,
+      publishForm: {
+        supportReconstructionReference: '',
+        usageChatId: '',
+        usageConversationTurnId: '',
+        usageModelRequestId: '',
+        billingExportReference: '',
+        releaseReportReference: 'report_1',
+      },
+      canPublishSelected: false,
+      publishDisabledReason: 'Publish requires support reconstruction evidence from a compatible retrieval evidence candidate.',
+    })
+
+    expect(screen.getByLabelText('Support reconstruction reference')).toBeDisabled()
+    expect(screen.getByText('Autofilled only from a compatible backend retrieval evidence candidate for the selected release.')).toBeInTheDocument()
+    expect(screen.getByText('This release has no compatible retrieval evidence candidate. Create a new release draft with retrieval evidence before publishing.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Publish' })).toBeDisabled()
   })
 
   it('shows backend no-candidate reasons without inventing usage ids', () => {

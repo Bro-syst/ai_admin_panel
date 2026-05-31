@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildReleaseDraftInput, deriveReleasesCanManage, hasCompleteExplicitEvidence } from '@/modules/Releases/model/useReleasesManager'
+import { buildReleaseDraftInput, deriveReleasesCanManage, hasCompleteExplicitEvidence, requiresManagedRetrievalEvidence, selectRetrievalEvidenceCandidateId } from '@/modules/Releases/model/useReleasesManager'
 import type { ReleaseEvidenceRequirements } from '@/modules/Releases/api/releasesApi'
 
 const requirements: ReleaseEvidenceRequirements = {
@@ -100,5 +100,66 @@ describe('deriveReleasesCanManage', () => {
         smokeCases: [{ caseId: 'sales_support.product_grounded', stableReference: 'knowledge-retrieval-run:run_1' }],
       },
     })
+  })
+
+  it('detects managed retrieval evidence requirements from backend rules', () => {
+    expect(requiresManagedRetrievalEvidence(requirements)).toBe(true)
+    expect(requiresManagedRetrievalEvidence({
+      ...requirements,
+      stableReferenceRule: 'stage18_agent_config_release_evidence_required',
+      stableReferencePrefix: null,
+      requiredSmokeCases: [],
+    })).toBe(false)
+  })
+
+  it('selects the newest compatible retrieval evidence candidate by default', () => {
+    expect(selectRetrievalEvidenceCandidateId('', {
+      items: [{
+        candidateId: 'old',
+        releaseCandidateId: 'release_candidate_old',
+        retrievalRunId: 'run_old',
+        stableReference: 'knowledge-retrieval-run:old',
+        supportReconstructionReference: 'support_old',
+        selectedConfigId: 'config_1',
+        outcome: 'passed',
+        sourceIds: [],
+        indexId: null,
+        indexVersionId: null,
+        sourceSetKey: null,
+        sourceSetReadinessMarker: null,
+        selectedChunkCount: 0,
+        citationCount: 0,
+        createdAt: '2026-05-27T10:00:00Z',
+        status: 'ready',
+        problems: [],
+      }, {
+        candidateId: 'new',
+        releaseCandidateId: 'release_candidate_new',
+        retrievalRunId: 'run_new',
+        stableReference: 'knowledge-retrieval-run:new',
+        supportReconstructionReference: 'support_new',
+        selectedConfigId: 'config_1',
+        outcome: 'passed',
+        sourceIds: [],
+        indexId: null,
+        indexVersionId: null,
+        sourceSetKey: null,
+        sourceSetReadinessMarker: null,
+        selectedChunkCount: 0,
+        citationCount: 0,
+        createdAt: '2026-05-28T10:00:00Z',
+        status: 'ready',
+        problems: [],
+      }],
+      summary: {
+        candidateCount: 2,
+        ready: true,
+        noCandidateReason: null,
+        requiredAction: null,
+        problems: [],
+      },
+      noCandidateReason: null,
+      generatedAt: '2026-05-28T10:01:00Z',
+    })).toBe('new')
   })
 })

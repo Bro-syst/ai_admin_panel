@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useI18n } from '@/core/i18n/useI18n'
-import type { ReleaseDetail, RuntimeProviderPreflightRequirement } from '@/modules/Releases/api/releasesApi'
+import type { ReleaseDetail, ReleaseRetrievalEvidenceCandidate, RuntimeProviderPreflightRequirement } from '@/modules/Releases/api/releasesApi'
 import { getUsageEvidenceNoCandidateReasonKey } from '@/modules/Releases/model/usageEvidenceCandidates'
 import type { ReleasesManager } from '@/modules/Releases/model/useReleasesManager'
 import { InfoGrid, ListBlock, MutationResultBlock, StatusBadge } from '@/shared/ui/EntityInfo'
@@ -27,6 +27,20 @@ function translateSmokeCaseId(t: (key: string) => string, caseId: string) {
   const labelKey = `release.evidence.${caseId}.label`
   const label = t(labelKey)
   return label === labelKey ? caseId : label
+}
+
+function getRetrievalEvidenceNoCandidateReasonKey(reason: string | null | undefined) {
+  const knownReasons = new Set([
+    'missing_selected_config',
+    'managed_knowledge_not_required',
+    'managed_knowledge_not_ready',
+    'no_retrieval_evidence_candidate',
+    'candidate_generation_failed',
+    'candidate_source_unavailable',
+  ])
+  return reason && knownReasons.has(reason)
+    ? `releases.retrieval_evidence.no_candidate_reason.${reason}`
+    : 'releases.retrieval_evidence.no_candidate_reason.unknown'
 }
 
 function formatKnownReadinessDetail(t: (key: string) => string, itemId: string, fallback: string) {
@@ -110,10 +124,134 @@ function RuntimeProviderPreflightSafeBlock({ requirements }: { requirements: Run
   )
 }
 
+function RetrievalEvidenceCandidateCard({
+  candidate,
+  selected,
+  onSelect,
+}: {
+  candidate: ReleaseRetrievalEvidenceCandidate
+  selected: boolean
+  onSelect: () => void
+}) {
+  const { t } = useI18n()
+
+  return (
+    <label className="grid cursor-pointer gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 text-sm text-[var(--text)] has-[:checked]:border-[var(--primary)]">
+      <span className="flex items-start gap-2">
+        <input
+          type="radio"
+          name="release-retrieval-evidence-candidate"
+          checked={selected}
+          onChange={onSelect}
+        />
+        <span className="grid gap-1">
+          <span className="font-bold">{t('releases.retrieval_evidence.candidate')}</span>
+          <span className="break-all text-xs text-[var(--text-muted)]">{t('releases.retrieval_evidence.stable_reference')}: {candidate.stableReference}</span>
+          <span className="break-all text-xs text-[var(--text-muted)]">{t('releases.retrieval_evidence.support_reference')}: {candidate.supportReconstructionReference}</span>
+        </span>
+      </span>
+      <InfoGrid
+        items={[
+          { label: t('releases.retrieval_evidence.release_candidate_id'), value: candidate.releaseCandidateId || t('agents.empty_value') },
+          { label: t('releases.retrieval_evidence.retrieval_run_id'), value: candidate.retrievalRunId || t('agents.empty_value') },
+          { label: t('releases.retrieval_evidence.selected_config_id'), value: candidate.selectedConfigId || t('agents.empty_value') },
+          { label: t('releases.retrieval_evidence.status'), value: translateBackendValue(t, 'releases.retrieval_evidence.status_value', candidate.status) },
+          { label: t('releases.retrieval_evidence.outcome'), value: translateBackendValue(t, 'releases.retrieval_evidence.outcome_value', candidate.outcome) },
+          { label: t('releases.retrieval_evidence.selected_chunk_count'), value: candidate.selectedChunkCount },
+          { label: t('releases.retrieval_evidence.citation_count'), value: candidate.citationCount },
+          { label: t('releases.retrieval_evidence.created_at'), value: candidate.createdAt || t('agents.empty_value') },
+          { label: t('releases.retrieval_evidence.source_ids'), value: candidate.sourceIds.length ? candidate.sourceIds.join(', ') : t('agents.empty_value') },
+          { label: t('releases.retrieval_evidence.index_id'), value: candidate.indexId ?? t('agents.empty_value') },
+          { label: t('releases.retrieval_evidence.index_version_id'), value: candidate.indexVersionId ?? t('agents.empty_value') },
+          { label: t('releases.retrieval_evidence.source_set_key'), value: candidate.sourceSetKey ?? t('agents.empty_value') },
+          { label: t('releases.retrieval_evidence.source_set_readiness_marker'), value: candidate.sourceSetReadinessMarker ?? t('agents.empty_value') },
+        ]}
+      />
+      {candidate.problems.length ? <ListBlock title={t('releases.retrieval_evidence.problems')} values={candidate.problems} /> : null}
+    </label>
+  )
+}
+
+function RetrievalEvidenceBlock({ manager, disabled }: { manager: ReleasesManager; disabled: boolean }) {
+  const { t } = useI18n()
+  const candidates = manager.retrievalEvidenceCandidates
+  const noCandidateReasonKey = getRetrievalEvidenceNoCandidateReasonKey(candidates?.noCandidateReason ?? candidates?.summary.noCandidateReason)
+  const isUnknownReason = noCandidateReasonKey === 'releases.retrieval_evidence.no_candidate_reason.unknown'
+  const rawReason = candidates?.noCandidateReason ?? candidates?.summary.noCandidateReason
+
+  return (
+    <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)]">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h3 className="text-sm font-bold text-[var(--text)]">{t('releases.retrieval_evidence.title')}</h3>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">{t('releases.retrieval_evidence.help')}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => void manager.loadRetrievalEvidenceCandidates()}
+            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[var(--border)] px-3 text-sm font-semibold text-[var(--text)] hover:border-[var(--primary)] disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-muted)]"
+            disabled={manager.isLoadingRetrievalEvidenceCandidates}
+          >
+            {manager.isLoadingRetrievalEvidenceCandidates ? t('common.loading') : t('common.retry')}
+          </button>
+          <button
+            type="button"
+            onClick={() => void manager.generateRetrievalEvidenceCandidate()}
+            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[var(--primary)] bg-[var(--primary)] px-3 text-sm font-bold text-white disabled:border-[var(--border)] disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-muted)]"
+            disabled={disabled || manager.isGeneratingRetrievalEvidenceCandidate}
+          >
+            {manager.isGeneratingRetrievalEvidenceCandidate ? t('releases.retrieval_evidence.generating') : t('releases.retrieval_evidence.generate')}
+          </button>
+        </div>
+      </div>
+
+      {manager.isLoadingRetrievalEvidenceCandidates ? (
+        <p className="mt-3 text-sm text-[var(--text-muted)]">{t('common.loading')}</p>
+      ) : manager.retrievalEvidenceCandidatesError ? (
+        <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">{manager.retrievalEvidenceCandidatesError}</p>
+      ) : candidates?.items.length ? (
+        <>
+          <div className="mt-3 grid gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] sm:grid-cols-2">
+            <span>{t('releases.retrieval_evidence.count')}: {candidates.summary.candidateCount}</span>
+            <span>{t('releases.retrieval_evidence.generated_at')}: {candidates.generatedAt ?? t('agents.empty_value')}</span>
+          </div>
+          <div className="mt-3 grid gap-3 xl:grid-cols-2">
+            {candidates.items.map((candidate) => (
+              <RetrievalEvidenceCandidateCard
+                key={candidate.candidateId}
+                candidate={candidate}
+                selected={manager.selectedRetrievalEvidenceCandidateId === candidate.candidateId}
+                onSelect={() => manager.setSelectedRetrievalEvidenceCandidateId(candidate.candidateId)}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            disabled={disabled || !manager.selectedRetrievalEvidenceCandidate}
+            onClick={manager.applyRetrievalEvidenceCandidateToDraftForm}
+            className="mt-3 inline-flex min-h-10 items-center justify-center rounded-xl border border-[var(--primary)] bg-[var(--primary)] px-4 text-sm font-bold text-white disabled:border-[var(--border)] disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-muted)]"
+          >
+            {t('releases.retrieval_evidence.apply')}
+          </button>
+        </>
+      ) : candidates ? (
+        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+          <p>{t(noCandidateReasonKey)}</p>
+          {isUnknownReason && rawReason ? <p className="mt-1 break-all text-xs">{t('releases.retrieval_evidence.no_candidate_reason_value')}: {rawReason}</p> : null}
+          {candidates.summary.requiredAction ? <p className="mt-1">{t('releases.retrieval_evidence.required_action')}: {candidates.summary.requiredAction}</p> : null}
+          {candidates.summary.problems.length ? <ListBlock title={t('releases.retrieval_evidence.problems')} values={candidates.summary.problems} /> : null}
+          {candidates.generatedAt ? <p className="mt-1 text-xs">{t('releases.retrieval_evidence.generated_at')}: {candidates.generatedAt}</p> : null}
+        </div>
+      ) : null}
+    </section>
+  )
+}
+
 function SmokeCaseMatrix({ manager, disabled }: { manager: ReleasesManager; disabled: boolean }) {
   const { t } = useI18n()
   const evidenceReference = manager.draftForm.evidenceStableReference.trim()
-  const canApplyReference = Boolean(evidenceReference) && manager.draftForm.smokeCases.some((smokeCase) => smokeCase.groundedReferenceRequired)
+  const canApplyReference = Boolean(manager.managedRetrievalEvidenceRequired ? manager.selectedRetrievalEvidenceCandidate : evidenceReference) && manager.draftForm.smokeCases.some((smokeCase) => smokeCase.groundedReferenceRequired)
 
   if (!manager.draftForm.smokeCases.length) {
     return manager.evidenceRequirements ? (
@@ -133,11 +271,11 @@ function SmokeCaseMatrix({ manager, disabled }: { manager: ReleasesManager; disa
         <button
           type="button"
           disabled={disabled || !canApplyReference}
-          title={!canApplyReference ? t('releases.fill_release_reference_first') : undefined}
+          title={!canApplyReference ? (manager.managedRetrievalEvidenceRequired ? t('releases.retrieval_evidence.select_candidate_first') : t('releases.fill_release_reference_first')) : undefined}
           onClick={manager.applyEvidenceReferenceToGroundedCases}
           className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[var(--border)] px-3 text-sm font-semibold text-[var(--text)] hover:border-[var(--primary)] disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-muted)]"
         >
-          {t('releases.apply_reference_to_grounded')}
+          {manager.managedRetrievalEvidenceRequired ? t('releases.retrieval_evidence.apply') : t('releases.apply_reference_to_grounded')}
         </button>
       </div>
       <div className="mt-4 grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
@@ -163,7 +301,7 @@ function SmokeCaseMatrix({ manager, disabled }: { manager: ReleasesManager; disa
               <div className="mt-3 grid gap-2">
                 <input aria-label={`${translateBackendKey(t, smokeCase.labelKey)} ${t('releases.smoke_case_outcome')}`} value={smokeCase.outcome} disabled={disabled} placeholder={t('releases.smoke_case_outcome')} onChange={(event) => manager.setDraftForm((current) => ({ ...current, smokeCases: current.smokeCases.map((item, itemIndex) => itemIndex === index ? { ...item, outcome: event.target.value, passed: event.target.value.trim() ? item.passed : false } : item) }))} className="h-10 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] disabled:bg-[var(--surface-muted)]" />
                 {smokeCase.groundedReferenceRequired ? (
-                  <input aria-label={`${translateBackendKey(t, smokeCase.labelKey)} ${t('releases.smoke_case_reference')}`} value={smokeCase.stableReference} disabled={disabled} placeholder={smokeCase.stableReferenceMustMatchReleaseReference ? t('releases.smoke_case_reference_match') : t('releases.smoke_case_reference')} onChange={(event) => manager.setDraftForm((current) => ({ ...current, smokeCases: current.smokeCases.map((item, itemIndex) => itemIndex === index ? { ...item, stableReference: event.target.value } : item) }))} className="h-10 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] disabled:bg-[var(--surface-muted)]" />
+                  <input aria-label={`${translateBackendKey(t, smokeCase.labelKey)} ${t('releases.smoke_case_reference')}`} value={smokeCase.stableReference} disabled={disabled || manager.managedRetrievalEvidenceRequired} placeholder={manager.managedRetrievalEvidenceRequired ? t('releases.retrieval_evidence.select_candidate_first') : smokeCase.stableReferenceMustMatchReleaseReference ? t('releases.smoke_case_reference_match') : t('releases.smoke_case_reference')} onChange={(event) => manager.setDraftForm((current) => ({ ...current, smokeCases: current.smokeCases.map((item, itemIndex) => itemIndex === index ? { ...item, stableReference: event.target.value } : item) }))} className="h-10 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] disabled:bg-[var(--surface-muted)]" />
                 ) : null}
               </div>
             </div>
@@ -341,6 +479,8 @@ export function ReleasesView({ manager }: { manager: ReleasesManager }) {
             </section>
           ) : null}
 
+          <RetrievalEvidenceBlock manager={manager} disabled={disabled} />
+
           <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
             <div className="space-y-4">
               <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)]">
@@ -376,7 +516,7 @@ export function ReleasesView({ manager }: { manager: ReleasesManager }) {
                 <div className="mt-3 grid gap-3">
                   <input aria-label={t('releases.selected_config_id')} title={permissionTooltip} value={manager.draftForm.selectedConfigId} disabled={disabled} placeholder={t('releases.selected_config_id')} onChange={(event) => manager.setDraftForm((current) => ({ ...current, selectedConfigId: event.target.value }))} className="h-10 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] disabled:bg-[var(--surface-muted)]" />
                   <div>
-                    <input aria-label={t('releases.evidence_reference')} title={permissionTooltip} value={manager.draftForm.evidenceStableReference} disabled={disabled} placeholder={evidenceRequirements?.stableReferencePrefix ? `${evidenceRequirements.stableReferencePrefix}...` : t('releases.evidence_reference')} onChange={(event) => manager.setDraftForm((current) => ({ ...current, evidenceStableReference: event.target.value }))} className="h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] disabled:bg-[var(--surface-muted)]" />
+                    <input aria-label={t('releases.evidence_reference')} title={permissionTooltip} value={manager.draftForm.evidenceStableReference} disabled={disabled || manager.managedRetrievalEvidenceRequired} placeholder={manager.managedRetrievalEvidenceRequired ? t('releases.retrieval_evidence.select_candidate_first') : evidenceRequirements?.stableReferencePrefix ? `${evidenceRequirements.stableReferencePrefix}...` : t('releases.evidence_reference')} onChange={(event) => manager.setDraftForm((current) => ({ ...current, evidenceStableReference: event.target.value }))} className="h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] disabled:bg-[var(--surface-muted)]" />
                     <p className="mt-1 text-xs text-[var(--text-muted)]">{t('releases.stable_reference_help')}: {translateBackendValue(t, 'releases.stable_reference_rule_value', evidenceRequirements?.stableReferenceRule)}</p>
                   </div>
                   {evidenceRequirements?.requiredChangeKind ? (
@@ -473,11 +613,17 @@ export function ReleasesView({ manager }: { manager: ReleasesManager }) {
                 {publishFields.map((field) => (
                   <label key={field.name} className="grid gap-1">
                     <span className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">{field.label}</span>
-                    <input aria-label={field.label} value={manager.publishForm[field.name]} disabled={disabled} placeholder={field.label} onChange={(event) => manager.setPublishForm((current) => ({ ...current, [field.name]: event.target.value }))} className="h-10 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] disabled:bg-[var(--surface-muted)]" />
+                    <input aria-label={field.label} value={manager.publishForm[field.name]} disabled={disabled || (field.name === 'supportReconstructionReference' && manager.managedRetrievalEvidenceRequired)} placeholder={field.name === 'supportReconstructionReference' && manager.managedRetrievalEvidenceRequired ? t('releases.retrieval_evidence.select_candidate_first') : field.label} onChange={(event) => manager.setPublishForm((current) => ({ ...current, [field.name]: event.target.value }))} className="h-10 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] disabled:bg-[var(--surface-muted)]" />
                     {'hint' in field && field.hint ? <span className="text-xs text-[var(--text-muted)]">{field.hint}</span> : null}
+                    {field.name === 'supportReconstructionReference' && manager.managedRetrievalEvidenceRequired ? <span className="text-xs text-[var(--text-muted)]">{t('releases.publish_support_reference_candidate_hint')}</span> : null}
                   </label>
                 ))}
               </div>
+              {manager.selectedReleaseMissingRetrievalEvidence ? (
+                <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+                  {t('releases.historical_release_without_retrieval_candidate')}
+                </p>
+              ) : null}
               <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>

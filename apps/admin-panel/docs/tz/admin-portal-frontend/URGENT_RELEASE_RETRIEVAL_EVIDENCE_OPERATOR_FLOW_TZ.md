@@ -1,6 +1,6 @@
 # Urgent TZ: Release Retrieval Evidence Operator Flow
 
-Status: `ready-for-consistency-review`
+Status: `accepted-docs-synced`
 
 This is a post-finalization frontend urgent TZ for the existing Admin Portal
 release screen. It adapts the backend source TZ:

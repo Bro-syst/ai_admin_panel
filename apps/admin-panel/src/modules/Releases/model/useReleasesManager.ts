@@ -12,6 +12,8 @@ import {
   type ReleaseEvidenceRequirements,
   type ReleaseListItem,
   type ReleaseReadiness,
+  type ReleaseRetrievalEvidenceCandidate,
+  type ReleaseRetrievalEvidenceCandidates,
   type ReleaseUsageEvidenceCandidate,
   type ReleaseUsageEvidenceCandidates,
 } from '@/modules/Releases/api/releasesApi'
@@ -217,6 +219,68 @@ function getMissingRequiredPublishEvidenceFields(form: PublishEvidenceForm, requ
     })
 }
 
+export function requiresManagedRetrievalEvidence(requirements: ReleaseEvidenceRequirements | null): boolean {
+  if (!requirements?.evidenceRequired) return false
+  return Boolean(
+    requirements.stableReferenceRule === 'knowledge_retrieval_run_required_for_grounded_cases' ||
+    requirements.stableReferencePrefix?.startsWith('knowledge-retrieval-run:') ||
+    requirements.requiredSmokeCases.some((smokeCase) => smokeCase.groundedReferenceRequired),
+  )
+}
+
+export function selectRetrievalEvidenceCandidateId(current: string, candidates: ReleaseRetrievalEvidenceCandidates | null): string {
+  if (!candidates?.items.length) return ''
+  if (current && candidates.items.some((candidate) => candidate.candidateId === current)) return current
+  return [...candidates.items].sort((left, right) => {
+    const leftTime = Date.parse(left.createdAt || '')
+    const rightTime = Date.parse(right.createdAt || '')
+    return (Number.isFinite(rightTime) ? rightTime : 0) - (Number.isFinite(leftTime) ? leftTime : 0)
+  })[0]?.candidateId ?? ''
+}
+
+function applyRetrievalEvidenceCandidateToDraft(
+  form: ReleaseDraftForm,
+  candidate: ReleaseRetrievalEvidenceCandidate,
+  requirements: ReleaseEvidenceRequirements | null,
+): ReleaseDraftForm {
+  return {
+    ...form,
+    releaseCandidateId: candidate.releaseCandidateId,
+    evidenceStableReference: candidate.stableReference,
+    evidenceChangeKind: requirements?.requiredChangeKind ?? form.evidenceChangeKind,
+    smokeCases: form.smokeCases.map((smokeCase) => smokeCase.groundedReferenceRequired
+      ? { ...smokeCase, stableReference: candidate.stableReference }
+      : smokeCase),
+  }
+}
+
+function isRetrievalCandidateAppliedToDraft(
+  form: ReleaseDraftForm,
+  candidate: ReleaseRetrievalEvidenceCandidate | null,
+) {
+  if (!candidate) return false
+  return form.releaseCandidateId.trim() === candidate.releaseCandidateId && form.evidenceStableReference.trim() === candidate.stableReference
+}
+
+function isRetrievalCandidateCompatibleWithRelease(
+  release: ReleaseDetail | null,
+  candidate: ReleaseRetrievalEvidenceCandidate,
+  rememberedReleaseCandidateId: string | null,
+) {
+  if (!release) return false
+  if (release.releaseCandidateId && release.releaseCandidateId === candidate.releaseCandidateId) return true
+  if (release.evidenceReference && release.evidenceReference === candidate.stableReference) return true
+  if (rememberedReleaseCandidateId && rememberedReleaseCandidateId === candidate.releaseCandidateId) return true
+  return false
+}
+
+function newRetrievalEvidenceIdempotencyKey() {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return `release_retrieval_evidence_${crypto.randomUUID()}`
+  }
+  return `release_retrieval_evidence_${Date.now()}`
+}
+
 export function useReleasesManager(tenantId: string, agentId: string) {
   const { adminUser } = useAuth()
   const { t } = useI18n()
@@ -225,6 +289,9 @@ export function useReleasesManager(tenantId: string, agentId: string) {
   const [evidenceRequirements, setEvidenceRequirements] = useState<ReleaseEvidenceRequirements | null>(null)
   const [usageEvidenceCandidates, setUsageEvidenceCandidates] = useState<ReleaseUsageEvidenceCandidates | null>(null)
   const [selectedUsageEvidenceCandidateId, setSelectedUsageEvidenceCandidateId] = useState<string>('')
+  const [retrievalEvidenceCandidates, setRetrievalEvidenceCandidates] = useState<ReleaseRetrievalEvidenceCandidates | null>(null)
+  const [selectedRetrievalEvidenceCandidateId, setSelectedRetrievalEvidenceCandidateId] = useState<string>('')
+  const [releaseCandidateByReleaseId, setReleaseCandidateByReleaseId] = useState<Record<string, string>>({})
   const [releases, setReleases] = useState<ReleaseListItem[]>([])
   const [selectedRelease, setSelectedRelease] = useState<ReleaseDetail | null>(null)
   const [draftForm, setDraftForm] = useState<ReleaseDraftForm>(() => defaultDraftForm())
@@ -235,6 +302,9 @@ export function useReleasesManager(tenantId: string, agentId: string) {
   const [isMutating, setIsMutating] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [usageEvidenceCandidatesError, setUsageEvidenceCandidatesError] = useState<string | null>(null)
+  const [retrievalEvidenceCandidatesError, setRetrievalEvidenceCandidatesError] = useState<string | null>(null)
+  const [isLoadingRetrievalEvidenceCandidates, setIsLoadingRetrievalEvidenceCandidates] = useState(true)
+  const [isGeneratingRetrievalEvidenceCandidate, setIsGeneratingRetrievalEvidenceCandidate] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
 
@@ -257,6 +327,22 @@ export function useReleasesManager(tenantId: string, agentId: string) {
       setUsageEvidenceCandidatesError(getLocalizedApiErrorMessage(error, t, t('releases.usage_evidence_candidates_load_error')))
     } finally {
       setIsLoadingUsageEvidenceCandidates(false)
+    }
+  }, [agentId, tenantId, t])
+
+  const loadRetrievalEvidenceCandidates = useCallback(async () => {
+    setIsLoadingRetrievalEvidenceCandidates(true)
+    setRetrievalEvidenceCandidatesError(null)
+    try {
+      const nextRetrievalEvidenceCandidates = await releasesApi.getRetrievalEvidenceCandidates(tenantId, agentId)
+      setRetrievalEvidenceCandidates(nextRetrievalEvidenceCandidates)
+      setSelectedRetrievalEvidenceCandidateId((current) => selectRetrievalEvidenceCandidateId(current, nextRetrievalEvidenceCandidates))
+    } catch (error) {
+      setRetrievalEvidenceCandidates(null)
+      setSelectedRetrievalEvidenceCandidateId('')
+      setRetrievalEvidenceCandidatesError(getLocalizedApiErrorMessage(error, t, t('releases.retrieval_evidence.load_error')))
+    } finally {
+      setIsLoadingRetrievalEvidenceCandidates(false)
     }
   }, [agentId, tenantId, t])
 
@@ -293,11 +379,17 @@ export function useReleasesManager(tenantId: string, agentId: string) {
   useEffect(() => {
     void loadReleases()
     void loadUsageEvidenceCandidates()
-  }, [loadReleases, loadUsageEvidenceCandidates])
+    void loadRetrievalEvidenceCandidates()
+  }, [loadReleases, loadRetrievalEvidenceCandidates, loadUsageEvidenceCandidates])
 
   const selectedUsageEvidenceCandidate = useMemo<ReleaseUsageEvidenceCandidate | null>(
     () => usageEvidenceCandidates?.items.find((candidate) => candidate.conversationTurnId === selectedUsageEvidenceCandidateId) ?? null,
     [selectedUsageEvidenceCandidateId, usageEvidenceCandidates?.items],
+  )
+
+  const selectedRetrievalEvidenceCandidate = useMemo<ReleaseRetrievalEvidenceCandidate | null>(
+    () => retrievalEvidenceCandidates?.items.find((candidate) => candidate.candidateId === selectedRetrievalEvidenceCandidateId) ?? null,
+    [retrievalEvidenceCandidates?.items, selectedRetrievalEvidenceCandidateId],
   )
 
   const selectRelease = useCallback(async (releaseId: string) => {
@@ -326,14 +418,19 @@ export function useReleasesManager(tenantId: string, agentId: string) {
       setSelectedRelease(response.resource)
       setMutationResult(response.result)
       setNotice(message)
-      const [nextReadiness, nextEvidenceRequirements, nextReleases] = await Promise.all([
+      const [nextReadiness, nextEvidenceRequirements, nextReleases, nextRetrievalEvidenceCandidates] = await Promise.all([
         releasesApi.getReadiness(tenantId, agentId),
         releasesApi.getEvidenceRequirements(tenantId, agentId),
         releasesApi.listReleases(tenantId, agentId),
+        releasesApi.getRetrievalEvidenceCandidates(tenantId, agentId).catch(() => null),
       ])
       setReadiness(nextReadiness)
       setEvidenceRequirements(nextEvidenceRequirements)
       setReleases(nextReleases)
+      if (nextRetrievalEvidenceCandidates) {
+        setRetrievalEvidenceCandidates(nextRetrievalEvidenceCandidates)
+        setSelectedRetrievalEvidenceCandidateId((current) => selectRetrievalEvidenceCandidateId(current, nextRetrievalEvidenceCandidates))
+      }
     } catch (error) {
       setFormError(getLocalizedApiErrorMessage(error, t, t('releases.action_error')))
     } finally {
@@ -341,9 +438,18 @@ export function useReleasesManager(tenantId: string, agentId: string) {
     }
   }, [agentId, canManageReleases, tenantId, t])
 
+  const managedRetrievalEvidenceRequired = useMemo(
+    () => requiresManagedRetrievalEvidence(evidenceRequirements),
+    [evidenceRequirements],
+  )
+  const selectedRetrievalEvidenceCandidateAppliedToDraft = useMemo(
+    () => isRetrievalCandidateAppliedToDraft(draftForm, selectedRetrievalEvidenceCandidate),
+    [draftForm, selectedRetrievalEvidenceCandidate],
+  )
+  const retrievalEvidenceReadyForDraft = !managedRetrievalEvidenceRequired || selectedRetrievalEvidenceCandidateAppliedToDraft
   const explicitEvidenceComplete = useMemo(
-    () => hasCompleteExplicitEvidence(draftForm, evidenceRequirements),
-    [draftForm, evidenceRequirements],
+    () => hasCompleteExplicitEvidence(draftForm, evidenceRequirements) && retrievalEvidenceReadyForDraft,
+    [draftForm, evidenceRequirements, retrievalEvidenceReadyForDraft],
   )
   const manualOverrideComplete = useMemo(
     () => hasCompleteManualOverride(draftForm, evidenceRequirements),
@@ -357,6 +463,9 @@ export function useReleasesManager(tenantId: string, agentId: string) {
     if (!evidenceRequirements) return t('releases.evidence_requirements_missing')
     if (!evidenceRequirements.releaseSetupReady) return t('releases.release_setup_not_ready')
     if (!evidenceRequirements.requiredChangeKind && !manualOverrideComplete) return t('releases.required_change_kind_missing')
+    if (managedRetrievalEvidenceRequired && !retrievalEvidenceReadyForDraft && !manualOverrideComplete) {
+      return t('releases.retrieval_evidence_required')
+    }
     if (!explicitEvidenceComplete && !manualOverrideComplete) {
       if (draftProgress.requiredTotal > 0) {
         return t('releases.create_disabled_remaining_matrix')
@@ -366,10 +475,26 @@ export function useReleasesManager(tenantId: string, agentId: string) {
       return t('releases.create_disabled_incomplete_evidence')
     }
     return null
-  }, [canManageReleases, draftProgress.missingGroundedReferences, draftProgress.missingRequiredOutcomes, draftProgress.requiredTotal, evidenceRequirements, explicitEvidenceComplete, manualOverrideComplete, t])
+  }, [canManageReleases, draftProgress.missingGroundedReferences, draftProgress.missingRequiredOutcomes, draftProgress.requiredTotal, evidenceRequirements, explicitEvidenceComplete, managedRetrievalEvidenceRequired, manualOverrideComplete, retrievalEvidenceReadyForDraft, t])
   const missingRequiredPublishEvidenceFields = useMemo(
     () => getMissingRequiredPublishEvidenceFields(publishForm, evidenceRequirements),
     [publishForm, evidenceRequirements],
+  )
+  const compatibleRetrievalEvidenceCandidateForSelectedRelease = useMemo(
+    () => retrievalEvidenceCandidates?.items.find((candidate) => isRetrievalCandidateCompatibleWithRelease(
+      selectedRelease,
+      candidate,
+      selectedRelease ? releaseCandidateByReleaseId[selectedRelease.releaseId] ?? null : null,
+    )) ?? null,
+    [releaseCandidateByReleaseId, retrievalEvidenceCandidates?.items, selectedRelease],
+  )
+  const selectedReleaseSupportReconstructionReference = selectedRelease?.supportReconstructionReference
+    || compatibleRetrievalEvidenceCandidateForSelectedRelease?.supportReconstructionReference
+    || ''
+  const selectedReleaseMissingRetrievalEvidence = Boolean(
+    managedRetrievalEvidenceRequired &&
+    selectedRelease &&
+    !selectedReleaseSupportReconstructionReference,
   )
   const canPublishSelected = Boolean(
     canManageReleases &&
@@ -378,6 +503,7 @@ export function useReleasesManager(tenantId: string, agentId: string) {
     selectedRelease.status !== 'failed' &&
     evidenceRequirements?.runtimeProviderPreflight.available &&
     evidenceRequirements.runtimeProviderPreflight.ready &&
+    !selectedReleaseMissingRetrievalEvidence &&
     !missingRequiredPublishEvidenceFields.length,
   )
   const publishDisabledReason = useMemo(() => {
@@ -387,6 +513,7 @@ export function useReleasesManager(tenantId: string, agentId: string) {
     if (!evidenceRequirements) return t('releases.evidence_requirements_missing')
     if (!evidenceRequirements.runtimeProviderPreflight.available) return t('releases.runtime_provider_preflight_missing')
     if (!evidenceRequirements.runtimeProviderPreflight.ready) return t('releases.runtime_provider_publish_warning')
+    if (selectedReleaseMissingRetrievalEvidence) return t('releases.publish_disabled_missing_retrieval_evidence')
     if (missingRequiredPublishEvidenceFields.length) {
       return t('releases.publish_disabled_missing_required_evidence')
         .replace('{fields}', missingRequiredPublishEvidenceFields.map((field) => {
@@ -395,16 +522,79 @@ export function useReleasesManager(tenantId: string, agentId: string) {
         }).join(', '))
     }
     return null
-  }, [canManageReleases, evidenceRequirements, missingRequiredPublishEvidenceFields, selectedRelease, t])
+  }, [canManageReleases, evidenceRequirements, missingRequiredPublishEvidenceFields, selectedRelease, selectedReleaseMissingRetrievalEvidence, t])
+
+  useEffect(() => {
+    if (!managedRetrievalEvidenceRequired) return
+    setPublishForm((current) => {
+      if (current.supportReconstructionReference === selectedReleaseSupportReconstructionReference) return current
+      return {
+        ...current,
+        supportReconstructionReference: selectedReleaseSupportReconstructionReference,
+      }
+    })
+  }, [managedRetrievalEvidenceRequired, selectedReleaseSupportReconstructionReference])
 
   const applyEvidenceReferenceToGroundedCases = useCallback(() => {
+    if (managedRetrievalEvidenceRequired && !selectedRetrievalEvidenceCandidate) {
+      setFormError(t('releases.retrieval_evidence.select_candidate_first'))
+      return
+    }
     setDraftForm((current) => ({
-      ...current,
+      ...(managedRetrievalEvidenceRequired && selectedRetrievalEvidenceCandidate
+        ? applyRetrievalEvidenceCandidateToDraft(current, selectedRetrievalEvidenceCandidate, evidenceRequirements)
+        : current),
       smokeCases: current.smokeCases.map((smokeCase) => smokeCase.groundedReferenceRequired
-        ? { ...smokeCase, stableReference: current.evidenceStableReference.trim() }
+        ? { ...smokeCase, stableReference: managedRetrievalEvidenceRequired ? selectedRetrievalEvidenceCandidate?.stableReference ?? '' : current.evidenceStableReference.trim() }
         : smokeCase),
     }))
-  }, [])
+    setFormError(null)
+    if (managedRetrievalEvidenceRequired) setNotice(t('releases.notice.retrieval_evidence_applied'))
+  }, [evidenceRequirements, managedRetrievalEvidenceRequired, selectedRetrievalEvidenceCandidate, t])
+
+  const applyRetrievalEvidenceCandidateToDraftForm = useCallback(() => {
+    if (!selectedRetrievalEvidenceCandidate) {
+      setFormError(t('releases.retrieval_evidence.select_candidate_first'))
+      return
+    }
+    setDraftForm((current) => applyRetrievalEvidenceCandidateToDraft(current, selectedRetrievalEvidenceCandidate, evidenceRequirements))
+    setFormError(null)
+    setNotice(t('releases.notice.retrieval_evidence_applied'))
+  }, [evidenceRequirements, selectedRetrievalEvidenceCandidate, t])
+
+  const generateRetrievalEvidenceCandidate = useCallback(async () => {
+    if (!canManageReleases) {
+      setFormError(t('releases.action_not_available'))
+      return
+    }
+    const selectedConfigId = draftForm.selectedConfigId.trim() || agentDetail?.activeConfigId || ''
+    if (!selectedConfigId) {
+      setFormError(t('releases.retrieval_evidence.missing_selected_config'))
+      return
+    }
+    setIsGeneratingRetrievalEvidenceCandidate(true)
+    setFormError(null)
+    setNotice(null)
+    try {
+      const nextRetrievalEvidenceCandidates = await releasesApi.createRetrievalEvidenceCandidate(tenantId, agentId, {
+        selectedConfigId,
+        releaseCandidateId: selectedRetrievalEvidenceCandidate?.releaseCandidateId || draftForm.releaseCandidateId.trim() || null,
+        idempotencyKey: newRetrievalEvidenceIdempotencyKey(),
+      })
+      setRetrievalEvidenceCandidates(nextRetrievalEvidenceCandidates)
+      const nextSelectedId = selectRetrievalEvidenceCandidateId('', nextRetrievalEvidenceCandidates)
+      setSelectedRetrievalEvidenceCandidateId(nextSelectedId)
+      const nextCandidate = nextRetrievalEvidenceCandidates.items.find((candidate) => candidate.candidateId === nextSelectedId) ?? nextRetrievalEvidenceCandidates.items[0] ?? null
+      if (nextCandidate) {
+        setDraftForm((current) => applyRetrievalEvidenceCandidateToDraft(current, nextCandidate, evidenceRequirements))
+      }
+      setNotice(t('releases.retrieval_evidence.generated'))
+    } catch (error) {
+      setFormError(getLocalizedApiErrorMessage(error, t, t('releases.retrieval_evidence.generate_error')))
+    } finally {
+      setIsGeneratingRetrievalEvidenceCandidate(false)
+    }
+  }, [agentDetail?.activeConfigId, agentId, canManageReleases, draftForm.releaseCandidateId, draftForm.selectedConfigId, evidenceRequirements, selectedRetrievalEvidenceCandidate?.releaseCandidateId, tenantId, t])
 
   const fillDefaultSmokeOutcomes = useCallback(() => {
     setDraftForm((current) => ({
@@ -429,7 +619,16 @@ export function useReleasesManager(tenantId: string, agentId: string) {
 
   const createRelease = useCallback(async () => {
     const input = buildReleaseDraftInput(draftForm, evidenceRequirements)
-    await applyMutation(() => releasesApi.createRelease(tenantId, agentId, input), t('releases.notice.created'))
+    await applyMutation(async () => {
+      const response = await releasesApi.createRelease(tenantId, agentId, input)
+      if (input.releaseCandidateId && response.resource.releaseId) {
+        setReleaseCandidateByReleaseId((current) => ({
+          ...current,
+          [response.resource.releaseId]: input.releaseCandidateId ?? '',
+        }))
+      }
+      return response
+    }, t('releases.notice.created'))
   }, [agentId, applyMutation, draftForm, evidenceRequirements, tenantId, t])
 
   const publishSelected = useCallback(async () => {
@@ -459,6 +658,12 @@ export function useReleasesManager(tenantId: string, agentId: string) {
     usageEvidenceCandidates,
     selectedUsageEvidenceCandidateId,
     selectedUsageEvidenceCandidate,
+    retrievalEvidenceCandidates,
+    selectedRetrievalEvidenceCandidateId,
+    selectedRetrievalEvidenceCandidate,
+    compatibleRetrievalEvidenceCandidateForSelectedRelease,
+    managedRetrievalEvidenceRequired,
+    selectedReleaseMissingRetrievalEvidence,
     releases,
     selectedRelease,
     draftForm,
@@ -474,18 +679,25 @@ export function useReleasesManager(tenantId: string, agentId: string) {
     draftProgress,
     isLoading,
     isLoadingUsageEvidenceCandidates,
+    isLoadingRetrievalEvidenceCandidates,
+    isGeneratingRetrievalEvidenceCandidate,
     isMutating,
     errorMessage,
     usageEvidenceCandidatesError,
+    retrievalEvidenceCandidatesError,
     formError,
     notice,
     loadReleases,
     loadUsageEvidenceCandidates,
+    loadRetrievalEvidenceCandidates,
     selectRelease,
     setDraftForm,
     setPublishForm,
     setSelectedUsageEvidenceCandidateId,
+    setSelectedRetrievalEvidenceCandidateId,
     applyEvidenceReferenceToGroundedCases,
+    applyRetrievalEvidenceCandidateToDraftForm,
+    generateRetrievalEvidenceCandidate,
     applyUsageEvidenceCandidateToPublishForm,
     fillDefaultSmokeOutcomes,
     createRelease,

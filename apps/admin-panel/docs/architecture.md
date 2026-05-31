@@ -36,8 +36,8 @@ The baseline contains:
   site/widget management APIs, backend-derived install guidance and isolated
   public widget smoke APIs;
 - tenant-scoped Releases page backed by release readiness, release evidence
-  requirements, release list/detail, draft/manual override, publish, rollback
-  and disable APIs;
+  requirements, retrieval evidence candidates, release list/detail,
+  draft/manual override, publish, rollback and disable APIs;
 - tenant-scoped Conversations page backed by conversation runtime summary,
   chat/message/turn/current-memory drill-down APIs, support-safe evidence refs
   and approved close API;
@@ -96,8 +96,8 @@ Active routes:
   smoke evidence;
 - `/tenants/:tenantId/agents/:agentId/releases` - protected tenant-scoped
   Releases page for backend-owned release readiness, release evidence
-  requirements, release history/detail, draft/manual override, publish,
-  rollback and disable actions;
+  requirements, backend-approved retrieval evidence candidates, release
+  history/detail, draft/manual override, publish, rollback and disable actions;
 - `/tenants/:tenantId/conversations` - protected tenant-scoped Conversations
   page for support-safe runtime summary, chat/message/turn/current-memory
   inspection, support evidence refs and approved close action;
@@ -174,9 +174,9 @@ Current modules:
   install guidance, isolated public widget smoke transport and evidence UI.
 - `src/modules/Releases` - `/tenants/:tenantId/agents/:agentId/releases`
   page plus release readiness/evidence requirements/list/detail mapping,
-  smoke-case evidence matrix state, release draft/manual override payload
-  building, publish/rollback/disable orchestration and backend action-ref
-  gating.
+  retrieval evidence candidate mapping, smoke-case evidence matrix state,
+  release draft/manual override payload building, publish/rollback/disable
+  orchestration and backend action-ref gating.
 - `src/modules/Conversations` - `/tenants/:tenantId/conversations` page plus
   runtime summary read-model mapping, chat/message/turn/current-memory
   drill-down mapping, support-safe redaction, evidence refs, close
@@ -275,9 +275,9 @@ The frontend treats the backend as the source of truth for:
   refs.
 - site/widget portal status, site/widget management results, backend-derived
   install guidance values and supported site/widget mutation action refs.
-- release readiness, release evidence requirements, release gates, release
-  evidence, manual override fields, active/latest release snapshots and
-  supported release mutation action refs.
+- release readiness, release evidence requirements, backend retrieval evidence
+  candidates, release gates, release evidence, manual override fields,
+  active/latest release snapshots and supported release mutation action refs.
 - conversation runtime summary, chat/message/turn/current-memory drill-downs,
   support-safe display boundaries, evidence refs and supported close action
   refs.

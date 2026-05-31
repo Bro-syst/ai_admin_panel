@@ -731,7 +731,7 @@ Post-finalization urgent packages:
 | --- | --- | --- | --- |
 | Agent Config operator UX fix | [urgent_stage_agent_config_operator_ux_fix.md](stages/urgent_stage_agent_config_operator_ux_fix.md) | Accepted and docs-synced | Existing Agent Config and Agent Detail UX/evidence polish. |
 | Release Evidence Requirements UI | [urgent_stage_release_evidence_requirements_ui.md](stages/urgent_stage_release_evidence_requirements_ui.md) | Accepted and docs-synced | Existing Releases route consumes backend release evidence requirements, smoke-case matrix and publish evidence metadata. |
-| Release Retrieval Evidence Operator Flow | [urgent_stage_release_retrieval_evidence_operator_flow.md](stages/urgent_stage_release_retrieval_evidence_operator_flow.md) | Created, pending consistency review | Existing Releases route will consume backend-approved retrieval evidence candidates for candidate-backed draft and publish evidence. |
+| Release Retrieval Evidence Operator Flow | [urgent_stage_release_retrieval_evidence_operator_flow.md](stages/urgent_stage_release_retrieval_evidence_operator_flow.md) | Accepted and docs-synced | Existing Releases route consumes backend-approved retrieval evidence candidates for candidate-backed draft and publish evidence. |
 
 Urgent package rules:
 - urgent packages do not reopen the accepted 13-stage umbrella;
