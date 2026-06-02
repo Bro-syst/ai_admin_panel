@@ -586,9 +586,9 @@ function toSourcePayload(input: CreateKnowledgeSourceInput) {
 }
 
 export const knowledgeApi = {
-  async listPortalSources(tenantId: string): Promise<{ items: KnowledgePortalSourceCard[]; metadata: KnowledgeListMetadata }> {
+  async listPortalSources(tenantId: string, agentId: string): Promise<{ items: KnowledgePortalSourceCard[]; metadata: KnowledgeListMetadata }> {
     const response = await apiClient.get<{ items?: PortalCardPayload[]; metadata?: MetadataPayload }>(
-      `${PORTAL_PREFIX}/${tenantId}/knowledge/sources`,
+      `${PORTAL_PREFIX}/${tenantId}/agents/${agentId}/knowledge/sources`,
     )
     return {
       items: response.data.items?.map(mapPortalSourceCard) ?? [],
@@ -596,12 +596,12 @@ export const knowledgeApi = {
     }
   },
 
-  async getPortalSourceDetail(tenantId: string, sourceId: string): Promise<KnowledgePortalSourceDetail> {
-    const response = await apiClient.get<PortalDetailPayload>(`${PORTAL_PREFIX}/${tenantId}/knowledge/sources/${sourceId}`)
+  async getPortalSourceDetail(tenantId: string, agentId: string, sourceId: string): Promise<KnowledgePortalSourceDetail> {
+    const response = await apiClient.get<PortalDetailPayload>(`${PORTAL_PREFIX}/${tenantId}/agents/${agentId}/knowledge/sources/${sourceId}`)
     return mapPortalSourceDetail(response.data)
   },
 
-  async getPortalReleaseReadiness(tenantId: string): Promise<KnowledgePortalReleaseReadiness> {
+  async getPortalReleaseReadiness(tenantId: string, agentId: string): Promise<KnowledgePortalReleaseReadiness> {
     const response = await apiClient.get<{
       tenant_id?: string
       owner_stage?: string
@@ -610,7 +610,7 @@ export const knowledgeApi = {
       failed_or_retryable_source_count?: number
       release_ready?: boolean
       sources?: PortalCardPayload[]
-    }>(`${PORTAL_PREFIX}/${tenantId}/knowledge/release-readiness`)
+    }>(`${PORTAL_PREFIX}/${tenantId}/agents/${agentId}/knowledge/release-readiness`)
     return {
       tenantId: readString(response.data.tenant_id),
       ownerStage: readString(response.data.owner_stage),

@@ -88,6 +88,6 @@ describe('EntityInfo shared UI', () => {
     )
 
     expect(screen.getByText('Not returned')).toBeInTheDocument()
-    expect(screen.getAllByText('Not provided by backend').length).toBeGreaterThanOrEqual(3)
+    expect(screen.getAllByText('Backend did not return this field').length).toBeGreaterThanOrEqual(3)
   })
 })

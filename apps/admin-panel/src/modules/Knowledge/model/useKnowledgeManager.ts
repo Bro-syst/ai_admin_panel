@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { getLocalizedApiErrorMessage } from '@/core/api/errors/getLocalizedApiErrorMessage'
 import { useI18n } from '@/core/i18n/useI18n'
 import {
@@ -120,7 +120,7 @@ export function useKnowledgeManager(tenantId: string, agentId: string, canManage
   const { t } = useI18n()
   const [sources, setSources] = useState<KnowledgePortalSourceCard[]>([])
   const [releaseReadiness, setReleaseReadiness] = useState<KnowledgePortalReleaseReadiness | null>(null)
-  const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null)
+  const selectedSourceIdRef = useRef<string | null>(null)
   const [selectedSourceDetail, setSelectedSourceDetail] = useState<KnowledgePortalSourceDetail | null>(null)
   const [retrievalRuns, setRetrievalRuns] = useState<KnowledgeRetrievalRun[]>([])
   const [retrievalErrorMessage, setRetrievalErrorMessage] = useState<string | null>(null)
@@ -134,11 +134,16 @@ export function useKnowledgeManager(tenantId: string, agentId: string, canManage
   const [isMutating, setIsMutating] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
+  const [warningMessage, setWarningMessage] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
 
+  const rememberSelectedSourceId = useCallback((sourceId: string | null) => {
+    selectedSourceIdRef.current = sourceId
+  }, [])
+
   const loadSourceDetail = useCallback(async (sourceId: string) => {
-    const detail = await knowledgeApi.getPortalSourceDetail(tenantId, sourceId)
-    setSelectedSourceId(detail.source.id)
+    const detail = await knowledgeApi.getPortalSourceDetail(tenantId, agentId, sourceId)
+    rememberSelectedSourceId(detail.source.id)
     setSelectedSourceDetail(detail)
     setSourceForm((current) => ({
       ...current,
@@ -149,16 +154,16 @@ export function useKnowledgeManager(tenantId: string, agentId: string, canManage
       ...current,
       documentId: current.documentId || detail.documents[0]?.id || '',
     }))
-  }, [tenantId])
+  }, [agentId, rememberSelectedSourceId, tenantId])
 
-  const loadKnowledge = useCallback(async () => {
+  const loadKnowledge = useCallback(async (preferredSourceId?: string | null) => {
     setIsLoading(true)
     setErrorMessage(null)
     setRetrievalErrorMessage(null)
     try {
       const [sourceListResult, readinessResult, retrievalRunListResult] = await Promise.allSettled([
-        knowledgeApi.listPortalSources(tenantId),
-        knowledgeApi.getPortalReleaseReadiness(tenantId),
+        knowledgeApi.listPortalSources(tenantId, agentId),
+        knowledgeApi.getPortalReleaseReadiness(tenantId, agentId),
         knowledgeApi.listRetrievalRuns(tenantId, { agentId }),
       ])
       if (sourceListResult.status === 'rejected') {
@@ -181,19 +186,31 @@ export function useKnowledgeManager(tenantId: string, agentId: string, canManage
           t('knowledge.retrieval_runs_error'),
         ))
       }
-      const nextSourceId = selectedSourceId ?? sourceList.items[0]?.source.id ?? null
+      const backendSourceIds = new Set(sourceList.items.map((item) => item.source.id))
+      const requestedSourceId = preferredSourceId ?? selectedSourceIdRef.current
+      const nextSourceId = requestedSourceId && backendSourceIds.has(requestedSourceId)
+        ? requestedSourceId
+        : sourceList.items[0]?.source.id ?? null
       if (nextSourceId) {
         await loadSourceDetail(nextSourceId)
       } else {
-        setSelectedSourceId(null)
+        rememberSelectedSourceId(null)
         setSelectedSourceDetail(null)
+      }
+      return {
+        selectedSourceId: nextSourceId,
+        containsPreferredSource: Boolean(preferredSourceId && backendSourceIds.has(preferredSourceId)),
       }
     } catch (error) {
       setErrorMessage(getLocalizedApiErrorMessage(error, t, t('knowledge.load_error')))
+      return {
+        selectedSourceId: null,
+        containsPreferredSource: false,
+      }
     } finally {
       setIsLoading(false)
     }
-  }, [agentId, loadSourceDetail, selectedSourceId, tenantId, t])
+  }, [agentId, loadSourceDetail, rememberSelectedSourceId, tenantId, t])
 
   useEffect(() => {
     void loadKnowledge()
@@ -211,7 +228,11 @@ export function useKnowledgeManager(tenantId: string, agentId: string, canManage
     }
   }, [loadSourceDetail, t])
 
-  const runMutation = useCallback(async (mutation: () => Promise<{ result: KnowledgeMutationResult }>, successMessage: string) => {
+  const runMutation = useCallback(async (
+    mutation: () => Promise<{ result: KnowledgeMutationResult }>,
+    successMessage: string,
+    afterSuccess?: () => void,
+  ) => {
     if (!canManageKnowledge) {
       setFormError(t('knowledge.action_not_available'))
       return
@@ -219,12 +240,14 @@ export function useKnowledgeManager(tenantId: string, agentId: string, canManage
     setIsMutating(true)
     setFormError(null)
     setNotice(null)
+    setWarningMessage(null)
     setMutationResult(null)
     try {
       const response = await mutation()
       setMutationResult(response.result)
       setNotice(successMessage)
       await loadKnowledge()
+      afterSuccess?.()
     } catch (error) {
       setFormError(getLocalizedApiErrorMessage(error, t, t('knowledge.action_error')))
     } finally {
@@ -255,8 +278,31 @@ export function useKnowledgeManager(tenantId: string, agentId: string, canManage
       metadata,
       idempotencyKey: compact(sourceForm.idempotencyKey),
     }
-    await runMutation(() => knowledgeApi.createSource(tenantId, input), t('knowledge.notice.source_created'))
-  }, [agentId, runMutation, sourceForm, tenantId, t])
+    if (!canManageKnowledge) {
+      setFormError(t('knowledge.action_not_available'))
+      return
+    }
+    setIsMutating(true)
+    setFormError(null)
+    setWarningMessage(null)
+    setNotice(null)
+    setMutationResult(null)
+    try {
+      const response = await knowledgeApi.createSource(tenantId, input)
+      setMutationResult(response.result)
+      const createdSourceId = response.resource.id || response.result.resourceId
+      const reloadResult = await loadKnowledge(createdSourceId)
+      if (createdSourceId && reloadResult.containsPreferredSource) {
+        setNotice(t('knowledge.notice.source_created'))
+      } else {
+        setWarningMessage(t('knowledge.notice.source_created_not_visible'))
+      }
+    } catch (error) {
+      setFormError(getLocalizedApiErrorMessage(error, t, t('knowledge.action_error')))
+    } finally {
+      setIsMutating(false)
+    }
+  }, [agentId, canManageKnowledge, loadKnowledge, sourceForm, tenantId, t])
 
   const updateSelectedSourceMetadata = useCallback(async () => {
     if (!selectedSourceDetail) return
@@ -313,6 +359,7 @@ export function useKnowledgeManager(tenantId: string, agentId: string, canManage
     await runMutation(
       () => knowledgeApi.registerDocument(tenantId, selectedSourceDetail.source.id, input),
       t('knowledge.notice.document_registered'),
+      () => setDocumentForm(defaultDocumentForm()),
     )
   }, [agentId, documentForm, runMutation, selectedSourceDetail, tenantId, t])
 
@@ -368,7 +415,7 @@ export function useKnowledgeManager(tenantId: string, agentId: string, canManage
       const response = await knowledgeApi.runIndexing(tenantId, selectedSourceDetail.source.id, input)
       setIndexingResult(response.resource)
       return response
-    }, t('knowledge.notice.indexing_started'))
+    }, t('knowledge.notice.indexing_started'), () => setIndexingForm(defaultIndexingForm()))
   }, [agentId, indexingForm, runMutation, selectedSourceDetail, tenantId, t])
 
   const retryIndexingJob = useCallback(async (jobId: string) => {
@@ -409,6 +456,7 @@ export function useKnowledgeManager(tenantId: string, agentId: string, canManage
     isMutating,
     errorMessage,
     formError,
+    warningMessage,
     notice,
     loadKnowledge,
     selectSource,

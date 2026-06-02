@@ -178,9 +178,9 @@ agent binding surfaces inside an accepted tenant/agent context.
 
 1. Register the route through `src/modules/Knowledge/index.ts` and keep the
    page under `/tenants/:tenantId/agents/:agentId/knowledge`.
-2. Keep portal knowledge source/readiness, source detail, document/indexing and
-   support-safe retrieval endpoint calls and DTO mapping in
-   `src/modules/Knowledge/api`.
+2. Keep agent-scoped portal knowledge source/readiness/detail reads,
+   document/indexing mutations and support-safe retrieval endpoint calls and
+   DTO mapping in `src/modules/Knowledge/api`.
 3. Keep source selection, registration/indexing orchestration,
    release-readiness state, retrieval drill-down state and mutation result
    feedback in `src/modules/Knowledge/model`.
@@ -188,8 +188,9 @@ agent binding surfaces inside an accepted tenant/agent context.
    retrieval runs and support reconstruction in `src/modules/Knowledge/ui`.
 5. Keep agent knowledge binding status/catalog/update/disable behavior inside
    `src/modules/AgentKnowledgeBinding`.
-6. Treat backend read models as authoritative for indexing, readiness,
-   release impact and support evidence. Do not calculate readiness locally.
+6. Treat backend read models as authoritative for source visibility, indexing,
+   readiness, release impact and support evidence. Do not calculate readiness
+   locally or keep created sources visible from mutation payloads.
 7. Do not add generic upload UI or direct DB/vector/provider/internal backend
    calls.
 8. Gate source/document/indexing/binding mutations through backend-supported

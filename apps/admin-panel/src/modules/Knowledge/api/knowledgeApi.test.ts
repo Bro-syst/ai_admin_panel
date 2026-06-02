@@ -93,11 +93,53 @@ describe('knowledgeApi', () => {
       },
     })
 
-    await expect(knowledgeApi.listPortalSources('tenant_1')).resolves.toMatchObject({
+    await expect(knowledgeApi.listPortalSources('tenant_1', 'agent_1')).resolves.toMatchObject({
       items: [{ source: { sourceKey: 'sales_faq' }, readiness: { readinessStatus: 'indexing_required', retryableJobCount: 1 }, failedOrRetryable: true }],
     })
 
-    expect(getMock).toHaveBeenCalledWith('/api/admin/v1/portal/tenants/tenant_1/knowledge/sources')
+    expect(getMock).toHaveBeenCalledWith('/api/admin/v1/portal/tenants/tenant_1/agents/agent_1/knowledge/sources')
+  })
+
+  it('loads portal source detail through the agent-scoped route', async () => {
+    getMock.mockResolvedValue({
+      data: {
+        source: sourcePayload,
+        lifecycle: { status: 'ready', readiness_status: 'ready' },
+        readiness: readinessPayload,
+        documents: [],
+        jobs: [],
+        chunks: [],
+      },
+    })
+
+    await expect(knowledgeApi.getPortalSourceDetail('tenant_1', 'agent_1', 'source_1')).resolves.toMatchObject({
+      source: { id: 'source_1' },
+      documents: [],
+    })
+
+    expect(getMock).toHaveBeenCalledWith('/api/admin/v1/portal/tenants/tenant_1/agents/agent_1/knowledge/sources/source_1')
+  })
+
+  it('loads portal release readiness through the agent-scoped route', async () => {
+    getMock.mockResolvedValue({
+      data: {
+        tenant_id: 'tenant_1',
+        owner_stage: 'stage_08',
+        source_count: 1,
+        ready_source_count: 1,
+        failed_or_retryable_source_count: 0,
+        release_ready: true,
+        sources: [{ source: sourcePayload, readiness: readinessPayload }],
+      },
+    })
+
+    await expect(knowledgeApi.getPortalReleaseReadiness('tenant_1', 'agent_1')).resolves.toMatchObject({
+      tenantId: 'tenant_1',
+      releaseReady: true,
+      sources: [{ source: { id: 'source_1' } }],
+    })
+
+    expect(getMock).toHaveBeenCalledWith('/api/admin/v1/portal/tenants/tenant_1/agents/agent_1/knowledge/release-readiness')
   })
 
   it('creates managed source and preserves backend mutation feedback', async () => {

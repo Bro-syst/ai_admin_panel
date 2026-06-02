@@ -29,6 +29,21 @@ function translateSmokeCaseId(t: (key: string) => string, caseId: string) {
   return label === labelKey ? caseId : label
 }
 
+function formatUsageEvidenceCandidateLabel(
+  t: (key: string) => string,
+  displayLabel: string | null | undefined,
+  createdAt: string | null | undefined,
+) {
+  if (!displayLabel) return t('releases.usage_evidence.candidate')
+  if (/runtime usage evidence candidate|public widget smoke/i.test(displayLabel)) {
+    const suffix = createdAt ?? displayLabel.replace(/^(runtime usage evidence candidate|public widget smoke)\s*/i, '').trim()
+    return suffix
+      ? `${t('releases.usage_evidence.candidate')} ${suffix}`
+      : t('releases.usage_evidence.candidate')
+  }
+  return displayLabel
+}
+
 function getRetrievalEvidenceNoCandidateReasonKey(reason: string | null | undefined) {
   const knownReasons = new Set([
     'missing_selected_config',
@@ -472,9 +487,7 @@ export function ReleasesView({ manager }: { manager: ReleasesManager }) {
                     <p className="mt-2 font-medium">{t('releases.runtime_provider_publish_warning')}</p>
                     <RuntimeProviderPreflightSafeBlock requirements={evidenceRequirements.runtimeProviderPreflight.requirements} />
                   </>
-                ) : (
-                  <p className="mt-2 font-medium">{t('releases.runtime_provider_ready')}</p>
-                )}
+                ) : null}
               </div>
             </section>
           ) : null}
@@ -660,7 +673,7 @@ export function ReleasesView({ manager }: { manager: ReleasesManager }) {
                               onChange={() => manager.setSelectedUsageEvidenceCandidateId(candidate.conversationTurnId)}
                             />
                             <span className="grid gap-1">
-                              <span className="font-bold">{candidate.displayLabel || t('releases.usage_evidence.candidate')}</span>
+                              <span className="font-bold">{formatUsageEvidenceCandidateLabel(t, candidate.displayLabel, candidate.createdAt)}</span>
                               <span className="break-all text-xs text-[var(--text-muted)]">{t('releases.usage_evidence.chat_id')}: {candidate.chatId}</span>
                               <span className="break-all text-xs text-[var(--text-muted)]">{t('releases.usage_evidence.turn_id')}: {candidate.conversationTurnId}</span>
                               <span className="break-all text-xs text-[var(--text-muted)]">{t('releases.usage_evidence.model_request_id')}: {candidate.modelRequestId}</span>
@@ -673,7 +686,7 @@ export function ReleasesView({ manager }: { manager: ReleasesManager }) {
                               { label: t('releases.usage_evidence.model_request_state'), value: translateBackendValue(t, 'releases.usage_evidence.model_request_state_value', candidate.modelRequestState) },
                               { label: t('releases.usage_evidence.usage_recorded'), value: candidate.usageRecorded ? t('common.yes') : t('common.no') },
                               { label: t('releases.usage_evidence.widget_key'), value: candidate.widgetKey ?? t('agents.empty_value') },
-                              { label: t('releases.usage_evidence.channel'), value: candidate.channel ?? t('agents.empty_value') },
+                              { label: t('releases.usage_evidence.channel'), value: translateBackendValue(t, 'releases.usage_evidence.channel_value', candidate.channel) },
                             ]}
                           />
                         </label>

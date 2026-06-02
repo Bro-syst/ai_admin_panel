@@ -27,8 +27,8 @@ The project is considered clean when it contains:
 - `src/modules/Agents` as the tenant-scoped agent lifecycle baseline;
 - `src/modules/AgentConfig` as the tenant-scoped agent config lifecycle
   baseline with controlled operator option metadata and safe mutation evidence;
-- `src/modules/Knowledge` as the tenant-scoped knowledge source, indexing and
-  support-safe retrieval baseline;
+- `src/modules/Knowledge` as the tenant-scoped, agent-scoped-read-model
+  knowledge source, indexing and support-safe retrieval baseline;
 - `src/modules/AgentKnowledgeBinding` as the agent-specific knowledge binding
   baseline;
 - `src/modules/AgentCapabilities` as the tenant-scoped capability assignment
@@ -232,9 +232,9 @@ For AgentConfig-style tenant-scoped config flows:
   config data in the frontend.
 
 For Knowledge-style tenant-scoped knowledge flows:
-- keep portal knowledge status/source/readiness, source detail,
-  document/indexing and support-safe retrieval endpoint calls and DTO mapping
-  in `src/modules/Knowledge/api`;
+- keep agent-scoped portal knowledge source/readiness/detail reads,
+  document/indexing mutations and support-safe retrieval endpoint calls and
+  DTO mapping in `src/modules/Knowledge/api`;
 - keep source selection, registration forms, document/indexing state,
   release-readiness state, support-safe chunk/retrieval drill-down state and
   mutation result feedback in `src/modules/Knowledge/model`;
@@ -242,8 +242,9 @@ For Knowledge-style tenant-scoped knowledge flows:
   retrieval runs and support reconstruction in `src/modules/Knowledge/ui`;
 - keep `src/modules/AgentKnowledgeBinding` focused on agent-specific knowledge
   status/catalog/binding, binding update/disable orchestration and binding UI;
-- treat backend indexing, release readiness and support evidence as the source
-  of truth; do not calculate readiness locally;
+- treat backend source visibility, indexing, release readiness and support
+  evidence as the source of truth; do not calculate readiness locally or keep
+  created sources visible from mutation payloads;
 - do not add generic file upload, direct DB/vector/provider calls, raw internal
   document access or cross-flow Policy/Release actions;
 - gate knowledge and binding mutations through backend-supported actions plus

@@ -25,7 +25,8 @@ The baseline contains:
 - tenant-scoped Agent Config page backed by versioned config, draft,
   create-version, validation, activation and rollback APIs, controlled
   operator option metadata and safe mutation evidence display;
-- tenant-scoped Knowledge page backed by portal knowledge read models, managed
+- tenant-scoped Knowledge page backed by agent-scoped portal knowledge source,
+  source detail and release-readiness read models, managed
   source/document/indexing APIs, support-safe retrieval read models and agent
   knowledge binding APIs;
 - tenant-scoped Capabilities page backed by capability catalog, assignment,
@@ -82,8 +83,8 @@ Active routes:
   activation, rollback and copyable mutation evidence;
 - `/tenants/:tenantId/agents/:agentId/knowledge` - protected tenant-scoped
   Knowledge page for managed source/document registration, indexing,
-  backend-owned release readiness, support-safe retrieval drill-downs and agent
-  knowledge binding;
+  backend-owned agent-scoped release readiness, support-safe retrieval
+  drill-downs and agent knowledge binding;
 - `/tenants/:tenantId/agents/:agentId/capabilities` - protected tenant-scoped
   Capabilities page for backend-owned capability catalog, current assignments,
   assignment update, readiness/issues and mutation result feedback;
@@ -154,9 +155,9 @@ Current modules:
   normalizes safe error details and does not own translations or backend
   validation rules.
 - `src/modules/Knowledge` - `/tenants/:tenantId/agents/:agentId/knowledge`
-  page plus portal knowledge status/source/readiness API mapping, managed
-  source/document/indexing orchestration and support-safe chunk/retrieval/
-  support reconstruction UI.
+  page plus agent-scoped portal knowledge source/detail/readiness API mapping,
+  managed source/document/indexing orchestration and support-safe
+  chunk/retrieval/support reconstruction UI.
 - `src/modules/AgentKnowledgeBinding` - agent-specific knowledge status/catalog
   and binding API mapping, backend action-ref gating, binding update/disable
   orchestration and binding UI.
@@ -265,9 +266,9 @@ The frontend treats the backend as the source of truth for:
 - versioned Agent Config state, approved config payload contracts, validation
   results, create-version, activation, rollback, returned mutation evidence
   and supported config mutation action refs.
-- knowledge source catalog/detail, document/indexing state, release-readiness
-  issues, support-safe retrieval evidence and supported agent knowledge binding
-  mutation action refs.
+- agent-scoped knowledge source catalog/detail, document/indexing state,
+  release-readiness issues, support-safe retrieval evidence and supported
+  agent knowledge binding mutation action refs.
 - capability catalog, current assignments, capability readiness/issues,
   assignment update results and supported capability mutation action refs.
 - policy profile catalog, current binding, backend validation results, policy

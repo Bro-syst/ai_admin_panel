@@ -24,6 +24,11 @@ function Brand() {
   )
 }
 
+function resolveAdminUserStatusLabel(status: string, t: (key: string) => string) {
+  const translated = t(`admin.status.${status}`)
+  return translated === `admin.status.${status}` ? status : translated
+}
+
 function DashboardIcon({ className = '' }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -480,7 +485,7 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
               {adminUser ? (
                 <div className="min-w-0 text-right">
                   <div className="truncate text-xs font-semibold text-[var(--text)]">{adminUser.email}</div>
-                  <div className="truncate text-[11px] text-[var(--text-muted)]">{adminUser.status}</div>
+                  <div className="truncate text-[11px] text-[var(--text-muted)]">{resolveAdminUserStatusLabel(adminUser.status, t)}</div>
                 </div>
               ) : null}
             </div>

@@ -283,7 +283,11 @@ describe('ReleasesView', () => {
         releaseReady: true,
         gateMode: null,
         blockingItemCount: 0,
-        items: [{ itemId: 'agent_config', ownerArea: 'agent_config', state: 'ready', blocking: true, detail: 'Active AgentConfig is present and accepted by the foundation policy.', requiredAction: null }],
+        items: [
+          { itemId: 'agent_config', ownerArea: 'agent_config', state: 'ready', blocking: true, detail: 'Active AgentConfig is present and accepted by the foundation policy.', requiredAction: null },
+          { itemId: 'agent_lifecycle', ownerArea: 'agent_lifecycle', state: 'ready', blocking: true, detail: 'Agent lifecycle is active.', requiredAction: null },
+          { itemId: 'metering_interpretation', ownerArea: 'metering_interpretation', state: 'ready', blocking: true, detail: 'Template metering markers: agent_invocation, model_token_usage, workflow_action_optional.', requiredAction: null },
+        ],
         currentReleaseId: null,
         currentReleaseVersion: null,
         currentReleaseStatus: null,
@@ -295,10 +299,10 @@ describe('ReleasesView', () => {
         activeReleaseStatus: null,
         activeReleaseGateMode: 'stage24_release_validation',
         activeReleaseManualOverride: null,
-        latestReleaseId: null,
-        latestReleaseVersion: null,
-        latestReleaseStatus: null,
-        latestReleaseGateMode: 'standard',
+        latestReleaseId: 'release_latest',
+        latestReleaseVersion: 4,
+        latestReleaseStatus: 'passed_by_evidence',
+        latestReleaseGateMode: 'passed_by_evidence',
         latestReleaseManualOverride: null,
         evaluationEvidenceOwnerMarker: 'backend',
         publishOwnerMarker: 'stage24_release_workflow',
@@ -308,12 +312,36 @@ describe('ReleasesView', () => {
     })
 
     expect(screen.getAllByText('Релизы').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Backend-процесс релиза').length).toBeGreaterThan(0)
+    expect(screen.getByText('Требования к подтверждениям релиза')).toBeInTheDocument()
+    expect(screen.getByText('Подтверждения поиска для релиза')).toBeInTheDocument()
+    expect(screen.getByText('Проверка среды выполнения')).toBeInTheDocument()
+    expect(screen.getByText('Среда выполнения готова')).toBeInTheDocument()
+    expect(screen.getByText('Прогресс подтверждений')).toBeInTheDocument()
+    expect(screen.getByText('Ссылки подтверждений для базы знаний: 1 / 1')).toBeInTheDocument()
+    expect(screen.getByText('Обязательные проверки релиза')).toBeInTheDocument()
+    expect(screen.getAllByText('Подставить подтверждения поиска в проверки с базой знаний').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Серверный процесс релиза').length).toBeGreaterThan(0)
     expect(screen.getByText('Проверка релиза')).toBeInTheDocument()
-    expect(screen.getByText('Стандартная проверка релиза')).toBeInTheDocument()
+    expect(screen.getByText('Проверка пройдена по подтверждениям')).toBeInTheDocument()
+    expect(screen.getByText('Подтверждён проверками')).toBeInTheDocument()
     expect(screen.getByText('Конфигурация агента: Готово - Активная конфигурация создана и принята')).toBeInTheDocument()
+    expect(screen.getByText('Жизненный цикл агента: Готово - Жизненный цикл агента включён')).toBeInTheDocument()
+    expect(screen.getByText('Учёт использования: Готово - Шаблон требует маркеры учёта: обращение агента, использование токенов модели, опциональное действие процесса')).toBeInTheDocument()
     expect(screen.queryByText('stage24_release_workflow')).not.toBeInTheDocument()
+    expect(screen.queryByText('agent_lifecycle')).not.toBeInTheDocument()
+    expect(screen.queryByText('metering_interpretation')).not.toBeInTheDocument()
+    expect(screen.queryByText('passed_by_evidence')).not.toBeInTheDocument()
+    expect(screen.queryByText('Runtime provider preflight')).not.toBeInTheDocument()
+    expect(screen.queryByText('Runtime provider готов')).not.toBeInTheDocument()
+    expect(screen.queryByText('Проверка платформенного runtime')).not.toBeInTheDocument()
+    expect(screen.queryByText('Платформенный runtime готов')).not.toBeInTheDocument()
+    expect(screen.queryByText('Backend-процесс релиза')).not.toBeInTheDocument()
+    expect(screen.queryByText('Прогресс evidence')).not.toBeInTheDocument()
+    expect(screen.queryByText('Обязательные smoke cases')).not.toBeInTheDocument()
+    expect(screen.queryByText('Сформировать retrieval evidence')).not.toBeInTheDocument()
     expect(screen.queryByText('Active AgentConfig is present and accepted by the foundation policy.')).not.toBeInTheDocument()
+    expect(screen.queryByText('Agent lifecycle is active.')).not.toBeInTheDocument()
+    expect(screen.queryByText('Template metering markers: agent_invocation, model_token_usage, workflow_action_optional.')).not.toBeInTheDocument()
   })
 
   it('lets operators edit optional manual override comment before draft creation', async () => {
@@ -531,15 +559,17 @@ describe('ReleasesView', () => {
     } as Partial<ReleasesManager>)
 
     expect(screen.getByText('Runtime usage evidence')).toBeInTheDocument()
-    expect(screen.getByText('Public widget smoke 2026-05-27')).toBeInTheDocument()
+    expect(screen.getByText('Usage evidence candidate 2026-05-27T10:00:00Z')).toBeInTheDocument()
     expect(screen.getByText('Chat ID: chat_1')).toBeInTheDocument()
     expect(screen.getByText('Conversation turn ID: turn_1')).toBeInTheDocument()
     expect(screen.getByText('Model request ID: model_request_1')).toBeInTheDocument()
     expect(screen.getAllByText('Response rendered').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Completed').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Public widget').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Public widget smoke 2026-05-27')).not.toBeInTheDocument()
     expect(screen.queryByText('must-not-leak')).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('radio', { name: /Public widget smoke 2026-05-27 second/i }))
+    await user.click(screen.getByRole('radio', { name: /Usage evidence candidate 2026-05-27T10:05:00Z/i }))
     await user.click(screen.getByRole('button', { name: 'Use for publish' }))
 
     expect(setSelectedUsageEvidenceCandidateId).toHaveBeenCalledWith('turn_2')

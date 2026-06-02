@@ -33,8 +33,8 @@ The portal currently includes:
   mutation evidence;
 - tenant-scoped Knowledge page
   `/tenants/:tenantId/agents/:agentId/knowledge` for managed source/document
-  registration, indexing, backend release-readiness inspection, support-safe
-  retrieval drill-downs and agent knowledge binding;
+  registration, indexing, agent-scoped backend source/detail/release-readiness
+  inspection, support-safe retrieval drill-downs and agent knowledge binding;
 - tenant-scoped Capabilities page
   `/tenants/:tenantId/agents/:agentId/capabilities` for backend-owned
   capability catalog, current assignments, assignment update, readiness/issues
@@ -112,9 +112,9 @@ This is intentional. New AI Core admin sections should not appear as placeholder
   list/detail API mapping, controlled option metadata, approved payload draft
   state, create draft/create version, backend validation, activation, rollback
   orchestration and safe mutation evidence display.
-- `Knowledge` - protected tenant-scoped knowledge page plus portal source,
-  release-readiness, source detail, document/indexing and support-safe
-  retrieval/reconstruction API mapping, orchestration and UI.
+- `Knowledge` - protected tenant-scoped knowledge page plus agent-scoped
+  portal source/readiness/detail reads, document/indexing mutations and
+  support-safe retrieval/reconstruction API mapping, orchestration and UI.
 - `AgentKnowledgeBinding` - agent-specific knowledge status/catalog/binding API
   mapping, backend action gating, update/disable orchestration and binding UI.
 - `AgentCapabilities` - protected tenant-scoped capabilities page plus

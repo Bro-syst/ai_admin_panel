@@ -1,13 +1,13 @@
 # Admin Portal Frontend Pipeline State
 
-Status: `post-finalization-urgent-release-retrieval-evidence-docs-synced`
+Status: `post-finalization-urgent-agent-scoped-knowledge-docs-synced`
 
-current_step: `urgent_release_retrieval_evidence_operator_flow_docs_sync_complete`
+current_step: `urgent_agent_scoped_knowledge_source_read_model_docs_sync_complete`
 allowed_next_step: `none`
 optional_next_step: `none`
 
-Last updated: `2026-05-29`
-Last refresh type: `post-finalization urgent release retrieval evidence docs sync`
+Last updated: `2026-06-01`
+Last refresh type: `post-finalization urgent agent-scoped knowledge source read model docs sync`
 
 ## Paths
 
@@ -24,13 +24,13 @@ STAGE_OUTPUT_DIR:
 - `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages`
 
 URGENT_STAGE_TZ_PATH:
-- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_release_retrieval_evidence_operator_flow.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_scoped_knowledge_source_read_model.md`
 
 URGENT_SOURCE_TZ_PATH:
-- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_RELEASE_RETRIEVAL_EVIDENCE_OPERATOR_FLOW_TZ.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_AGENT_SCOPED_KNOWLEDGE_SOURCE_READ_MODEL_TZ.md`
 
 URGENT_BACKEND_SOURCE_TZ_PATH:
-- `/Volumes/Work/AI_Agents/ai_core/docs/productization/first-service-sales-support/tz/TZ-SVC-10_release_retrieval_evidence_operator_flow/FRONTEND_RELEASE_SCREEN_RETRIEVAL_EVIDENCE_TZ.md`
+- `/Volumes/Work/AI_Agents/ai_core/docs/productization/first-service-sales-support/tz/TZ-SVC-11_agent_scoped_knowledge_source_portal_read_model_closure/TZ-SVC-11-FRONTEND_agent_knowledge_screen.md`
 
 FRONTEND_IMPLEMENTATION_PACKAGE:
 - `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/FRONTEND_PRODUCT_BRIEF.md`
@@ -66,6 +66,11 @@ ADAPTED_PROMPTS_PATH:
 - `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow/04_urgent_release_retrieval_evidence_operator_flow_implementation_prompt.md`
 - `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow/05_urgent_release_retrieval_evidence_operator_flow_acceptance_review_prompt.md`
 - `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow/06_urgent_release_retrieval_evidence_operator_flow_docs_sync_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_scoped_knowledge_source_read_model/README.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_scoped_knowledge_source_read_model/03_urgent_agent_scoped_knowledge_source_read_model_consistency_review_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_scoped_knowledge_source_read_model/04_urgent_agent_scoped_knowledge_source_read_model_implementation_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_scoped_knowledge_source_read_model/05_urgent_agent_scoped_knowledge_source_read_model_acceptance_review_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_scoped_knowledge_source_read_model/06_urgent_agent_scoped_knowledge_source_read_model_docs_sync_prompt.md`
 
 PIPELINE_STATE_PATH:
 - `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
@@ -104,6 +109,7 @@ Prompt source:
 | urgent-agent-config-operator-ux | Post-finalization urgent fix stage TZ and prompt package | accepted and docs synced | `stages/urgent_stage_agent_config_operator_ux_fix.md`; `prompts/urgent_agent_config_operator_ux/*.md`; controlled AgentConfig operator UX |
 | urgent-release-evidence-requirements-ui | Post-finalization urgent Release Evidence Requirements UI stage TZ and prompt package | accepted and docs synced | `stages/urgent_stage_release_evidence_requirements_ui.md`; `prompts/urgent_release_evidence_requirements_ui/*.md`; existing `/tenants/:tenantId/agents/:agentId/releases` route |
 | urgent-release-retrieval-evidence-operator-flow | Post-finalization urgent Release Retrieval Evidence Operator Flow stage TZ and prompt package | accepted and docs synced | `stages/urgent_stage_release_retrieval_evidence_operator_flow.md`; `prompts/urgent_release_retrieval_evidence_operator_flow/*.md`; existing `/tenants/:tenantId/agents/:agentId/releases` route |
+| urgent-agent-scoped-knowledge-source-read-model | Post-finalization urgent Agent-Scoped Knowledge Source Read Model stage TZ and prompt package | accepted and docs synced | `stages/urgent_stage_agent_scoped_knowledge_source_read_model.md`; `prompts/urgent_agent_scoped_knowledge_source_read_model/*.md`; existing `/tenants/:tenantId/agents/:agentId/knowledge` route |
 
 ## Accepted Decisions
 
@@ -368,6 +374,18 @@ Prompt source:
   invent retrieval/support references, must not make historical failed releases
   publishable through fake refs, and must keep runtime usage candidate flow as
   a separate accepted evidence source.
+- Urgent Agent-Scoped Knowledge Source Read Model consistency review is
+  accepted as a post-finalization urgent stage, not `stage_14`. Implementation
+  may touch only the existing Knowledge route/module, Knowledge-focused tests,
+  i18n and docs/ledger unless a narrow no-regression router test is needed.
+- Backend TZ-SVC-11 is the contract source for agent-scoped Knowledge source
+  list/detail/release-readiness read routes. Existing source/document/indexing
+  mutation contracts remain unchanged unless backend explicitly rejects the
+  current payload shape.
+- Knowledge source visibility, source detail and release readiness are
+  backend-owned. Frontend must not keep created sources visible from mutation
+  payloads, browser storage or local readiness calculations unless the
+  agent-scoped read model returns them.
 
 ## Current Baseline To Preserve
 
@@ -471,6 +489,8 @@ Prompt 08 availability:
   existing Releases route/module and Stage 10 ownership.
 - The post-finalization urgent Release Retrieval Evidence Operator Flow
   implementation has no open blockers before acceptance review.
+- The post-finalization urgent Agent-Scoped Knowledge Source Read Model stage
+  has no open blockers after docs sync.
 
 ## Blocked Findings
 
@@ -481,6 +501,22 @@ Prompt 08 availability:
 - none.
 
 ## Changed Files
+
+Repeated prompt 03 urgent Agent-Scoped Knowledge Source Read Model consistency
+review changed:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_AGENT_SCOPED_KNOWLEDGE_SOURCE_READ_MODEL_TZ.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_scoped_knowledge_source_read_model.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_scoped_knowledge_source_read_model/README.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Pipeline correction before repeated urgent Agent-Scoped Knowledge Source Read
+Model consistency review changed:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Prompt 03 urgent Agent-Scoped Knowledge Source Read Model consistency review
+changed:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_scoped_knowledge_source_read_model.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
 
 Prompt 06 urgent Release Retrieval Evidence Operator Flow docs sync changed:
 - `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/implemented-functionality-checklist.md`
@@ -972,6 +1008,38 @@ Prompt 01 discovery/refresh changed:
 - `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/prompts/*`
 
 ## Commands Run
+
+Repeated prompt 03 urgent Agent-Scoped Knowledge Source Read Model consistency
+review:
+- `sed -n` reviews of prompt READMEs, pipeline state, urgent source TZ, urgent
+  stage TZ, Stage 08 baseline, backend TZ-SVC-11 frontend task, Knowledge API,
+  Knowledge manager, Knowledge UI, Knowledge tests, router and public exports.
+- `rg -n "Knowledge|knowledge|AgentKnowledge|База знаний|agent-scoped|source visibility|release readiness|direct DB|vector|provider" apps/admin-panel/docs/tz/admin-portal-frontend/ADMIN_PORTAL_FRONTEND_UMBRELLA_TZ.md apps/admin-panel/docs/tz/admin-portal-frontend/FUNCTIONAL_CHECKLIST.md apps/admin-panel/docs/implemented-functionality-checklist.md apps/admin-panel/docs/overview.md apps/admin-panel/docs/architecture.md apps/admin-panel/docs/development-guide.md apps/admin-panel/docs/recipes.md docs/architecture.md docs/development-guide.md docs/recipes.md`
+- `rg -n "listPortalSources|getPortalSourceDetail|getPortalReleaseReadiness|agentId|knowledge/sources|release-readiness|selectedSourceDetail|source created|no_source" apps/admin-panel/src/modules/Knowledge apps/admin-panel/src/core/i18n/messages.ts`
+- `rg -n "releaseCandidate|publish|release evidence|support reconstruction|localStorage|sessionStorage|apiClient|fetch\\(|axios" apps/admin-panel/src/modules/Knowledge`
+- `rg -n "api_key|secret|provider|raw chunk|debug|vector|database|pgvector|opensearch|internal prompt" apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_scoped_knowledge_source_read_model.md apps/admin-panel/src/modules/Knowledge`
+- `rg -n "portal/tenants/.*/agents/.*/knowledge|agents/\\{agent|knowledge/sources|release-readiness|agent-scoped|Agent Knowledge|Knowledge" /Volumes/Work/AI_Agents/ai_core/docs/api/portals/admin/README.md`
+- `find apps/admin-panel/src/core/router apps/admin-panel/src/modules/Knowledge -maxdepth 3 -type f | sort`
+- `rg -n "apiClient|fetch\\(|axios|localStorage|sessionStorage|releaseCandidate|publish|release evidence|support reconstruction" apps/admin-panel/src/modules/Releases apps/admin-panel/src/modules/Agents apps/admin-panel/src/modules/AgentConfig apps/admin-panel/src/modules/Knowledge`
+- `rg -n "knowledge\\.no_sources|knowledge\\.no_source_selected|knowledge\\.notice\\.source_created|created.*visible|not_visible|current agent|текущ" apps/admin-panel/src/core/i18n/messages.ts apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_scoped_knowledge_source_read_model.md apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_AGENT_SCOPED_KNOWLEDGE_SOURCE_READ_MODEL_TZ.md`
+- No runtime code changed.
+
+Pipeline correction before repeated urgent Agent-Scoped Knowledge Source Read
+Model consistency review:
+- `sed -n` reviews of prompt READMEs and pipeline state.
+- `rg -n "post-finalization-urgent-agent-scoped-knowledge|allowed_next_step|urgent-agent-scoped-knowledge-source-read-model|Current Expected State|consistency accepted|ready for implementation|stage-created|stage created|Last refresh type" apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_scoped_knowledge_source_read_model/README.md`
+- No runtime code changed.
+
+Prompt 03 urgent Agent-Scoped Knowledge Source Read Model consistency review:
+- `sed -n` reviews of prompt READMEs, pipeline state, urgent source TZ,
+  urgent stage TZ, Stage 08 baseline and backend TZ-SVC-11 frontend task.
+- `rg -n "listPortalSources|getPortalSourceDetail|getPortalReleaseReadiness|agentId|knowledge/sources|release-readiness|selectedSourceDetail|source created|no_source" apps/admin-panel/src/modules/Knowledge apps/admin-panel/src/core/i18n/messages.ts`
+- `rg -n "releaseCandidate|publish|release evidence|support reconstruction|localStorage|sessionStorage|apiClient|fetch\\(|axios" apps/admin-panel/src/modules/Knowledge`
+- `rg -n "api_key|secret|provider|raw chunk|debug|vector|database|pgvector|opensearch|internal prompt" apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_scoped_knowledge_source_read_model.md apps/admin-panel/src/modules/Knowledge`
+- `rg -n "agent-scoped|listPortalSources|getPortalSourceDetail|getPortalReleaseReadiness|current agent|source created|created but not visible|localStorage|sessionStorage|release evidence|release candidate|publish" apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_AGENT_SCOPED_KNOWLEDGE_SOURCE_READ_MODEL_TZ.md apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_scoped_knowledge_source_read_model.md /Volumes/Work/AI_Agents/ai_core/docs/productization/first-service-sales-support/tz/TZ-SVC-11_agent_scoped_knowledge_source_portal_read_model_closure/TZ-SVC-11-FRONTEND_agent_knowledge_screen.md`
+- `rg -n "urgent-agent-scoped|urgent agent scoped|Agent-Scoped Knowledge|agent-scoped knowledge|stage_14|Release Retrieval Evidence|Release Evidence Requirements" apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md apps/admin-panel/docs/tz/admin-portal-frontend/ADMIN_PORTAL_FRONTEND_UMBRELLA_TZ.md apps/admin-panel/docs/implemented-functionality-checklist.md apps/admin-panel/docs/overview.md apps/admin-panel/docs/architecture.md apps/admin-panel/docs/development-guide.md apps/admin-panel/docs/recipes.md`
+- `git diff --check -- apps/admin-panel/docs/tz/admin-portal-frontend`
+- No runtime code changed.
 
 Prompt 06 urgent Release Retrieval Evidence Operator Flow docs sync:
 - `sed -n` reviews of prompt READMEs, urgent TZ files, app docs and pipeline
@@ -6760,6 +6828,600 @@ Blocked findings:
 
 Current status:
 - `post-finalization-urgent-release-retrieval-evidence-docs-synced`.
+
+Allowed next step is now:
+- `none`.
+
+## 2026-05-31 Urgent Agent-Scoped Knowledge Source Read Model TZ/Prompt Package Creation
+
+Prompt/source:
+- User-requested standard frontend TZ/prompt package creation based on
+  `/Volumes/Work/AI_Agents/ai_core/docs/productization/first-service-sales-support/tz/TZ-SVC-11_agent_scoped_knowledge_source_portal_read_model_closure/TZ-SVC-11-FRONTEND_agent_knowledge_screen.md`.
+- Reference prompt style:
+  `/Volumes/Work/DV/ web_kassa/admin_portal/docs/promt/01_discovery_frontend_tz_prompt.md`.
+- Reference package style:
+  `/Volumes/Work/DV/ web_kassa/admin_portal/docs/specs/tz/TZ-029`.
+
+Gate result:
+- The accepted 13-stage umbrella remains closed.
+- Urgent Agent Config Operator UX, urgent Release Evidence Requirements UI and
+  urgent Release Retrieval Evidence Operator Flow are accepted and docs-synced.
+- `allowed_next_step` was `none`, so a new post-finalization urgent package may
+  become the next legal pipeline step.
+
+Docs created:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_AGENT_SCOPED_KNOWLEDGE_SOURCE_READ_MODEL_TZ.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_scoped_knowledge_source_read_model.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_scoped_knowledge_source_read_model/README.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_scoped_knowledge_source_read_model/03_urgent_agent_scoped_knowledge_source_read_model_consistency_review_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_scoped_knowledge_source_read_model/04_urgent_agent_scoped_knowledge_source_read_model_implementation_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_scoped_knowledge_source_read_model/05_urgent_agent_scoped_knowledge_source_read_model_acceptance_review_prompt.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_scoped_knowledge_source_read_model/06_urgent_agent_scoped_knowledge_source_read_model_docs_sync_prompt.md`
+
+Docs updated:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/README.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Scope summary:
+- Existing Knowledge route only:
+  `/tenants/:tenantId/agents/:agentId/knowledge`.
+- Knowledge module owns API/model/UI changes for agent-scoped source list,
+  source detail and release readiness reads.
+- Existing mutations remain unchanged unless backend rejects current shape.
+- Source visibility, detail and readiness stay backend-owned; mutation payload
+  is evidence/reload hint only.
+- Releases, release evidence and publish flow are no-regression boundaries.
+- No backend code, new routes, global nav, local readiness calculation or
+  DB/vector/provider/internal backend access is in scope.
+
+Reuse/new ownership decisions:
+- Reuse existing `Knowledge/{api,model,ui,pages}` owners.
+- Reuse existing i18n owner in `core/i18n/messages.ts`.
+- No new shared UI abstraction or module ownership move is planned.
+
+Commands run:
+- `sed` reads of backend TZ-SVC-11 frontend task, web_kassa discovery prompt,
+  TZ-029 implementation prompt and existing urgent release retrieval prompt
+  package.
+- `mkdir -p apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_scoped_knowledge_source_read_model`
+
+Deferred items:
+- Runtime implementation is deferred to
+  `04_urgent_agent_scoped_knowledge_source_read_model_implementation` after
+  consistency review accepts the stage.
+
+Blocked findings:
+- none.
+
+Current status:
+- `post-finalization-urgent-agent-scoped-knowledge-stage-created-ready-for-consistency-review`.
+
+Allowed next step is now:
+- `03_urgent_agent_scoped_knowledge_source_read_model_consistency_review`.
+
+## 2026-06-01 Repeated Urgent Agent-Scoped Knowledge Source Read Model Final State
+
+Result:
+- The repeated prompt 03 consistency review was completed after reopening the
+  gate.
+- No blocking findings remain.
+- The authoritative current state is the top-level ledger status.
+
+Current status:
+- `post-finalization-urgent-agent-scoped-knowledge-consistency-accepted-ready-for-implementation`.
+
+Allowed next step is now:
+- `04_urgent_agent_scoped_knowledge_source_read_model_implementation`.
+
+## 2026-06-01 Urgent Agent-Scoped Knowledge Source Read Model Acceptance Review
+
+Prompt:
+- `05_urgent_agent_scoped_knowledge_source_read_model_acceptance_review_prompt.md`.
+
+Gate result:
+- passed. `allowed_next_step` was
+  `05_urgent_agent_scoped_knowledge_source_read_model_acceptance_review`.
+- Urgent stage was recorded as ready for acceptance review.
+- Changed files, commands run and implementation notes were recorded.
+- Blocked findings remained `none`.
+
+Findings:
+- none.
+
+Acceptance checks:
+- Reviewed prompt READMEs, pipeline state, urgent source TZ, urgent stage TZ,
+  umbrella TZ, implemented checklist, architecture/development/recipes docs
+  and Knowledge code/tests.
+- Confirmed the existing route remains
+  `/tenants/:tenantId/agents/:agentId/knowledge`; no new route or global nav
+  was added.
+- Confirmed Knowledge owns the API/model/UI changes and no release evidence or
+  publish logic was moved into Knowledge.
+- Confirmed `Knowledge/api` maps the three agent-scoped read routes with both
+  `tenantId` and `agentId`:
+  - `listPortalSources(tenantId, agentId)`;
+  - `getPortalSourceDetail(tenantId, agentId, sourceId)`;
+  - `getPortalReleaseReadiness(tenantId, agentId)`.
+- Confirmed `useKnowledgeManager` loads source list/readiness/detail from the
+  agent-scoped backend read model, preserves retrieval runs filtered by
+  `agentId`, and selects sources only when the backend agent-scoped list
+  returns them.
+- Confirmed create-source success records mutation evidence, reloads backend
+  data, selects the created source only when visible in the reloaded list, and
+  shows actionable created-but-not-visible warning otherwise.
+- Confirmed document/indexing sections are disabled until backend source detail
+  is loaded and document/indexing mutations refresh through the backend-owned
+  read model.
+- Confirmed pages/UI do not call transport directly; `apiClient` stays in
+  `Knowledge/api`.
+- Confirmed no localStorage/sessionStorage source truth, local readiness
+  calculation, local release gate calculation or direct DB/vector/provider
+  calls were introduced.
+
+Commands run:
+- `npm run test:admin -- Knowledge` was attempted from
+  `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel` and failed because
+  `test:admin` is a root workspace script, not an app-local script.
+- `npm run test:admin -- Knowledge` from
+  `/Volumes/Work/PC/ai_admin_panel` passed: 6 files, 32 tests.
+- Acceptance review boundary searches/read commands:
+  - `rg -n "agent-scoped|knowledge/sources|release-readiness|listPortalSources|getPortalSourceDetail|getPortalReleaseReadiness|created-but-not-visible|not visible|source created|no_source|createdSource" apps/admin-panel/src/modules/Knowledge apps/admin-panel/src/core/i18n/messages.ts`
+  - `rg -n "localStorage|sessionStorage|releaseCandidate|publish|release evidence|apiClient|fetch\\(|axios" apps/admin-panel/src/modules/Knowledge`
+  - `rg -n "normalizedContent|normalized_content|chunk" apps/admin-panel/src/modules/Knowledge/api/knowledgeApi.ts apps/admin-panel/docs/tz/admin-portal-frontend/stages/stage_08_knowledge_binding.md apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_scoped_knowledge_source_read_model.md`
+  - `git diff --check -- docs/tz/admin-portal-frontend src/modules/Knowledge src/core/i18n/messages.ts` passed.
+- Previously recorded implementation checks remain accepted:
+  - `npm run test:admin -- Knowledge` passed;
+  - `npm run test:admin` passed;
+  - `npm run lint:admin` passed;
+  - `npm run build:admin` passed.
+
+Implementation review notes:
+- Existing chunk/retrieval support-safe display remains accepted Stage 08
+  behavior and was not expanded by this urgent stage.
+- The prompt package README and urgent TZ status fields were updated to match
+  the accepted-pending-docs-sync state so prompt 06 can use an unambiguous
+  gate.
+
+Updated files:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_AGENT_SCOPED_KNOWLEDGE_SOURCE_READ_MODEL_TZ.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_scoped_knowledge_source_read_model.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/README.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_scoped_knowledge_source_read_model/README.md`
+
+Deferred items:
+- none.
+
+Blocked findings:
+- none.
+
+Current status:
+- `post-finalization-urgent-agent-scoped-knowledge-accepted-pending-docs-sync`.
+
+Allowed next step is now:
+- `06_urgent_agent_scoped_knowledge_source_read_model_docs_sync`.
+
+## 2026-06-01 Urgent Agent-Scoped Knowledge Source Read Model Implementation
+
+Prompt:
+- `04_urgent_agent_scoped_knowledge_source_read_model_implementation_prompt.md`.
+
+Gate result:
+- passed. `allowed_next_step` was
+  `04_urgent_agent_scoped_knowledge_source_read_model_implementation`.
+- Urgent prompt 03 consistency review was accepted.
+- Blocked findings remained `none`.
+- Stages 01-13 remain accepted/finalized.
+- Urgent Release Evidence Requirements UI and urgent Release Retrieval Evidence
+  Operator Flow remain accepted and docs-synced.
+
+Implementation summary:
+- Switched the existing Knowledge agent screen read methods to backend
+  agent-scoped portal routes:
+  - `listPortalSources(tenantId, agentId)`;
+  - `getPortalSourceDetail(tenantId, agentId, sourceId)`;
+  - `getPortalReleaseReadiness(tenantId, agentId)`.
+- Preserved existing source/document/indexing mutation contracts.
+- Preserved retrieval run loading filtered by current `agentId`.
+- Updated `useKnowledgeManager` selection logic so the selected source is kept
+  only when the backend agent-scoped list returns it; otherwise the first
+  backend-returned source is selected or source detail is cleared.
+- Added create-source handling that records mutation evidence, reloads the
+  agent-scoped list/readiness, auto-selects a created source only when backend
+  returns it, and shows an actionable warning when it is absent.
+- Avoided misleading document/indexing empty copy when no source detail is
+  loaded; disabled sections now guide the operator to select or create a source
+  for the current agent.
+- Localized current-agent empty/no-selection copy and source-created
+  visible/not-visible notices.
+
+Changed files:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Knowledge/api/knowledgeApi.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Knowledge/api/knowledgeApi.test.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Knowledge/model/useKnowledgeManager.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Knowledge/model/useKnowledgeManager.flow.test.tsx`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Knowledge/ui/KnowledgeView.tsx`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Knowledge/ui/KnowledgeView.test.tsx`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/core/i18n/messages.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Reuse/new ownership decisions:
+- Reused existing `Knowledge/api` for transport and DTO mapping.
+- Reused existing `Knowledge/model/useKnowledgeManager` for loading,
+  selection, mutation orchestration and backend-confirmed visibility.
+- Reused existing `Knowledge/ui/KnowledgeView` for operator copy and disabled
+  states.
+- Reused existing `core/i18n/messages.ts` for localized copy.
+- No new route, global nav, shared UI abstraction or cross-module ownership
+  move was introduced.
+
+Commands run:
+- `npm run test:admin -- Knowledge` passed: 6 files, 32 tests.
+- `npm run test:admin` passed: 71 files, 340 tests.
+- `npm run lint:admin` passed.
+- `npm run build:admin` passed.
+- Boundary search:
+  `rg -n "releaseCandidate|publish|release evidence|support reconstruction|localStorage|sessionStorage|apiClient|fetch\\(|axios" apps/admin-panel/src/modules/Knowledge`
+  completed. Transport hits are limited to `Knowledge/api` and tests; support
+  reconstruction hits are existing accepted Knowledge UI/test evidence display.
+- Boundary search:
+  `rg -n "api_key|secret|provider|raw chunk|debug|vector|database|pgvector|opensearch|internal prompt" apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_scoped_knowledge_source_read_model.md apps/admin-panel/src/modules/Knowledge`
+  completed. Hits are existing safe DTO/form field names and TZ boundary text;
+  no direct DB/vector/provider/internal backend calls or secret/API key UI were
+  introduced.
+- `git diff --check -- apps/admin-panel/src/modules/Knowledge apps/admin-panel/src/core/i18n/messages.ts apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md` passed.
+
+Deferred items:
+- none.
+
+Blocked findings:
+- none.
+
+Current status:
+- `post-finalization-urgent-agent-scoped-knowledge-implementation-ready-for-acceptance-review`.
+
+Allowed next step is now:
+- `05_urgent_agent_scoped_knowledge_source_read_model_acceptance_review`.
+
+## 2026-06-01 Urgent Agent-Scoped Knowledge Empty-State UX Polish
+
+Context:
+- Follow-up UX review noted that selected-but-empty source states still used
+  backend-error-like copy for missing documents, indexing jobs and chunks.
+
+Implementation summary:
+- Replaced empty selected-source copy with neutral operator text:
+  - documents: `No documents are registered yet.`;
+  - indexing jobs: `No indexing jobs have been started yet.`;
+  - chunks: `No support-safe chunks are available yet.`.
+- Added Russian equivalents:
+  - `Документы ещё не зарегистрированы.`;
+  - `Задачи индексации ещё не запускались.`;
+  - `Безопасные фрагменты пока недоступны.`.
+- Added a focused UI test for a selected source with no documents, jobs or
+  chunks.
+
+Changed files:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/core/i18n/messages.ts`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/src/modules/Knowledge/ui/KnowledgeView.test.tsx`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Commands run:
+- `npm run test:admin -- Knowledge` passed: 6 files, 33 tests.
+- `git diff --check -- apps/admin-panel/src/core/i18n/messages.ts apps/admin-panel/src/modules/Knowledge/ui/KnowledgeView.test.tsx apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md` passed.
+
+Deferred items:
+- none.
+
+Blocked findings:
+- none.
+
+Current status remains:
+- `post-finalization-urgent-agent-scoped-knowledge-implementation-ready-for-acceptance-review`.
+
+Allowed next step remains:
+- `05_urgent_agent_scoped_knowledge_source_read_model_acceptance_review`.
+
+## 2026-06-01 Repeated Urgent Agent-Scoped Knowledge Source Read Model Consistency Review
+
+Prompt:
+- `03_urgent_agent_scoped_knowledge_source_read_model_consistency_review_prompt.md`.
+
+Gate result:
+- passed. `allowed_next_step` was
+  `03_urgent_agent_scoped_knowledge_source_read_model_consistency_review`.
+- Urgent source TZ and urgent stage TZ paths matched this prompt.
+- Stages 01-13 are accepted and docs-synced/not required.
+- Umbrella finalization is accepted.
+- Urgent Release Evidence Requirements UI and urgent Release Retrieval Evidence
+  Operator Flow are accepted and docs-synced.
+- Blocked findings remained `none`.
+
+Findings:
+- none.
+
+Coverage result:
+- Urgent source TZ, backend TZ-SVC-11 and urgent stage TZ are aligned.
+- The stage represents the three required agent-scoped read routes:
+  source list, source detail and release readiness.
+- Required tests are represented: API route tests, manager initial-load,
+  create-source reload/auto-select, created-but-not-visible warning,
+  reload/fresh-load visibility, empty/no-selection copy, document/indexing
+  disabled state, backend-readiness-only rendering and RU/EN i18n coverage.
+- Current code-grounded gap is exactly the accepted implementation scope:
+  Knowledge API/model still use tenant-scoped source list/detail/readiness
+  routes, while the stage requires moving those reads to agent-scoped routes.
+- Existing Knowledge route remains
+  `/tenants/:tenantId/agents/:agentId/knowledge`; no new route or global
+  navigation is introduced.
+- Releases remains no-regression boundary only; release evidence/retrieval
+  publish flows are not implementation scope.
+
+Architecture/reuse result:
+- `Knowledge/api` owns endpoint calls, DTO mapping and safe defaults.
+- `Knowledge/model` owns loading, selection, source creation evidence,
+  backend-confirmed source visibility, document/indexing reloads and readiness
+  refresh.
+- `Knowledge/ui` owns source list/detail, empty/no-selection guidance,
+  disabled controls and backend-owned readiness rendering.
+- `Knowledge/pages` keeps route composition only.
+- No shared UI extraction or cross-module ownership move is required.
+- Pages/UI do not call transport directly.
+
+Degradation-safety result:
+- Accepted auth/session/security and Stage 08 Knowledge baseline are preserved.
+- Accepted urgent Release Evidence Requirements UI and Release Retrieval
+  Evidence Operator Flow are no-regression boundaries.
+- No stale mutation-payload, browser storage, local readiness, release,
+  policy, billing, metering, pricing or model-routing source of truth is
+  allowed.
+- No direct DB/vector/provider/internal backend calls are allowed.
+- Mutation evidence may expose only safe ids/evidence values; raw source text,
+  raw chunks, provider payloads, secrets, internal prompts and backend-internal
+  debug payloads remain forbidden.
+
+Backend API doc note:
+- `/Volumes/Work/AI_Agents/ai_core/docs/api/portals/admin/README.md` did not
+  enumerate the new TZ-SVC-11 agent-scoped Knowledge routes in the searched
+  passages. The backend TZ-SVC-11 frontend task is the explicit route contract
+  for this urgent package; the API README remains read-only boundary context.
+
+Updated files:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_AGENT_SCOPED_KNOWLEDGE_SOURCE_READ_MODEL_TZ.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_scoped_knowledge_source_read_model.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_scoped_knowledge_source_read_model/README.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Open questions:
+- none.
+
+Deferred items:
+- Runtime implementation is deferred to
+  `04_urgent_agent_scoped_knowledge_source_read_model_implementation`.
+
+Blocked findings:
+- none.
+
+Current status:
+- `post-finalization-urgent-agent-scoped-knowledge-consistency-accepted-ready-for-implementation`.
+
+Allowed next step is now:
+- `04_urgent_agent_scoped_knowledge_source_read_model_implementation`.
+
+## 2026-06-01 Urgent Agent-Scoped Knowledge Source Read Model Consistency Review
+
+Prompt:
+- `03_urgent_agent_scoped_knowledge_source_read_model_consistency_review_prompt.md`.
+
+Gate result:
+- passed. `allowed_next_step` was
+  `03_urgent_agent_scoped_knowledge_source_read_model_consistency_review`.
+- Urgent source TZ and urgent stage TZ paths matched this prompt.
+- Stages 01-13 are accepted and docs-synced/not required.
+- Umbrella finalization is accepted.
+- Urgent Release Evidence Requirements UI and urgent Release Retrieval Evidence
+  Operator Flow are accepted and docs-synced.
+- Blocked findings remained `none`.
+
+Findings:
+- Minor consistency gap: the stage TZ did not explicitly preserve existing
+  retrieval run loading filtered by the current `agentId`.
+  - File/section:
+    `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_scoped_knowledge_source_read_model.md`,
+    `Model Owner`.
+  - Risk: implementation could accidentally regress the accepted
+    support-safe retrieval run display while switching source reads to
+    agent-scoped routes.
+  - Fix applied: added an explicit requirement to preserve retrieval run load
+    filtered by current `agentId`.
+- Minor consistency gap: the stage TZ did not explicitly state that source,
+  document and indexing mutation contracts stay unchanged unless backend
+  rejects current payloads.
+  - File/section:
+    `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_scoped_knowledge_source_read_model.md`,
+    `Out Of Scope`.
+  - Risk: implementation could expand scope from read-model closure into
+    mutation contract redesign.
+  - Fix applied: added an explicit out-of-scope rule for mutation contract
+    changes.
+
+Coverage result:
+- Urgent source TZ, backend TZ-SVC-11 and urgent stage TZ are aligned after the
+  two documentation fixes.
+- The stage represents the three required agent-scoped read routes:
+  source list, source detail and release readiness.
+- Required tests are represented: API route tests, manager initial-load,
+  create-source reload/auto-select, created-but-not-visible warning,
+  reload/fresh-load visibility, empty/no-selection copy, document/indexing
+  disabled state, backend-readiness-only rendering and RU/EN i18n coverage.
+- Existing Knowledge route remains
+  `/tenants/:tenantId/agents/:agentId/knowledge`; no new route or global
+  navigation is introduced.
+- Releases remains no-regression boundary only; release evidence/retrieval
+  publish flows are not implementation scope.
+
+Architecture/reuse result:
+- `Knowledge/api` owns endpoint calls, DTO mapping and safe defaults.
+- `Knowledge/model` owns loading, selection, source creation evidence,
+  backend-confirmed source visibility, document/indexing reloads and readiness
+  refresh.
+- `Knowledge/ui` owns source list/detail, empty/no-selection guidance,
+  disabled controls and backend-owned readiness rendering.
+- `Knowledge/pages` keeps route composition only.
+- No shared UI extraction or cross-module ownership move is required.
+- Pages/UI do not call transport directly.
+
+Degradation-safety result:
+- Accepted auth/session/security and Stage 08 Knowledge baseline are preserved.
+- Accepted urgent Release Evidence Requirements UI and Release Retrieval
+  Evidence Operator Flow are no-regression boundaries.
+- No stale mutation-payload, browser storage, local readiness, release,
+  policy, billing, metering, pricing or model-routing source of truth is
+  allowed.
+- No direct DB/vector/provider/internal backend calls are allowed.
+- Mutation evidence may expose only safe ids/evidence values; raw source text,
+  raw chunks, provider payloads, secrets, internal prompts and backend-internal
+  debug payloads remain forbidden.
+
+Backend API doc note:
+- `/Volumes/Work/AI_Agents/ai_core/docs/api/portals/admin/README.md` did not
+  enumerate the new TZ-SVC-11 agent-scoped Knowledge routes in the searched
+  passages. The backend TZ-SVC-11 frontend task is the explicit route contract
+  for this urgent package; the API README remains read-only boundary context.
+
+Updated files:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_scoped_knowledge_source_read_model.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Open questions:
+- none.
+
+Deferred items:
+- none.
+
+Blocked findings:
+- none.
+
+Current status:
+- `post-finalization-urgent-agent-scoped-knowledge-consistency-accepted-ready-for-implementation`.
+
+Allowed next step is now:
+- `04_urgent_agent_scoped_knowledge_source_read_model_implementation`.
+
+## 2026-06-01 Urgent Agent-Scoped Knowledge Source Read Model Gate Reopen
+
+Reason:
+- The urgent stage was advanced to implementation after an initial consistency
+  review, but runtime development had not started and the stage TZ should be
+  rechecked before prompt 04.
+- To preserve the prompt pipeline gate, the ledger was reopened to the
+  stage-created state instead of running prompt 03 against an implementation
+  gate.
+
+Scope:
+- Documentation/ledger correction only.
+- Runtime code was not changed.
+- The previously recorded consistency review findings remain historical notes;
+  the repeated prompt 03 must perform the current authoritative consistency
+  review before implementation.
+
+Current status:
+- `post-finalization-urgent-agent-scoped-knowledge-stage-created-ready-for-consistency-review`.
+
+Allowed next step is now:
+- `03_urgent_agent_scoped_knowledge_source_read_model_consistency_review`.
+
+## 2026-06-01 Repeated Urgent Agent-Scoped Knowledge Source Read Model Final State
+
+Result:
+- The repeated prompt 03 consistency review was completed after reopening the
+  gate.
+- No blocking findings remain.
+- The authoritative current state is the top-level ledger status.
+
+Current status:
+- `post-finalization-urgent-agent-scoped-knowledge-consistency-accepted-ready-for-implementation`.
+
+Allowed next step is now:
+- `04_urgent_agent_scoped_knowledge_source_read_model_implementation`.
+
+## 2026-06-01 Urgent Agent-Scoped Knowledge Source Read Model Accepted Final State
+
+Result:
+- Prompt 05 acceptance review accepted the implemented urgent stage.
+- No blocking findings remain.
+- The authoritative current state is the top-level ledger status.
+
+Current status:
+- `post-finalization-urgent-agent-scoped-knowledge-accepted-pending-docs-sync`.
+
+Allowed next step is now:
+- `06_urgent_agent_scoped_knowledge_source_read_model_docs_sync`.
+
+## 2026-06-01 Urgent Agent-Scoped Knowledge Source Read Model Docs Sync
+
+Prompt:
+- `06_urgent_agent_scoped_knowledge_source_read_model_docs_sync_prompt.md`.
+
+Gate result:
+- passed. `allowed_next_step` was
+  `06_urgent_agent_scoped_knowledge_source_read_model_docs_sync`.
+- Urgent stage had been accepted.
+- Blocked findings remained `none`.
+
+Docs sync result:
+- synced. Documentation changes were required because the accepted urgent stage
+  changed the Knowledge route's read-model ownership from tenant-scoped source
+  reads to agent-scoped source list/detail/release-readiness reads.
+- The accepted 13-stage umbrella remains closed.
+- No `stage_14` was created.
+- Runtime code was not changed.
+- Backend docs were not edited.
+
+Docs changed:
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/implemented-functionality-checklist.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/overview.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/architecture.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/development-guide.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/recipes.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_AGENT_SCOPED_KNOWLEDGE_SOURCE_READ_MODEL_TZ.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_scoped_knowledge_source_read_model.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/README.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_scoped_knowledge_source_read_model/README.md`
+- `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/pipeline_state.md`
+
+Recorded behavior:
+- The existing Knowledge route remains
+  `/tenants/:tenantId/agents/:agentId/knowledge`.
+- `Knowledge/api` owns agent-scoped source list/detail/release-readiness read
+  calls and DTO mapping.
+- `Knowledge/model` owns backend-confirmed source selection, source creation
+  evidence, document/indexing orchestration and read-model reloads.
+- Source visibility, source detail, indexing readiness and release readiness
+  are backend-owned.
+- Created sources are not kept visible from mutation payloads unless the
+  backend agent-scoped list returns them.
+- Release evidence, retrieval candidate and publish flows remain in Releases
+  and were not reopened.
+
+Checks:
+- No docs examples or scripts were changed, so no docs-specific runtime check
+  was required.
+- Accepted prompt 05 checks are recorded:
+  - `npm run test:admin -- Knowledge` from
+    `/Volumes/Work/PC/ai_admin_panel` passed: 6 files, 32 tests.
+  - `git diff --check -- docs/tz/admin-portal-frontend src/modules/Knowledge src/core/i18n/messages.ts` passed.
+  - Prompt 04 recorded full `npm run test:admin`, `npm run lint:admin` and
+    `npm run build:admin` as passed.
+
+Deferred items:
+- none.
+
+Blocked findings:
+- none.
+
+Current status:
+- `post-finalization-urgent-agent-scoped-knowledge-docs-synced`.
 
 Allowed next step is now:
 - `none`.

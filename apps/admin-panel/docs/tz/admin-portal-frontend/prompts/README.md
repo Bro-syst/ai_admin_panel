@@ -45,9 +45,12 @@ A post-finalization urgent stage for Release Evidence Requirements UI has also
 been implemented, accepted and docs-synced.
 
 A post-finalization urgent stage for Release Retrieval Evidence Operator Flow
-has also been implemented, accepted and docs-synced:
+has also been implemented, accepted and docs-synced.
 
-- current status: `post-finalization-urgent-release-retrieval-evidence-docs-synced`
+A post-finalization urgent stage package for Agent-Scoped Knowledge Source Read
+Model has been implemented, accepted and docs-synced:
+
+- current status: `post-finalization-urgent-agent-scoped-knowledge-docs-synced`
 - allowed next step: `none`
 - optional next step: `none`
 - state ledger:
@@ -55,12 +58,16 @@ has also been implemented, accepted and docs-synced:
 - stage package:
   `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages`
 - urgent stage TZ:
-  `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_release_retrieval_evidence_operator_flow.md`
+  `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/stages/urgent_stage_agent_scoped_knowledge_source_read_model.md`
 - urgent source TZ:
-  `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_RELEASE_RETRIEVAL_EVIDENCE_OPERATOR_FLOW_TZ.md`
+  `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/URGENT_AGENT_SCOPED_KNOWLEDGE_SOURCE_READ_MODEL_TZ.md`
 - urgent prompt package:
-  `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_release_retrieval_evidence_operator_flow`
+  `/Volumes/Work/PC/ai_admin_panel/apps/admin-panel/docs/tz/admin-portal-frontend/prompts/urgent_agent_scoped_knowledge_source_read_model`
 
 Both urgent release packages stay on the existing
 `/tenants/:tenantId/agents/:agentId/releases` route and do not reopen the
 accepted 13-stage umbrella as `stage_14`.
+
+The urgent Agent-Scoped Knowledge Source Read Model package stays on the
+existing `/tenants/:tenantId/agents/:agentId/knowledge` route and also did not
+reopen the umbrella as `stage_14`.

@@ -4,9 +4,10 @@ Status: `implemented`
 
 Use this checklist to verify the current functional composition of
 `apps/admin-panel`. It describes what is already implemented and accepted in
-the Admin Portal after umbrella frontend finalization and the accepted urgent
-Agent Config operator UX fix plus the urgent Release Evidence Requirements UI
-and Release Retrieval Evidence Operator Flow stages.
+the Admin Portal after umbrella frontend finalization, the accepted urgent
+Agent Config operator UX fix, urgent Release Evidence Requirements UI, urgent
+Release Retrieval Evidence Operator Flow and urgent Agent-Scoped Knowledge
+Source Read Model stages.
 
 ## Product Boundary
 
@@ -211,19 +212,22 @@ and Release Retrieval Evidence Operator Flow stages.
 ## Knowledge And Agent Binding
 
 - [x] Portal knowledge status display.
-- [x] Source catalog.
-- [x] Source detail.
+- [x] Agent-scoped portal source catalog for
+  `/tenants/:tenantId/agents/:agentId/knowledge`.
+- [x] Agent-scoped portal source detail.
 - [x] Source registration.
 - [x] Source metadata update/disable where permitted.
 - [x] Document registration.
 - [x] Document metadata update/disable where permitted.
 - [x] Indexing start.
 - [x] Indexing retry.
-- [x] Knowledge release-readiness display from backend read models.
+- [x] Knowledge release-readiness display from backend agent-scoped read
+  models.
 - [x] Support-safe chunks/retrieval/support reconstruction drill-downs.
 - [x] Agent knowledge binding status.
 - [x] Agent knowledge binding update/disable where permitted.
-- [x] Cross-tenant source selection is prevented by tenant-scoped contracts.
+- [x] Cross-tenant and wrong-agent source selection is prevented by
+  tenant/agent-scoped read contracts.
 - [x] No generic upload is promised without a backend endpoint.
 - [x] No direct vector DB/provider calls are made from frontend.
 

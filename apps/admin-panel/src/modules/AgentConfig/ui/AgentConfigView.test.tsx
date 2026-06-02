@@ -591,7 +591,7 @@ describe('AgentConfigView', () => {
     expect(evidence).not.toBeNull()
     const evidenceScope = within(evidence as HTMLElement)
 
-    expect(evidenceScope.getAllByText('Not provided by backend').length).toBeGreaterThanOrEqual(3)
+    expect(evidenceScope.getAllByText('Backend did not return this field').length).toBeGreaterThanOrEqual(3)
     expect(evidenceScope.getByText('2026-05-20T10:05:00Z')).toBeInTheDocument()
   })
 

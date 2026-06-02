@@ -3,7 +3,7 @@ import { getLocalizedApiErrorMessage } from './getLocalizedApiErrorMessage'
 
 const messages: Record<string, string> = {
   'errors.backend.authentication_failed': 'Не удалось войти. Проверьте email и пароль.',
-  'errors.backend.credential_configuration_failure': 'Runtime credential не настроен. Сообщение не дошло до модели, usage evidence не создан.',
+  'errors.backend.credential_configuration_failure': 'Учётные данные среды выполнения не настроены. Сообщение не дошло до модели, подтверждения использования не созданы.',
   'errors.kind.unauthorized': 'Сессия истекла. Войдите снова.',
 }
 
@@ -69,6 +69,6 @@ describe('getLocalizedApiErrorMessage', () => {
         t,
         'fallback',
       ),
-    ).toBe('Runtime credential не настроен. Сообщение не дошло до модели, usage evidence не создан.')
+    ).toBe('Учётные данные среды выполнения не настроены. Сообщение не дошло до модели, подтверждения использования не созданы.')
   })
 })

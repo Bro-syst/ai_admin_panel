@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import { useI18n } from '@/core/i18n/useI18n'
 import type { KnowledgeManager } from '@/modules/Knowledge/model/useKnowledgeManager'
 import type { KnowledgeDocument, KnowledgeIngestionJob, KnowledgeRetrievalRun } from '@/modules/Knowledge/api/knowledgeApi'
-import { InfoGrid, MutationResultBlock, StatusBadge } from '@/shared/ui/EntityInfo'
+import { CopyableValue, InfoGrid, MutationResultBlock, StatusBadge } from '@/shared/ui/EntityInfo'
 
 type TFunction = (key: string) => string
 
@@ -18,6 +19,28 @@ function translateCode(t: TFunction, key: string, fallback: string) {
 function formatKnowledgeCode(t: TFunction, group: string, value: string | null | undefined, emptyValue = t('agents.empty_value')) {
   if (!value) return emptyValue
   return translateCode(t, `knowledge.${group}.${value}`, value)
+}
+
+function formatTemplate(value: string, replacements: Record<string, string | number>) {
+  return Object.entries(replacements).reduce(
+    (current, [key, replacement]) => current.split(`{${key}}`).join(String(replacement)),
+    value,
+  )
+}
+
+function shortValue(value: string) {
+  if (value.length <= 22) return value
+  return `${value.slice(0, 10)}...${value.slice(-8)}`
+}
+
+function CopyableShortValue({ value }: { value: string | null | undefined }) {
+  const { t } = useI18n()
+  if (!value) return <span className="text-sm text-[var(--text-muted)]">{t('agents.empty_value')}</span>
+  return <CopyableValue value={value} label={shortValue(value)} />
+}
+
+function operatorReadinessLabel(t: TFunction, value: string | null | undefined) {
+  return formatKnowledgeCode(t, 'operator_readiness_status', value)
 }
 
 function Field({
@@ -160,17 +183,16 @@ function SourceList({ manager }: { manager: KnowledgeManager }) {
             type="button"
             onClick={() => void manager.selectSource(card.source.id)}
             className={[
-              'rounded-xl border px-3 py-2 text-left text-sm hover:bg-[var(--surface-muted)]',
+              'min-h-[112px] overflow-hidden rounded-xl border px-3 py-2 text-left text-sm hover:bg-[var(--surface-muted)]',
               manager.selectedSourceDetail?.source.id === card.source.id ? 'border-[var(--primary)] bg-[var(--surface-muted)]' : 'border-[var(--border)]',
             ].join(' ')}
           >
             <span className="flex items-center justify-between gap-2">
-              <span className="font-semibold text-[var(--text)]">{card.source.name}</span>
-              <StatusBadge status={card.source.status} />
+              <span className="min-w-0 font-semibold text-[var(--text)] [overflow-wrap:anywhere] [word-break:break-word]">{card.source.name}</span>
+              <StatusBadge status={card.readiness.readinessStatus} label={operatorReadinessLabel(t, card.readiness.readinessStatus)} />
             </span>
-            <span className="mt-1 block text-xs text-[var(--text-muted)]">{card.source.sourceKey} / {formatKnowledgeCode(t, 'source_kind_value', card.source.sourceKind)}</span>
+            <span className="mt-1 block text-xs text-[var(--text-muted)] [overflow-wrap:anywhere] [word-break:break-word]">{card.source.sourceKey} / {formatKnowledgeCode(t, 'source_kind_value', card.source.sourceKind)}</span>
             <span className="mt-1 flex flex-wrap gap-2">
-              <StatusBadge status={card.readiness.readinessStatus} />
               {card.failedOrRetryable ? <StatusBadge status="retryable" /> : null}
             </span>
           </button>
@@ -200,11 +222,13 @@ function SourceDetail({ manager }: { manager: KnowledgeManager }) {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h3 className="text-sm font-bold text-[var(--text)]">{detail.source.name}</h3>
-          <p className="mt-1 break-all text-sm text-[var(--text-muted)]">{detail.source.id}</p>
+          <div className="mt-1">
+            <CopyableShortValue value={detail.source.id} />
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <StatusBadge status={detail.source.status} />
-          <StatusBadge status={detail.source.readinessStatus} />
+          <StatusBadge status={detail.source.readinessStatus} label={operatorReadinessLabel(t, detail.source.readinessStatus)} />
           <StatusBadge status={detail.source.accessScope} />
         </div>
       </div>
@@ -287,6 +311,7 @@ function SourceForms({ manager }: { manager: KnowledgeManager }) {
 function DocumentsAndIndexing({ manager }: { manager: KnowledgeManager }) {
   const { t } = useI18n()
   const disabled = !manager.canManageKnowledge || manager.isMutating || !manager.selectedSourceDetail
+  const noSelectedSource = !manager.selectedSourceDetail
   const documentForm = manager.documentForm
   const indexingForm = manager.indexingForm
   const documents = manager.selectedSourceDetail?.documents ?? []
@@ -325,7 +350,7 @@ function DocumentsAndIndexing({ manager }: { manager: KnowledgeManager }) {
         <div className="mt-4 grid gap-2">
           {documents.length > 0 ? documents.map((document) => (
             <DocumentRow key={document.id} document={document} disabled={disabled} manager={manager} />
-          )) : <p className="text-sm text-[var(--text-muted)]">{t('knowledge.no_documents')}</p>}
+          )) : <p className="text-sm text-[var(--text-muted)]">{t(noSelectedSource ? 'knowledge.no_source_selected' : 'knowledge.no_documents')}</p>}
         </div>
       </div>
 
@@ -353,14 +378,24 @@ function DocumentsAndIndexing({ manager }: { manager: KnowledgeManager }) {
           <TextAreaField label={t('knowledge.raw_content')} value={indexingForm.rawContent} rows={5} disabled={disabled} onChange={(value) => manager.setIndexingForm((current) => ({ ...current, rawContent: value }))} />
         </div>
         {manager.indexingResult ? (
-          <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3 text-sm text-[var(--text-muted)]">
-            {t('knowledge.indexing_result')}: {manager.indexingResult.job.id} / {manager.indexingResult.readinessSummary.readinessStatus}
+          <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100">
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge status={manager.indexingResult.readinessSummary.readinessStatus} label={operatorReadinessLabel(t, manager.indexingResult.readinessSummary.readinessStatus)} />
+              <span className="font-semibold">{t('knowledge.indexing_completed')}</span>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-3 text-xs font-semibold">
+              <span>{t('knowledge.chunks')}: {manager.indexingResult.chunkCount}</span>
+              <span>{t('knowledge.vectorizations')}: {manager.indexingResult.vectorizationCount}</span>
+            </div>
+            <div className="mt-2">
+              <CopyableShortValue value={manager.indexingResult.job.id} />
+            </div>
           </div>
         ) : null}
         <div className="mt-4 grid gap-2">
           {jobs.length > 0 ? jobs.map((job) => (
             <JobRow key={job.id} job={job} disabled={disabled} manager={manager} />
-          )) : <p className="text-sm text-[var(--text-muted)]">{t('knowledge.no_jobs')}</p>}
+          )) : <p className="text-sm text-[var(--text-muted)]">{t(noSelectedSource ? 'knowledge.no_source_selected' : 'knowledge.no_jobs')}</p>}
         </div>
       </div>
     </section>
@@ -370,11 +405,14 @@ function DocumentsAndIndexing({ manager }: { manager: KnowledgeManager }) {
 function DocumentRow({ document, disabled, manager }: { document: KnowledgeDocument; disabled: boolean; manager: KnowledgeManager }) {
   const { t } = useI18n()
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3">
+    <div className="min-h-[112px] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div className="text-sm font-semibold text-[var(--text)]">{document.title}</div>
-          <div className="break-all text-xs text-[var(--text-muted)]">{document.documentKey} / {document.id}</div>
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-[var(--text)] [overflow-wrap:anywhere] [word-break:break-word]">{document.title}</div>
+          <div className="mt-1 text-xs text-[var(--text-muted)] [overflow-wrap:anywhere] [word-break:break-word]">{document.documentKey}</div>
+          <div className="mt-2">
+            <CopyableShortValue value={document.id} />
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <StatusBadge status={document.status} />
@@ -393,12 +431,16 @@ function DocumentRow({ document, disabled, manager }: { document: KnowledgeDocum
 function JobRow({ job, disabled, manager }: { job: KnowledgeIngestionJob; disabled: boolean; manager: KnowledgeManager }) {
   const { t } = useI18n()
   const canRetry = job.status === 'failed' || job.status === 'retry_scheduled'
+  const readyJob = job.status === 'ready' || job.status === 'succeeded' || job.status === 'completed'
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div className="text-sm font-semibold text-[var(--text)]">{job.pipelineStep}</div>
-          <div className="break-all text-xs text-[var(--text-muted)]">{job.id} / {job.correlationId ?? 'no correlation'}</div>
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-[var(--text)]">{readyJob ? t('knowledge.indexing_completed') : job.pipelineStep}</div>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[var(--text-muted)]">
+            <CopyableShortValue value={job.id} />
+            {job.correlationId ? <CopyableShortValue value={job.correlationId} /> : null}
+          </div>
           {job.errorMessage ? <div className="mt-1 text-xs text-rose-600">{job.errorMessage}</div> : null}
         </div>
         <div className="flex flex-wrap gap-2">
@@ -414,27 +456,55 @@ function JobRow({ job, disabled, manager }: { job: KnowledgeIngestionJob; disabl
 
 function ChunkDrillDown({ manager }: { manager: KnowledgeManager }) {
   const { t } = useI18n()
+  const [expandedChunkIds, setExpandedChunkIds] = useState<Set<string>>(() => new Set())
   const chunks = manager.selectedSourceDetail?.chunks ?? []
 
   return (
     <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)]">
       <h3 className="text-sm font-bold text-[var(--text)]">{t('knowledge.chunks_title')}</h3>
       <div className="mt-3 grid gap-2">
-        {chunks.length > 0 ? chunks.map((chunk) => (
-          <article key={chunk.id} className="rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3">
-            <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <div className="text-sm font-semibold text-[var(--text)]">{chunk.chunkKey}</div>
-                <div className="break-all text-xs text-[var(--text-muted)]">{chunk.id} / {chunk.citationAnchor}</div>
+        {chunks.length > 0 ? chunks.map((chunk, index) => {
+          const expanded = expandedChunkIds.has(chunk.id)
+          return (
+            <article key={chunk.id} className="min-h-[180px] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3">
+              <div className="flex flex-col gap-2">
+                <div>
+                  <div className="text-sm font-semibold text-[var(--text)]">{formatTemplate(t('knowledge.chunk_title'), { index: index + 1 })}</div>
+                  <div className="mt-1 text-xs text-[var(--text-muted)] [overflow-wrap:anywhere] [word-break:break-word]">{chunk.chunkKey}</div>
+                  <div className="mt-2">
+                    <CopyableShortValue value={chunk.id} />
+                  </div>
+                  <div className="mt-1 text-xs text-[var(--text-muted)] [overflow-wrap:anywhere] [word-break:break-word]">{chunk.citationAnchor}</div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <StatusBadge status={chunk.status} />
+                  <StatusBadge status={chunk.accessScope} />
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <StatusBadge status={chunk.status} />
-                <StatusBadge status={chunk.accessScope} />
-              </div>
-            </div>
-            <p className="mt-2 whitespace-pre-wrap text-sm text-[var(--text-muted)]">{chunk.normalizedContent}</p>
-          </article>
-        )) : <p className="text-sm text-[var(--text-muted)]">{t('knowledge.no_chunks')}</p>}
+              <p className={[
+                'mt-3 whitespace-pre-wrap text-sm text-[var(--text-muted)] [overflow-wrap:anywhere] [word-break:break-word]',
+                expanded ? '' : 'max-h-24 overflow-hidden',
+              ].join(' ')}
+              >
+                {chunk.normalizedContent}
+              </p>
+              {chunk.normalizedContent.length > 220 ? (
+                <button
+                  type="button"
+                  onClick={() => setExpandedChunkIds((current) => {
+                    const next = new Set(current)
+                    if (next.has(chunk.id)) next.delete(chunk.id)
+                    else next.add(chunk.id)
+                    return next
+                  })}
+                  className="mt-2 text-sm font-semibold text-[var(--primary)]"
+                >
+                  {expanded ? t('knowledge.hide_full_chunk') : t('knowledge.show_full_chunk')}
+                </button>
+              ) : null}
+            </article>
+          )
+        }) : <p className="text-sm text-[var(--text-muted)]">{t('knowledge.no_chunks')}</p>}
       </div>
     </section>
   )
@@ -516,9 +586,18 @@ export function KnowledgeView({ manager, bindingReady = false }: { manager: Know
   return (
     <div className="space-y-4">
       {manager.notice ? <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">{manager.notice}</div> : null}
+      {manager.warningMessage ? <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">{manager.warningMessage}</div> : null}
       {manager.errorMessage ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">{manager.errorMessage}</div> : null}
       {manager.formError ? <p className="text-sm font-medium text-rose-600">{manager.formError}</p> : null}
       <MutationResultBlock title={t('knowledge.mutation_result')} result={manager.mutationResult} />
+      {manager.indexingResult?.readinessSummary.readinessStatus === 'ready' ? (
+        <div className="flex flex-col gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100 sm:flex-row sm:items-center sm:justify-between">
+          <span>{t('knowledge.indexing_ready_next_step')}</span>
+          <a href={`/tenants/${manager.tenantId}/agents/${manager.agentId}/releases`} className="inline-flex h-9 items-center justify-center rounded-lg border border-emerald-300 px-3 text-sm font-bold text-emerald-900 hover:bg-emerald-100 dark:border-emerald-500/40 dark:text-emerald-50 dark:hover:bg-emerald-500/20">
+            {t('knowledge.go_to_releases')}
+          </a>
+        </div>
+      ) : null}
 
       {manager.isLoading ? (
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-sm text-[var(--text-muted)]">{t('common.loading')}</div>
