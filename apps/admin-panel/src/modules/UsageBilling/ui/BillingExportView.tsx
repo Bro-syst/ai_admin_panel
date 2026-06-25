@@ -17,9 +17,24 @@ function confirmAction(message: string, action: () => void) {
   if (window.confirm(message)) action()
 }
 
+function translateBackendValue(t: (key: string) => string, namespace: string, value: string | null | undefined) {
+  if (!value) return null
+
+  const key = `${namespace}.${value}`
+  const translated = t(key)
+
+  return translated === key ? value : translated
+}
+
 function BatchResult({ batch }: { batch: BillingExportBatch | null }) {
   const { t } = useI18n()
   if (!batch) return null
+
+  const exportState = (value: string | null | undefined) => translateBackendValue(t, 'usage_billing.export_state_value', value)
+  const replayClassification = (value: string | null | undefined) => translateBackendValue(t, 'usage_billing.replay_classification_value', value)
+  const activityType = (value: string | null | undefined) => translateBackendValue(t, 'usage_billing.activity_type_value', value)
+  const billingUnit = (value: string | null | undefined) => translateBackendValue(t, 'usage_billing.billing_unit_value', value)
+  const eventType = (value: string | null | undefined) => translateBackendValue(t, 'usage_billing.event_type_value', value)
 
   return (
     <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 shadow-[var(--shadow-soft)] dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100">
@@ -29,9 +44,9 @@ function BatchResult({ batch }: { batch: BillingExportBatch | null }) {
           items={[
             { label: t('usage_billing.export_batch_ref'), value: batch.exportBatchRef },
             { label: t('usage_billing.export_request_id'), value: batch.exportRequestId },
-            { label: t('usage_billing.export_state'), value: batch.exportState },
+            { label: t('usage_billing.export_state'), value: exportState(batch.exportState) },
             { label: t('usage_billing.item_count'), value: batch.itemCount },
-            { label: t('usage_billing.replay_classification'), value: batch.replayClassification },
+            { label: t('usage_billing.replay_classification'), value: replayClassification(batch.replayClassification) },
             { label: t('usage_billing.retry_safe'), value: batch.retrySafe ? t('common.yes') : t('common.no') },
             { label: t('usage_billing.direct_runtime_db_access_required'), value: batch.directRuntimeDbAccessRequired ? t('common.yes') : t('common.no') },
             { label: t('usage_billing.invoice_logic_exposed'), value: batch.invoiceLogicExposed ? t('common.yes') : t('common.no') },
@@ -40,7 +55,7 @@ function BatchResult({ batch }: { batch: BillingExportBatch | null }) {
         />
       </div>
       <div className="mt-3 grid gap-3 lg:grid-cols-2">
-        <ListBlock title={t('usage_billing.event_types')} values={batch.eventTypes} />
+        <ListBlock title={t('usage_billing.event_types')} values={batch.eventTypes.map((value) => eventType(value) ?? value)} />
         <ListBlock title={t('usage_billing.payload_correlations')} values={batch.payloads.map((payload) => `${payload.billableActivityId}: ${payload.correlationId}`)} />
       </div>
       {batch.payloads.length ? (
@@ -49,8 +64,8 @@ function BatchResult({ batch }: { batch: BillingExportBatch | null }) {
             <div key={payload.billableActivityId} className="rounded-xl border border-emerald-200/70 bg-white/70 p-3 dark:border-emerald-500/20 dark:bg-slate-950/20">
               <div className="break-all text-sm font-bold">{payload.billableActivityId}</div>
               <div className="mt-2 grid gap-2 text-xs sm:grid-cols-2">
-                <span>{t('usage_billing.activity_type')}: {payload.activityType}</span>
-                <span>{t('usage_billing.quantity')}: {payload.quantity} {payload.billableUnit}</span>
+                <span>{t('usage_billing.activity_type')}: {activityType(payload.activityType)}</span>
+                <span>{t('usage_billing.quantity')}: {payload.quantity} {billingUnit(payload.billableUnit)}</span>
                 <span>{t('usage_billing.chat_id')}: {payload.chatId ?? t('agents.empty_value')}</span>
                 <span>{t('usage_billing.model_request_id')}: {payload.modelRequestId ?? t('agents.empty_value')}</span>
               </div>
@@ -66,6 +81,9 @@ export function BillingExportView({ manager }: { manager: UsageBillingManager })
   const { t } = useI18n()
   const status = manager.billingStatus
   const disabled = !manager.canManageBilling || manager.isMutating
+  const exportStatus = (value: string | null | undefined) => translateBackendValue(t, 'usage_billing.export_status_value', value)
+  const ownerStage = (value: string | null | undefined) => translateBackendValue(t, 'usage_billing.owner_stage_value', value)
+  const ownerMarker = (value: string | null | undefined) => translateBackendValue(t, 'usage_billing.owner_marker_value', value)
 
   return (
     <div className="space-y-4">
@@ -99,9 +117,9 @@ export function BillingExportView({ manager }: { manager: UsageBillingManager })
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <h3 className="text-sm font-bold text-[var(--text)]">{t('usage_billing.export_status')}</h3>
-                <p className="mt-1 text-sm text-[var(--text-muted)]">{status?.stage25OwnerMarker ?? t('agents.empty_value')}</p>
+                <p className="mt-1 text-sm text-[var(--text-muted)]">{ownerMarker(status?.stage25OwnerMarker) ?? t('agents.empty_value')}</p>
               </div>
-              {status?.exportStatus ? <StatusBadge status={status.exportStatus} /> : null}
+              {status?.exportStatus ? <StatusBadge status={status.exportStatus} label={exportStatus(status.exportStatus) ?? status.exportStatus} /> : null}
             </div>
             <div className="mt-3">
               <InfoGrid
@@ -111,10 +129,10 @@ export function BillingExportView({ manager }: { manager: UsageBillingManager })
                   { label: t('usage_billing.failed_count'), value: status?.failedCount ?? 0 },
                   { label: t('usage_billing.retry_scheduled_count'), value: status?.retryScheduledCount ?? 0 },
                   { label: t('usage_billing.reconciled_count'), value: status?.reconciledCount ?? 0 },
-                  { label: t('usage_billing.current_state'), value: status?.currentState ?? t('agents.empty_value') },
+                  { label: t('usage_billing.current_state'), value: exportStatus(status?.currentState) ?? t('agents.empty_value') },
                   { label: t('usage_billing.external_billing_ref'), value: valueOrEmpty(status?.externalBillingRef, t('agents.empty_value')) },
                   { label: t('usage_billing.external_billing_ref_present'), value: status?.externalBillingRefPresent ? t('common.yes') : t('common.no') },
-                  { label: t('usage_billing.owner_stage'), value: status?.ownerStage ?? t('agents.empty_value') },
+                  { label: t('usage_billing.owner_stage'), value: ownerStage(status?.ownerStage) ?? t('agents.empty_value') },
                   { label: t('usage_billing.last_export_attempt_at'), value: valueOrEmpty(status?.lastExportAttemptAt, t('agents.empty_value')) },
                   { label: t('usage_billing.last_exported_at'), value: valueOrEmpty(status?.lastExportedAt, t('agents.empty_value')) },
                   { label: t('usage_billing.invoice_logic_exposed'), value: status?.invoiceLogicExposed ? t('common.yes') : t('common.no') },

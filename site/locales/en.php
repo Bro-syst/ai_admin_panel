@@ -9,6 +9,7 @@ return [
         'nav' => [
             'platform' => 'Platform',
             'agents' => 'Agents',
+            'solutions' => 'Solutions',
             'pilot' => 'Pilot',
             'contact' => 'Contact',
         ],
@@ -18,6 +19,7 @@ return [
             'use_case' => 'Discuss Your Use Case',
             'explore_platform' => 'Explore Platform',
             'view_agents' => 'View Agent Scenarios',
+            'view_solutions' => 'All Solutions',
         ],
         'footer' => [
             'line' => 'AI Agents Platform for Business Operations',
@@ -38,6 +40,22 @@ return [
         'agents' => [
             'title' => 'AI Agents - Core AI Platform',
             'description' => 'Sales, support, request processing, operations, back-office and knowledge scenarios on one platform foundation.',
+        ],
+        'solutions' => [
+            'title' => 'Ready Solutions - Core AI Platform',
+            'description' => 'Ready AI-enabled solutions: syn0rix.dc for AI Data Center operations, syn0rix.billing for billing and crypto operations, and syn0rix.HSM for PCI DSS-compliant cryptographic infrastructure.',
+        ],
+        'solution_dc' => [
+            'title' => 'syn0rix.dc - AI Data Center operations software',
+            'description' => 'Software for AI Data Center operations: GPU bare metal capacity, clients, orders, resources, payments, incidents and operational workflows.',
+        ],
+        'solution_billing' => [
+            'title' => 'syn0rix.billing - billing, ledger and crypto operations',
+            'description' => 'A flexible billing solution for services, payments, FX, balances, reports and cryptocurrency operations.',
+        ],
+        'solution_hsm' => [
+            'title' => 'syn0rix.HSM - PCI DSS HSM-first platform',
+            'description' => 'A PCI DSS-compliant HSM-first platform for protected keys, signing, key lifecycle, administration and audit.',
         ],
         'pilot' => [
             'title' => 'Pilot and Contact - Core AI Platform',
@@ -185,12 +203,52 @@ return [
             'hero' => ['label' => 'Agents', 'title' => 'Different agent types on one platform base', 'body' => 'The platform supports sales, support, request processing, operations, back-office and knowledge/compliance scenarios.'],
             'spotlight' => ['title' => 'First service scenario', 'text' => 'Website Sales & Support Knowledge Agent is a practical public-channel starting point before expanding into deeper operations.'],
         ],
+        'solutions' => [
+            'hero' => ['label' => 'Ready solutions', 'title' => 'The platform can be expanded into serious B2B solutions', 'body' => 'This section does not replace the platform story. It adds a practical product layer: ready solutions for infrastructure, billing and secure operations with AI agents inside the workflow.'],
+            'overview' => ['label' => 'Solution line', 'title' => 'Three directions where AI agents support operational systems', 'body' => 'Each solution has its own data, roles, statuses, reports and control points.'],
+            'cards' => [
+                ['code' => 'syn0rix.dc', 'tag' => 'AI Data Center', 'title' => 'AI DC operations', 'text' => 'Software for GPU bare metal capacity, clients, orders, resources, payments, incidents and operations.', 'points' => ['clients, capacity and orders', 'resources, payments and incidents', 'AI assistance for operators'], 'page' => 'solution_dc', 'link' => 'Explore syn0rix.dc'],
+                ['code' => 'syn0rix.billing', 'tag' => 'Billing core', 'title' => 'Billing, ledger and crypto operations', 'text' => 'A billing platform for services, payments, FX logic, reports and cryptocurrency operations.', 'points' => ['accounts, documents and transactions', 'currencies, rates and exchange', 'wallets, transfers and indexer'], 'page' => 'solution_billing', 'link' => 'Explore syn0rix.billing'],
+                ['code' => 'syn0rix.HSM', 'tag' => 'Secure crypto', 'title' => 'HSM-first crypto contour', 'text' => 'A PCI DSS-compliant platform for protected keys, signing, lifecycle operations, administration, audit and HSM backend integration.', 'points' => ['PCI DSS compliance', 'LMK, KEK and cryptograms', 'SoftHSM, Thales and Cloud HSM', 'admin, CLI, audit and portal'], 'page' => 'solution_hsm', 'link' => 'Explore syn0rix.HSM'],
+            ],
+            'proof' => ['label' => 'Why it matters', 'title' => 'Ready solutions show that AI agents can work inside real operations', 'body' => 'These are not separate demos. They show how the platform approach applies to infrastructure, billing, payments and security.', 'checks' => ['productized directions', 'clear business contours', 'AI agents inside operations', 'less manual work', 'fewer heavy external systems', 'better launch economics']],
+            'cta' => ['title' => 'Start with one solution or one process inside it', 'body' => 'We can help choose the first operational area to automate.'],
+        ],
+        'solution_details' => [
+            'dc' => [
+                'label' => 'Ready solution',
+                'title' => 'syn0rix.dc - AI Data Center operations software',
+                'body' => 'A solution for AI Data Center operators selling GPU bare metal capacity, LLM access or infrastructure services without adopting a heavy external platform.',
+                'summary' => ['label' => 'Business value', 'title' => 'AI DC needs an operational layer around capacity', 'body' => 'syn0rix.dc brings clients, orders, capacity, resources, payments, incidents and operations into one managed contour.', 'facts' => [['metric' => '01', 'title' => 'Lower payback threshold', 'text' => 'Less external platform cost and less manual operational assembly.'], ['metric' => '02', 'title' => 'Less manual work', 'text' => 'AI agents assist with monitoring, statuses, notifications and summaries.'], ['metric' => '03', 'title' => 'Faster controlled start', 'text' => 'Resources, orders and incidents become visible in one process.']]],
+                'capabilities' => ['label' => 'Key blocks', 'title' => 'What syn0rix.dc covers', 'body' => 'A concise product view for investors, partners and early customers.', 'blocks' => [['title' => 'Clients and orders', 'text' => 'Client records, orders, service states and operational steps.'], ['title' => 'Capacity and resources', 'text' => 'GPU bare metal servers, available capacity, hardware statuses and resource utilization.'], ['title' => 'Payments and commercial logic', 'text' => 'Services, orders, payments, tariffs and units of consumption.'], ['title' => 'Incidents and operations', 'text' => 'Incident control, notifications, ownership, statuses and management summaries.']]],
+                'agents' => ['label' => 'AI agents', 'title' => 'Agents help run the data center with a leaner team', 'body' => 'They do not replace the team completely, but reduce repetitive control and operator load.', 'checks' => ['health monitoring', 'resource accounting', 'hardware statuses', 'operation control', 'notifications', 'operator assistance', 'management summaries']],
+                'cta' => ['title' => 'Discuss the first AI DC contour to automate', 'body' => 'Start with capacity, client orders, equipment statuses or operator control.'],
+            ],
+            'billing' => [
+                'label' => 'Ready solution',
+                'title' => 'syn0rix.billing - billing, ledger and crypto operations',
+                'body' => 'A universal billing solution for services, payments, online products, FX calculations, exchange differences and cryptocurrency operations.',
+                'summary' => ['label' => 'Business value', 'title' => 'Billing becomes the center of accounting, not just payments UI', 'body' => 'The model is built around documents, transactions, ledger effects, balances, holds, reports and crypto operations.', 'facts' => [['metric' => '01', 'title' => 'Ledger core', 'text' => 'Documents, transactions, revisions, statuses, balances and audit trail.'], ['metric' => '02', 'title' => 'FX and exchange', 'text' => 'Currencies, rates, exchange documents and cross-currency accounting.'], ['metric' => '03', 'title' => 'Crypto operations', 'text' => 'Wallets, transfers, indexer and crypto-agent contours.']]],
+                'capabilities' => ['label' => 'Solution blocks', 'title' => 'Short view of syn0rix.billing', 'body' => 'The solution covers accounting, posting, control, reporting and crypto operations.', 'blocks' => [['title' => 'Billing core', 'text' => 'Accounts, clients, documents, transactions, fees, revisions, statuses and integration API.'], ['title' => 'Balances and holds', 'text' => 'Online balances, reservations, daily history and balance snapshots.'], ['title' => 'Currencies and rates', 'text' => 'Atomic units, currency directories, rates, exchange documents and credit/debit legs.'], ['title' => 'Reports and statements', 'text' => 'JSON statements, XLSX exports, balance reports and export jobs.'], ['title' => 'Wallets and addresses', 'text' => 'Crypto profiles, deposit addresses and billing account to network/token mapping.'], ['title' => 'Transfers and Indexer', 'text' => 'Withdrawals, signing, broadcast, confirmations, finality and reorg handling.']]],
+                'agents' => ['label' => 'AI in billing', 'title' => 'AI reduces staff load in accounting operations', 'body' => 'Agents can help with exceptions, statuses, reconciliation, reports and operator support.', 'checks' => ['document status control', 'exception hints', 'payment reconciliation', 'report preparation', 'operator assistance', 'FX control', 'operational alerts']],
+                'cta' => ['title' => 'Discuss how syn0rix.billing fits your model', 'body' => 'Suitable for subscriptions, usage-based services, FX, crypto payments or complex service accounting.'],
+            ],
+            'hsm' => [
+                'label' => 'Ready solution',
+                'title' => 'syn0rix.HSM - PCI DSS-compliant HSM-first platform',
+                'body' => 'A PCI DSS-compliant solution for protected key storage, signing, key lifecycle, audit and HSM backend integration.',
+                'summary' => ['label' => 'Business value', 'title' => 'Key material must stay inside a PCI DSS-compliant protected contour', 'body' => 'External systems receive public data or crypto operation results, not plaintext private keys.', 'facts' => [['metric' => '01', 'title' => 'PCI DSS', 'text' => 'Architecture aligned with PCI DSS requirements for protected cryptographic and payment contours.'], ['metric' => '02', 'title' => 'HSM-first model', 'text' => 'LMK, KEK, cryptograms, key ceremony, rotation and signing path.'], ['metric' => '03', 'title' => 'Admin/Ops contour', 'text' => 'Admin API, hsmctl, portal/BFF, self-test, incidents and audit.']]],
+                'capabilities' => ['label' => 'Key blocks', 'title' => 'What syn0rix.HSM includes', 'body' => 'A concise commercial view without deep cryptographic detail.', 'blocks' => [['title' => 'PCI DSS compliance', 'text' => 'A PCI DSS-compliant HSM contour for payment, financial and regulated scenarios where key control, audit and access separation matter.'], ['title' => 'Key hierarchy', 'text' => 'LMK -> KEK -> encrypted private keys / cryptograms.'], ['title' => 'Business RPC over UDS', 'text' => 'Local business contour for key generation, public derivation, address creation and signing.'], ['title' => 'Admin and operator tools', 'text' => 'Runtime state, unlock/lock, self-test, key ceremony, incidents and rotation.'], ['title' => 'Pluggable HSM backend', 'text' => 'A unified HSM Manager hides vendor-specific details.']]],
+                'agents' => ['label' => 'AI and control', 'title' => 'AI helps operators understand secure-contour state faster', 'body' => 'The AI layer supports diagnostics, runbooks, incidents and reporting without replacing crypto policies.', 'checks' => ['operator summaries', 'incident highlighting', 'runbook support', 'audit summaries', 'runtime state control', 'status explanations', 'management information']],
+                'cta' => ['title' => 'Discuss a protected contour for your payment or crypto process', 'body' => 'Start with design review, a SoftHSM pilot or an enterprise hardware HSM profile.'],
+            ],
+        ],
         'pilot' => [
             'hero' => ['label' => 'Pilot', 'title' => 'A controlled first launch instead of a large risky implementation', 'body' => 'A pilot validates the scenario, knowledge quality, interaction channel and handoff rules before wider scaling.'],
             'needs' => ['title' => 'What we need from the client', 'items' => ['Priority scenario', 'Knowledge base materials', 'Response boundaries', 'Feedback contact team']],
             'setup' => ['title' => 'What the platform team sets up', 'items' => ['Agent profile', 'Knowledge connection', 'Public or internal channel', 'Fallback and handoff rules', 'Pilot quality review']],
             'success' => ['title' => 'What pilot success looks like', 'text' => 'A clear scenario works in a controlled channel, the team can review response quality and the next use case can launch without a new foundation.'],
-            'form' => ['title' => 'Let us discuss which AI scenario should launch first', 'text' => 'Describe your use case and we will help define the right pilot path on Core AI Platform.', 'fields' => ['name' => 'Name', 'company' => 'Company', 'email' => 'Email', 'use_case' => 'Use Case', 'message' => 'Message'], 'submit' => 'Start Pilot Discussion', 'sent' => 'Request saved. The team can process it from the local log.', 'error' => 'Check the email and required fields, then send the request again.'],
+            'form' => ['title' => 'Let us discuss which AI scenario should launch first', 'text' => 'Describe your use case and we will help define the right pilot path on Core AI Platform.', 'fields' => ['name' => 'Name', 'company' => 'Company', 'email' => 'Email', 'use_case' => 'Use Case', 'message' => 'Message'], 'submit' => 'Start Pilot Discussion', 'sent' => 'Request sent. We will contact you and suggest the next pilot step.', 'error' => 'Check the email and required fields, then send the request again.'],
         ],
     ],
 ];

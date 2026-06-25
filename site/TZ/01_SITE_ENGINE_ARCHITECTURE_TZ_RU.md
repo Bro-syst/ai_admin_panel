@@ -46,7 +46,7 @@ TZ/
 
 - определение текущего языка по URL;
 - загрузка словаря выбранного языка;
-- fallback на `ru`;
+- fallback на `en`;
 - helper для безопасного вывода текста;
 - helper для получения перевода по ключу;
 - генерация ссылок на языковые версии;
@@ -61,20 +61,21 @@ TZ/
 ## 6. URL-модель
 
 ```text
-/        ru home
+/        auto language redirect
 /en/     en home
+/ru/     ru home
 /es/     es home
 ```
 
 Будущие страницы:
 
 ```text
-/platform/
-/agents/
-/pilot/
 /en/platform/
 /en/agents/
 /en/pilot/
+/ru/platform/
+/ru/agents/
+/ru/pilot/
 /es/platform/
 /es/agents/
 /es/pilot/

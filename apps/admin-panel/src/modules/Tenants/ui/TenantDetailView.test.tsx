@@ -42,6 +42,7 @@ function renderView(manager: Partial<TenantDetailManager> = {}, locale = 'en') {
         defaultModelFamily: 'gpt',
       },
       supportedMutationActions: [
+        'tenant.provision',
         'tenant.change_status',
         'tenant.change_provisioning_status',
         'tenant.update_provisioning_metadata',
@@ -102,7 +103,7 @@ function renderView(manager: Partial<TenantDetailManager> = {}, locale = 'en') {
       changeTenantStatus: true,
       changeProvisioningStatus: true,
       updateBillingRef: true,
-      provisionDefaultConfig: true,
+      provisionDefaultConfig: false,
       updateConfiguration: true,
     },
     canMutate: true,
@@ -140,8 +141,12 @@ describe('TenantDetailView', () => {
     expect(screen.getByRole('link', { name: 'Billing Export' })).toHaveAttribute('href', '/tenants/tenant_1/billing-export')
     expect(screen.getByText('Acme')).toBeInTheDocument()
     expect(screen.getAllByText('correlation_1').length).toBeGreaterThan(0)
-    expect(screen.getByText('Provision tenant')).toBeInTheDocument()
+    expect(screen.getAllByText('Provision tenant').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Provision tenant').some((node) => node.getAttribute('title') === 'tenant.provision')).toBe(true)
     expect(screen.getByLabelText('Tenant configuration JSON')).toHaveValue('{\n  "limits": {}\n}')
+    expect(screen.getByRole('button', { name: 'Provision default config' })).toBeDisabled()
+    expect(screen.getByText('Default configuration already exists.')).toBeInTheDocument()
+    expect(screen.queryByText('tenant.provision')).not.toBeInTheDocument()
   })
 
   it('requests explicit confirmation before running a mutation', async () => {
@@ -256,9 +261,29 @@ describe('TenantDetailView', () => {
     expect(screen.getAllByText('Успешно').length).toBeGreaterThan(0)
     expect(screen.getByText('Успешный повтор')).toBeInTheDocument()
     expect(screen.getByText('Снимок подготовки тенанта')).toBeInTheDocument()
+    expect(screen.getByText('Подготовка тенанта')).toBeInTheDocument()
+    expect(screen.getByText('Подготовка тенанта')).toHaveAttribute('title', 'tenant.provision')
+    expect(screen.queryByText('tenant.provision')).not.toBeInTheDocument()
     expect(screen.queryByText('provision_default_configuration')).not.toBeInTheDocument()
     expect(screen.queryByText('tenant_configuration')).not.toBeInTheDocument()
     expect(screen.queryByText('successful_replay')).not.toBeInTheDocument()
+  })
+
+  it('explains when configuration summary exists but JSON payload is unavailable', () => {
+    renderView({
+      configuration: null,
+      configurationDraft: '{}',
+      allowedActions: {
+        changeTenantStatus: true,
+        changeProvisioningStatus: true,
+        updateBillingRef: true,
+        provisionDefaultConfig: false,
+        updateConfiguration: false,
+      },
+    })
+
+    expect(screen.getByText('Configuration summary is loaded. Raw JSON is not available from the configuration endpoint yet.')).toBeInTheDocument()
+    expect(screen.getByText('Default configuration already exists.')).toBeInTheDocument()
   })
 
   it('disables mutation actions when backend-supported actions are absent', () => {

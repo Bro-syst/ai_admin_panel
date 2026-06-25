@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildReleaseDraftInput, deriveReleasesCanManage, hasCompleteExplicitEvidence, requiresManagedRetrievalEvidence, selectRetrievalEvidenceCandidateId } from '@/modules/Releases/model/useReleasesManager'
+import { applyPublishEvidenceBundle, buildReleaseDraftInput, deriveReleasesCanManage, hasCompleteExplicitEvidence, requiresManagedRetrievalEvidence, selectPublishEvidenceBundleId, selectRetrievalEvidenceCandidateId } from '@/modules/Releases/model/useReleasesManager'
 import type { ReleaseEvidenceRequirements } from '@/modules/Releases/api/releasesApi'
 
 const requirements: ReleaseEvidenceRequirements = {
@@ -27,6 +27,14 @@ const requirements: ReleaseEvidenceRequirements = {
     relatedMissingOrFailedItemsDefault: ['evaluation_evidence'],
   },
   publishEvidenceRequirements: [],
+  publishEvidenceDefaults: {
+    supportReconstructionReference: null,
+    usageChatId: null,
+    usageConversationTurnId: null,
+    usageModelRequestId: null,
+    billingExportReference: null,
+    releaseReportReference: null,
+  },
   runtimeProviderPreflight: {
     available: true,
     ready: true,
@@ -161,5 +169,100 @@ describe('deriveReleasesCanManage', () => {
       noCandidateReason: null,
       generatedAt: '2026-05-28T10:01:00Z',
     })).toBe('new')
+  })
+
+  it('selects the backend recommended publish evidence bundle by default', () => {
+    expect(selectPublishEvidenceBundleId('', {
+      agentId: 'agent_1',
+      templateId: 'sales_qualification_v1',
+      items: [{
+        bundleId: 'blocked',
+        displayLabel: 'Release v1 publish evidence',
+        readinessStatus: 'blocked',
+        recommended: false,
+        releaseId: 'release_1',
+        releaseVersion: 1,
+        releaseStatus: 'validated',
+        releaseActive: false,
+        selectedConfigId: 'config_1',
+        supportReconstructionReference: null,
+        usageChatId: null,
+        usageConversationTurnId: null,
+        usageModelRequestId: null,
+        billingExportReference: null,
+        releaseReportReference: null,
+        retrievalCandidateId: null,
+        usageCandidateId: null,
+        blockingReasons: ['missing_usage_evidence_candidate'],
+        technicalDetails: {},
+      }, {
+        bundleId: 'ready',
+        displayLabel: 'Release v2 publish evidence',
+        readinessStatus: 'ready',
+        recommended: true,
+        releaseId: 'release_2',
+        releaseVersion: 2,
+        releaseStatus: 'validated',
+        releaseActive: false,
+        selectedConfigId: 'config_2',
+        supportReconstructionReference: 'support-reconstruction:knowledge-retrieval-run:run_1',
+        usageChatId: 'chat_1',
+        usageConversationTurnId: 'turn_1',
+        usageModelRequestId: 'model_request_1',
+        billingExportReference: 'billing-export:billing-chain-1',
+        releaseReportReference: 'docs:TZ-SVC-4.3:RELEASE_METERING_USAGE_REPORT',
+        retrievalCandidateId: 'retrieval_1',
+        usageCandidateId: 'turn_1',
+        blockingReasons: [],
+        technicalDetails: {},
+      }],
+      summary: {
+        candidateCount: 2,
+        ready: true,
+        recommendedBundleId: 'ready',
+        noCandidateReason: null,
+        message: 'Ready.',
+      },
+      noCandidateReason: null,
+      generatedAt: '2026-06-23T10:00:00Z',
+    })).toBe('ready')
+  })
+
+  it('applies a publish evidence bundle to all publish evidence fields', () => {
+    expect(applyPublishEvidenceBundle({
+      supportReconstructionReference: '',
+      usageChatId: '',
+      usageConversationTurnId: '',
+      usageModelRequestId: '',
+      billingExportReference: '',
+      releaseReportReference: '',
+    }, {
+      bundleId: 'ready',
+      displayLabel: 'Release v1 publish evidence',
+      readinessStatus: 'ready',
+      recommended: true,
+      releaseId: 'release_1',
+      releaseVersion: 1,
+      releaseStatus: 'validated',
+      releaseActive: false,
+      selectedConfigId: 'config_1',
+      supportReconstructionReference: 'support-reconstruction:knowledge-retrieval-run:run_1',
+      usageChatId: 'chat_1',
+      usageConversationTurnId: 'turn_1',
+      usageModelRequestId: 'model_request_1',
+      billingExportReference: 'billing-export:billing-chain-1',
+      releaseReportReference: 'docs:TZ-SVC-4.3:RELEASE_METERING_USAGE_REPORT',
+      retrievalCandidateId: 'retrieval_1',
+      usageCandidateId: 'turn_1',
+      blockingReasons: [],
+      technicalDetails: {},
+    })).toEqual({
+      supportReconstructionReference: 'support-reconstruction:knowledge-retrieval-run:run_1',
+      usageChatId: 'chat_1',
+      usageConversationTurnId: 'turn_1',
+      usageModelRequestId: 'model_request_1',
+      billingExportReference: 'billing-export:billing-chain-1',
+      releaseReportReference: 'docs:TZ-SVC-4.3:RELEASE_METERING_USAGE_REPORT',
+    })
   })
 })

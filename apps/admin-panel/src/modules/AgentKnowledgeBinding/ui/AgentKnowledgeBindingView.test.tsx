@@ -216,6 +216,13 @@ describe('AgentKnowledgeBindingView', () => {
     expect(screen.queryByText('None')).not.toBeInTheDocument()
   })
 
+  it('localizes the saved binding status in Russian', () => {
+    renderView({}, 'ru')
+
+    expect(screen.getByText('Активно')).toBeInTheDocument()
+    expect(screen.queryByText('active')).not.toBeInTheDocument()
+  })
+
   it('localizes source-set options and summary labels in Russian', () => {
     renderView({
       portalStatus: {

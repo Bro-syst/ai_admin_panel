@@ -58,7 +58,10 @@ function TestReleasesManager() {
       <span data-testid="publish-support-reference">{manager.publishForm.supportReconstructionReference || 'none'}</span>
       <span data-testid="publish-usage-turn-id">{manager.publishForm.usageConversationTurnId || 'none'}</span>
       <span data-testid="publish-usage-model-request-id">{manager.publishForm.usageModelRequestId || 'none'}</span>
+      <span data-testid="publish-billing-export-reference">{manager.publishForm.billingExportReference || 'none'}</span>
+      <span data-testid="publish-release-report-reference">{manager.publishForm.releaseReportReference || 'none'}</span>
       <button type="button" onClick={manager.applyUsageEvidenceCandidateToPublishForm}>apply usage candidate</button>
+      <button type="button" onClick={manager.applyPublishEvidenceDefaultsToPublishForm}>apply publish evidence</button>
     </div>
   )
 }
@@ -305,6 +308,14 @@ describe('useReleasesManager flow', () => {
         labelKey: 'release.publish.usage_chat_id.label',
         descriptionKey: 'release.publish.usage_chat_id.description',
       }],
+      publishEvidenceDefaults: {
+        supportReconstructionReference: null,
+        usageChatId: null,
+        usageConversationTurnId: null,
+        usageModelRequestId: null,
+        billingExportReference: 'billing-export:billing-chain-1',
+        releaseReportReference: 'docs:TZ-SVC-4.3:RELEASE_METERING_USAGE_REPORT',
+      },
       runtimeProviderPreflight: {
         available: true,
         ready: true,
@@ -379,11 +390,13 @@ describe('useReleasesManager flow', () => {
     expect(screen.getByTestId('selected-retrieval-candidate')).toHaveTextContent('candidate_1')
     expect(screen.getByTestId('publish-support-reference')).toHaveTextContent('support_reconstruction_1')
 
-    fireEvent.click(screen.getByRole('button', { name: 'apply usage candidate' }))
+    fireEvent.click(screen.getByRole('button', { name: 'apply publish evidence' }))
 
     expect(screen.getByTestId('publish-usage-chat-id')).toHaveTextContent('chat_1')
     expect(screen.getByTestId('publish-usage-turn-id')).toHaveTextContent('turn_1')
     expect(screen.getByTestId('publish-usage-model-request-id')).toHaveTextContent('model_request_1')
+    expect(screen.getByTestId('publish-billing-export-reference')).toHaveTextContent('billing-export:billing-chain-1')
+    expect(screen.getByTestId('publish-release-report-reference')).toHaveTextContent('docs:TZ-SVC-4.3:RELEASE_METERING_USAGE_REPORT')
     expect(screen.getByTestId('can-publish')).toHaveTextContent('true')
   })
 

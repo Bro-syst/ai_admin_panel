@@ -145,6 +145,9 @@ export function AgentKnowledgeBindingView({ manager }: { manager: AgentKnowledge
     .filter((source): source is NonNullable<typeof catalog>['sources'][number] => Boolean(source))
   const selectedSourceNames = selectedSources.map((source) => formatSourceLabel(t, source))
   const hasReferenceProductCatalog = selectedSourceIds.includes('source.catalog.reference_product_catalog')
+  const bindingStatusLabel = manager.binding?.status
+    ? translateCode(t, `mutation_result.status_value.${manager.binding.status}`, manager.binding.status)
+    : null
   const sourceCountSummary = interpolate(t('knowledge.source_count_summary'), {
     available: catalog?.sources.length ?? manager.portalStatus?.sources.length ?? 0,
     selected: selectedSourceIds.length,
@@ -173,7 +176,7 @@ export function AgentKnowledgeBindingView({ manager }: { manager: AgentKnowledge
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {manager.binding?.status ? <StatusBadge status={manager.binding.status} /> : null}
+          {manager.binding?.status ? <StatusBadge status={manager.binding.status} label={bindingStatusLabel ?? undefined} /> : null}
           <button type="button" disabled={disabled} onClick={() => void manager.updateBinding()} className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--primary)] bg-[var(--primary)] px-4 text-sm font-bold text-white hover:bg-[var(--primary-hover)] disabled:cursor-not-allowed disabled:border-[var(--border)] disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-muted)]">
             {t('knowledge.update_binding')}
           </button>

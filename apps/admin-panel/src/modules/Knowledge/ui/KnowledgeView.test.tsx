@@ -142,7 +142,7 @@ describe('KnowledgeView', () => {
   it('renders Knowledge-owned source readiness, documents, chunks and support reconstruction', () => {
     renderView()
 
-    expect(screen.getByText('Indexing / retrieval readiness')).toBeInTheDocument()
+    expect(screen.getByText('Search and indexing readiness')).toBeInTheDocument()
     expect(screen.getAllByText('Sales FAQ').length).toBeGreaterThan(0)
     expect(screen.getAllByText('FAQ doc').length).toBeGreaterThan(0)
     expect(screen.getByText('safe projection')).toBeInTheDocument()
@@ -179,7 +179,7 @@ describe('KnowledgeView', () => {
       retrievalErrorMessage: 'История поисковых запусков временно недоступна',
     })
 
-    expect(screen.getByText('Indexing / retrieval readiness')).toBeInTheDocument()
+    expect(screen.getByText('Search and indexing readiness')).toBeInTheDocument()
     expect(screen.getByText('История поисковых запусков временно недоступна')).toBeInTheDocument()
     expect(screen.getByText('Retrieval history is temporarily unavailable. The rest of the knowledge setup is still available.')).toBeInTheDocument()
   })
@@ -234,6 +234,19 @@ describe('KnowledgeView', () => {
     expect(screen.getByText('No support-safe chunks are available yet.')).toBeInTheDocument()
   })
 
+  it('shows the selected source context before document registration in Russian', () => {
+    renderView({}, 'ru')
+
+    expect(screen.getByText('Выбранный источник')).toBeInTheDocument()
+    expect(screen.getByText('Документ будет зарегистрирован в этом источнике. Чтобы сменить источник, выберите другой в блоке «Источники базы знаний» выше.')).toBeInTheDocument()
+    expect(screen.getAllByText('Название источника').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Ключ источника').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('ID источника').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Sales FAQ').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('sales_faq').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('source_1').length).toBeGreaterThan(0)
+  })
+
   it('shows operator readiness, indexing result next step, and retrieval evidence guidance', () => {
     renderView({
       retrievalRuns: [],
@@ -281,18 +294,131 @@ describe('KnowledgeView', () => {
     expect(screen.getAllByText('Indexing required for readiness').length).toBeGreaterThan(0)
     expect(screen.getByText('Knowledge base is ready. Next step: generate retrieval evidence in Releases.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Go to Releases' })).toHaveAttribute('href', '/tenants/tenant_1/agents/agent_1/releases')
+    expect(screen.getByRole('button', { name: 'Expand advanced source and indexing setup' })).toBeInTheDocument()
     expect(screen.getAllByText('Indexing completed').length).toBeGreaterThan(0)
     expect(screen.getByText('Chunks: 3')).toBeInTheDocument()
     expect(screen.getByText('Vectorizations: 3')).toBeInTheDocument()
     expect(screen.getByText('Retrieval runs will appear after retrieval evidence validation.')).toBeInTheDocument()
   })
 
+  it('keeps ready knowledge setup compact in Russian after indexing', () => {
+    renderView({
+      sources: [{
+        source: {
+          id: 'source_1',
+          tenantId: 'tenant_1',
+          sourceKey: 'sales_faq',
+          name: 'Sales FAQ',
+          sourceKind: 'faq',
+          allowedAgentScope: 'agent_ids',
+          allowedAgentIds: ['agent_1'],
+          accessScope: 'tenant_restricted',
+          status: 'ready',
+          contentRevision: 'v1',
+          readinessStatus: 'indexing_required',
+          metadata: { owner: 'support' },
+          sourceSetEligibilityMarker: 'source_pack.aml_kyc_domain_knowledge_v1',
+          idempotencyKey: 'idem_1',
+          createdByCorrelationId: null,
+          updatedByCorrelationId: null,
+        },
+        lifecycle: { status: 'ready', readinessStatus: 'ready', sourceSetEligibilityMarker: 'marker', documentCount: 1, indexingRequired: false, downstreamOwner: 'backend' },
+        readiness: { tenantId: 'tenant_1', sourceId: 'source_1', indexId: 'index_1', latestIndexVersionId: 'index_version_1', readinessStatus: 'ready', sourceSetReadinessMarker: 'ready', membershipFingerprint: null, chunkCount: 6, vectorizationCount: 6, failedJobCount: 0, retryableJobCount: 0 },
+        latestJob: null,
+        failedOrRetryable: false,
+      }],
+      releaseReadiness: {
+        tenantId: 'tenant_1',
+        ownerStage: 'stage_08',
+        sourceCount: 1,
+        readySourceCount: 1,
+        failedOrRetryableSourceCount: 0,
+        releaseReady: true,
+        sources: [],
+      },
+      selectedSourceDetail: {
+        source: {
+          id: 'source_1',
+          tenantId: 'tenant_1',
+          sourceKey: 'sales_faq',
+          name: 'Sales FAQ',
+          sourceKind: 'faq',
+          allowedAgentScope: 'agent_ids',
+          allowedAgentIds: ['agent_1'],
+          accessScope: 'tenant_restricted',
+          status: 'ready',
+          contentRevision: 'v1',
+          readinessStatus: 'indexing_required',
+          metadata: { owner: 'support' },
+          sourceSetEligibilityMarker: 'source_pack.aml_kyc_domain_knowledge_v1',
+          idempotencyKey: null,
+          createdByCorrelationId: null,
+          updatedByCorrelationId: null,
+        },
+        lifecycle: { status: 'ready', readinessStatus: 'ready', sourceSetEligibilityMarker: 'marker', documentCount: 1, indexingRequired: false, downstreamOwner: 'backend' },
+        readiness: { tenantId: 'tenant_1', sourceId: 'source_1', indexId: 'index_1', latestIndexVersionId: 'index_version_1', readinessStatus: 'ready', sourceSetReadinessMarker: 'ready', membershipFingerprint: null, chunkCount: 6, vectorizationCount: 6, failedJobCount: 0, retryableJobCount: 0 },
+        latestJob: null,
+        failedOrRetryable: false,
+        documents: [{ id: 'doc_1', tenantId: 'tenant_1', sourceId: 'source_1', documentKey: 'doc', title: 'FAQ doc', contentRevision: 'v1', normalizedMetadata: {}, contentReference: 's3://safe', status: 'registered', retentionPolicy: null, disableReason: null, idempotencyKey: null, createdByCorrelationId: null, updatedByCorrelationId: null }],
+        jobs: [],
+        chunks: [{ id: 'chunk_1', sourceId: 'source_1', documentId: 'doc_1', chunkKey: 'c1', sequence: 1, normalizedContent: 'safe projection', citationAnchor: 'faq#1', accessScope: 'tenant_restricted', allowedAgentScope: 'agent_ids', allowedAgentIds: ['agent_1'], status: 'active' }],
+      },
+      indexingResult: {
+        job: {
+          id: 'job_1234567890abcdef',
+          tenantId: 'tenant_1',
+          sourceId: 'source_1',
+          documentId: 'doc_1',
+          pipelineStep: 'vectorization',
+          status: 'succeeded',
+          retryCount: 0,
+          errorClassification: null,
+          errorMessage: null,
+          idempotencyKey: 'idem',
+          correlationId: 'corr',
+          chunkingProfile: 'default',
+          chunkSize: 512,
+          vectorizationProfile: 'default',
+          embeddingProvider: 'backend',
+          embeddingModel: 'model',
+          embeddingVersion: 'v1',
+          accessScope: 'tenant_restricted',
+          allowedAgentScope: 'agent_ids',
+          allowedAgentIds: ['agent_1'],
+        },
+        readinessSummary: {
+          tenantId: 'tenant_1',
+          sourceId: 'source_1',
+          indexId: 'index_1',
+          latestIndexVersionId: 'index_version_1',
+          readinessStatus: 'ready',
+          sourceSetReadinessMarker: 'ready',
+          membershipFingerprint: 'fingerprint',
+          chunkCount: 6,
+          vectorizationCount: 6,
+          failedJobCount: 0,
+          retryableJobCount: 0,
+        },
+        chunkCount: 6,
+        vectorizationCount: 6,
+      },
+    }, 'ru', true)
+
+    expect(screen.getByText('База знаний готова. Следующий шаг: сформировать подтверждения поиска в релизах.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Перейти к релизам' })).toHaveAttribute('href', '/tenants/tenant_1/agents/agent_1/releases')
+    expect(screen.getByRole('button', { name: 'Развернуть дополнительные настройки источников и индексации' })).toBeInTheDocument()
+    expect(screen.getByText('Источник, документ и индексация готовы. Открывайте только для повторной индексации или правки серверных метаданных.')).toBeInTheDocument()
+    expect(screen.getAllByText('Готово к поиску').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Текущий шаг настройки')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Настроить возможности' })).not.toBeInTheDocument()
+  })
+
   it('renders created-but-not-visible warning from manager state', () => {
     renderView({
-      warningMessage: 'Source was created but is not visible to the current agent. Refresh the screen or check agent visibility in backend.',
+      warningMessage: 'Source was created but is not visible to the current agent. Refresh the screen or check agent visibility on the server.',
     })
 
-    expect(screen.getByText('Source was created but is not visible to the current agent. Refresh the screen or check agent visibility in backend.')).toBeInTheDocument()
+    expect(screen.getByText('Source was created but is not visible to the current agent. Refresh the screen or check agent visibility on the server.')).toBeInTheDocument()
   })
 
   it('localizes all knowledge select options in Russian while preserving backend values', () => {
@@ -347,7 +473,9 @@ describe('KnowledgeView', () => {
     expect(screen.queryByRole('option', { name: 'doc_1' })).not.toBeInTheDocument()
   })
 
-  it('separates binding readiness from indexing readiness in Russian', () => {
+  it('separates binding readiness from indexing readiness in Russian', async () => {
+    const user = userEvent.setup()
+
     renderView({
       sources: [],
       releaseReadiness: {
@@ -359,12 +487,64 @@ describe('KnowledgeView', () => {
         releaseReady: false,
         sources: [],
       },
+      mutationResult: {
+        action: 'upsert_knowledge_binding',
+        resourceType: 'agent_knowledge_binding',
+        resourceId: 'binding_1',
+        actorId: null,
+        actorType: null,
+        tenantId: 'tenant_1',
+        correlationId: 'corr_1',
+        mutationTimestamp: '2026-06-10T21:18:54.040187Z',
+        changedStateSummary: {},
+      },
       retrievalRuns: [],
     }, 'ru', true)
 
-    expect(screen.getByText('Индексация / retrieval readiness')).toBeInTheDocument()
-    expect(screen.getByText('Привязка готова, но индекс/readiness не подтвержден.')).toBeInTheDocument()
+    expect(screen.getByText('Обновление привязки базы знаний')).toBeInTheDocument()
+    expect(screen.getByText('Привязка базы знаний к агенту')).toBeInTheDocument()
+    expect(screen.getByText('Текущий шаг настройки')).toBeInTheDocument()
+    expect(screen.getByText('База знаний подключена')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Настроить возможности' })).toHaveAttribute('href', '/tenants/tenant_1/agents/agent_1/capabilities')
+    expect(screen.getByText('Готовность поиска и индексации')).toBeInTheDocument()
+    expect(screen.getByText('Привязка готова для настройки агента. Для релиза ещё нужна проверка поиска и индексации.')).toBeInTheDocument()
     expect(screen.getByText('Нет данных по индексированной готовности.')).toBeInTheDocument()
+    expect(screen.getByText('Дополнительная настройка источников и индексации')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Развернуть дополнительные настройки источников и индексации' })).toBeInTheDocument()
+    expect(screen.getByText('Развернуть')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Развернуть дополнительные настройки источников и индексации' }))
+    expect(screen.getByRole('button', { name: 'Свернуть дополнительные настройки источников и индексации' })).toBeInTheDocument()
+    expect(screen.getByText('Свернуть')).toBeInTheDocument()
     expect(screen.getByText('Для этого агента пока нет доступных управляемых источников. Создайте источник или проверьте привязку.')).toBeInTheDocument()
+    expect(screen.queryByText('upsert_knowledge_binding')).not.toBeInTheDocument()
+    expect(screen.queryByText('agent_knowledge_binding')).not.toBeInTheDocument()
+    expect(screen.queryByText('Индексация / retrieval readiness')).not.toBeInTheDocument()
+    expect(screen.queryByText('Привязка готова, но индекс/readiness не подтвержден.')).not.toBeInTheDocument()
+  })
+
+  it('localizes knowledge source mutation evidence and hides missing optional fields in Russian', () => {
+    renderView({
+      mutationResult: {
+        action: 'create_source',
+        resourceType: 'knowledge_source',
+        resourceId: 'source_1',
+        actorId: null,
+        actorType: null,
+        tenantId: 'tenant_1',
+        correlationId: 'corr_1',
+        mutationTimestamp: '2026-06-15T15:24:15.882571Z',
+        changedStateSummary: {},
+        status: null,
+        resultStatus: null,
+        version: null,
+      },
+    }, 'ru')
+
+    expect(screen.getByText('Создание источника базы знаний')).toBeInTheDocument()
+    expect(screen.getByText('Источник базы знаний')).toBeInTheDocument()
+    expect(screen.queryByText('create_source')).not.toBeInTheDocument()
+    expect(screen.queryByText('Статус / результат')).not.toBeInTheDocument()
+    expect(screen.queryByText('Версия')).not.toBeInTheDocument()
+    expect(screen.queryByText('Сервер не вернул поле')).not.toBeInTheDocument()
   })
 })

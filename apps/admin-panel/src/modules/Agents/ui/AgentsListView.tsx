@@ -6,6 +6,13 @@ import type { AgentTemplateCatalogManager } from '@/modules/AgentTemplates'
 import { StatusBadge } from '@/shared/ui/EntityInfo'
 import { RefreshButton } from '@/shared/ui/RefreshButton'
 
+function translatedValue(t: (key: string) => string, namespace: string, value: string | null | undefined) {
+  if (!value) return t('agents.empty_value')
+  const key = `${namespace}.${value}`
+  const translated = t(key)
+  return translated === key ? value : translated
+}
+
 export function AgentsListView({
   manager,
   catalogManager,
@@ -71,21 +78,28 @@ export function AgentsListView({
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border)]">
-                {manager.agents.map((agent) => (
-                  <tr key={agent.agentId} className="transition hover:bg-[var(--surface-muted)]">
-                    <td className="px-4 py-3">
-                      <Link to={`/tenants/${manager.tenantId}/agents/${agent.agentId}`} className="font-semibold text-[var(--primary-hover)] hover:underline">
-                        {agent.name}
-                      </Link>
-                      <div className="mt-1 break-all text-xs text-[var(--text-muted)]">{agent.agentId}</div>
-                    </td>
-                    <td className="px-4 py-3 text-[var(--text-muted)]">{agent.templateId ?? agent.archetypeId}</td>
-                    <td className="px-4 py-3"><StatusBadge status={agent.status} label={t(`agents.status.${agent.status}`)} /></td>
-                    <td className="px-4 py-3"><StatusBadge status={agent.lifecycleStatus} label={t(`agents.lifecycle_status.${agent.lifecycleStatus}`)} /></td>
-                    <td className="px-4 py-3"><StatusBadge status={agent.readinessStatus} label={t(`agents.readiness_status.${agent.readinessStatus}`)} /></td>
-                    <td className="px-4 py-3 text-[var(--text-muted)]">{agent.blockingItemCount}</td>
-                  </tr>
-                ))}
+                {manager.agents.map((agent) => {
+                  const templateValue = agent.templateId ?? agent.archetypeId
+                  const templateLabel = agent.templateId
+                    ? translatedValue(t, 'agents.templates.template_label', agent.templateId)
+                    : translatedValue(t, 'agents.templates.archetype', agent.archetypeId)
+
+                  return (
+                    <tr key={agent.agentId} className="transition hover:bg-[var(--surface-muted)]">
+                      <td className="px-4 py-3">
+                        <Link to={`/tenants/${manager.tenantId}/agents/${agent.agentId}`} className="font-semibold text-[var(--primary-hover)] hover:underline">
+                          {agent.name}
+                        </Link>
+                        <div className="mt-1 break-all text-xs text-[var(--text-muted)]">{agent.agentId}</div>
+                      </td>
+                      <td className="px-4 py-3 text-[var(--text-muted)]" title={templateValue ?? undefined}>{templateLabel}</td>
+                      <td className="px-4 py-3"><StatusBadge status={agent.status} label={t(`agents.status.${agent.status}`)} /></td>
+                      <td className="px-4 py-3"><StatusBadge status={agent.lifecycleStatus} label={t(`agents.lifecycle_status.${agent.lifecycleStatus}`)} /></td>
+                      <td className="px-4 py-3"><StatusBadge status={agent.readinessStatus} label={t(`agents.readiness_status.${agent.readinessStatus}`)} /></td>
+                      <td className="px-4 py-3 text-[var(--text-muted)]">{agent.blockingItemCount}</td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

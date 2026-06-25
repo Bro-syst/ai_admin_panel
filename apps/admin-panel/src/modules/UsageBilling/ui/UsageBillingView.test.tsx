@@ -163,7 +163,8 @@ function managerFixture(overrides: Partial<UsageBillingManager> = {}) {
   } as unknown as UsageBillingManager
 }
 
-function renderWithShell(children: ReactNode, path = '/tenants/tenant_1/usage') {
+function renderWithShell(children: ReactNode, path = '/tenants/tenant_1/usage', locale = 'en') {
+  window.localStorage.setItem('ai_admin_panel:locale_v1', locale)
   render(
     <I18nProvider>
       <MemoryRouter initialEntries={[path]} future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
@@ -205,6 +206,41 @@ describe('BillingExportView', () => {
     expect(screen.getByText('activity_1: corr_1')).toBeInTheDocument()
     expect(screen.getAllByText('Invoice logic exposed').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Payment logic exposed').length).toBeGreaterThan(0)
+  })
+
+  it('localizes billing export labels and backend status values for Russian operators', () => {
+    const manager = managerFixture()
+
+    renderWithShell(
+      <BillingExportView
+        manager={managerFixture({
+          billingStatus: {
+            ...manager.billingStatus!,
+            stage25OwnerMarker: 'stage25_billing_export',
+            ownerStage: 'stage25_billing_export',
+            exportStatus: 'pending',
+            currentState: 'retry_scheduled',
+          },
+        })}
+      />,
+      '/tenants/tenant_1/billing-export',
+      'ru',
+    )
+
+    expect(screen.getByRole('link', { name: 'Назад к тенанту' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Использование и учёт' })).toBeInTheDocument()
+    expect(screen.getAllByText('Выгрузка биллинга').length).toBeGreaterThan(0)
+    expect(screen.getByText('Статус выгрузки биллинга')).toBeInTheDocument()
+    expect(screen.getAllByText('Ожидает выгрузки').length).toBeGreaterThan(0)
+    expect(screen.getByText('Повтор запланирован')).toBeInTheDocument()
+    expect(screen.getAllByText('Серверный процесс выгрузки биллинга').length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: 'Выгрузить пакет' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Отметить ошибку выгрузки' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Запланировать повтор' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Сверить выгрузку' })).toBeInTheDocument()
+    expect(screen.queryByText('Billing Export')).not.toBeInTheDocument()
+    expect(screen.queryByText('Billing export status')).not.toBeInTheDocument()
+    expect(screen.queryByText('stage25_billing_export')).not.toBeInTheDocument()
   })
 
   it('requires confirmation before export mutation', async () => {

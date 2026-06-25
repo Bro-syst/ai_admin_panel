@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getLocalizedApiErrorMessage } from '@/core/api/errors/getLocalizedApiErrorMessage'
 import { useAuth } from '@/core/auth/useAuth'
@@ -29,16 +29,23 @@ export function useAgentCreateManager(tenantId: string, selectedTemplate: AgentT
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [mutationResult, setMutationResult] = useState<AgentMutationResult | null>(null)
+  const lastTemplateDefaultsRef = useRef({ purpose: '', description: '' })
 
   const canMutate = canMutateAgents(adminUser)
 
   useEffect(() => {
     if (!selectedTemplate) return
+    const nextDefaults = {
+      purpose: selectedTemplate.defaultAgentPurpose,
+      description: selectedTemplate.defaultAgentDescription ?? '',
+    }
+    const previousDefaults = lastTemplateDefaultsRef.current
     setForm((current) => ({
       ...current,
-      purpose: current.purpose || selectedTemplate.defaultAgentPurpose,
-      description: current.description || (selectedTemplate.defaultAgentDescription ?? ''),
+      purpose: !current.purpose || current.purpose === previousDefaults.purpose ? nextDefaults.purpose : current.purpose,
+      description: !current.description || current.description === previousDefaults.description ? nextDefaults.description : current.description,
     }))
+    lastTemplateDefaultsRef.current = nextDefaults
   }, [selectedTemplate])
 
   const updateForm = useCallback((patch: Partial<AgentCreateForm>) => {

@@ -5,66 +5,69 @@ declare(strict_types=1);
 $page = t('pages.pilot', []);
 ?>
 <section class="page-hero">
-    <div class="container narrow">
-        <p class="section-label"><?= e($page['hero']['label']) ?></p>
-        <h1><?= e($page['hero']['title']) ?></h1>
-        <p><?= e($page['hero']['body']) ?></p>
+    <div class="shell shell--narrow">
+        <p class="eyebrow"><?= e($page['hero']['label']) ?></p>
+        <h1 class="display"><?= e($page['hero']['title']) ?></h1>
+        <p class="lead"><?= e($page['hero']['body']) ?></p>
     </div>
 </section>
-<section class="section pilot-prep-section">
-    <div class="container pilot-role-grid">
-        <?php foreach ([['code' => '01', 'data' => $page['needs']], ['code' => '02', 'data' => $page['setup']]] as $role): ?>
-            <article class="pilot-role-card">
-                <div class="scenario-top">
-                    <span class="scenario-icon" aria-hidden="true"><?= e($role['code']) ?></span>
-                    <?php if (($role['data']['tag'] ?? '') !== ''): ?>
-                        <span class="scenario-tag"><?= e($role['data']['tag']) ?></span>
+
+<section class="section">
+    <div class="shell">
+        <div class="matrix cols-2">
+            <?php foreach ([['code' => '01', 'data' => $page['needs']], ['code' => '02', 'data' => $page['setup']]] as $role): ?>
+                <article class="matrix-card">
+                    <div class="card-meta">
+                        <span class="index"><?= e($role['code']) ?></span>
+                        <?php if (($role['data']['tag'] ?? '') !== ''): ?>
+                            <span class="card-tag"><?= e($role['data']['tag']) ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <h3><?= e($role['data']['title']) ?></h3>
+                    <?php if (($role['data']['summary'] ?? '') !== ''): ?>
+                        <p><?= e($role['data']['summary']) ?></p>
                     <?php endif; ?>
-                </div>
-                <h2><?= e($role['data']['title']) ?></h2>
-                <?php if (($role['data']['summary'] ?? '') !== ''): ?>
-                    <p class="pilot-role-summary"><?= e($role['data']['summary']) ?></p>
-                <?php endif; ?>
-                <div class="pilot-role-points">
-                    <?php foreach ($role['data']['items'] as $index => $item): ?>
-                        <div class="pilot-role-point">
-                            <span><?= e(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)) ?></span>
-                            <p><?= e($item) ?></p>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-                <?php if (($role['data']['result'] ?? '') !== ''): ?>
-                    <p class="scenario-result"><?= e($role['data']['result']) ?></p>
-                <?php endif; ?>
-            </article>
-        <?php endforeach; ?>
-    </div>
-</section>
-<section class="section surface pilot-path-section">
-    <div class="container pilot-path-grid">
-        <div>
-            <p class="section-label"><?= e(t('pages.home.pilot.label')) ?></p>
-            <h2><?= e(t('pages.home.pilot.title')) ?></h2>
-            <p><?= e(t('pages.home.pilot.body')) ?></p>
-        </div>
-        <div class="pilot-path-steps">
-            <?php foreach (t('pages.home.pilot.steps', []) as $index => $step): ?>
-                <article>
-                    <span><?= e(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)) ?></span>
-                    <p><?= e($step) ?></p>
+                    <ul class="check-list">
+                        <?php foreach ($role['data']['items'] as $item): ?>
+                            <li><?= e($item) ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <?php if (($role['data']['result'] ?? '') !== ''): ?>
+                        <p class="result-line"><?= e($role['data']['result']) ?></p>
+                    <?php endif; ?>
                 </article>
             <?php endforeach; ?>
         </div>
     </div>
 </section>
+
+<section class="section band-dark">
+    <div class="shell cols">
+        <div class="section-head" style="margin-bottom:0">
+            <p class="eyebrow"><?= e(t('pages.home.pilot.label')) ?></p>
+            <h2 class="heading"><?= e(t('pages.home.pilot.title')) ?></h2>
+            <p class="support"><?= e(t('pages.home.pilot.body')) ?></p>
+        </div>
+        <div class="spec">
+            <?php foreach (t('pages.home.pilot.steps', []) as $index => $step): ?>
+                <div>
+                    <span class="index"><?= e(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)) ?></span>
+                    <p><?= e($step) ?></p>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
 <section class="section">
-    <div class="container split-section">
+    <div class="shell split-section">
         <article>
-            <h2><?= e($page['success']['title']) ?></h2>
+            <p class="eyebrow"><?= e($page['hero']['label']) ?></p>
+            <h2 class="heading"><?= e($page['success']['title']) ?></h2>
             <p><?= e($page['success']['text']) ?></p>
         </article>
         <form class="contact-form" id="contact" method="post" action="/handlers/contact.php">
-            <h2><?= e($page['form']['title']) ?></h2>
+            <h2 class="heading" style="font-size:1.4rem"><?= e($page['form']['title']) ?></h2>
             <p><?= e($page['form']['text']) ?></p>
             <?php if (($_GET['contact'] ?? '') === 'sent'): ?>
                 <p class="form-status success"><?= e($page['form']['sent']) ?></p>

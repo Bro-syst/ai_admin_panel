@@ -159,15 +159,18 @@ describe('AgentPolicyView', () => {
     expect(screen.getAllByText('Наследовать профиль тенанта').length).toBeGreaterThan(0)
     expect(screen.getByText('Обязательна')).toBeInTheDocument()
     expect(screen.getAllByText('Профиль безопасности лид-данных').length).toBeGreaterThan(0)
-    expect(screen.getByText('Явный профиль для lead-capture и sales-сценариев, работающих с клиентскими данными.')).toBeInTheDocument()
+    expect(screen.getByText('Явный профиль для захвата лидов и продаж, где агент работает с клиентскими данными.')).toBeInTheDocument()
     expect(screen.getAllByText('Проверка входящего запроса').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Контроль вызова модели').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Защита от подмены инструкций').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Ограничения бизнес-политики тенанта').length).toBeGreaterThan(0)
     expect(screen.getByText('Политика лид-данных')).toBeInTheDocument()
     expect(screen.queryByText('inherited_default')).not.toBeInTheDocument()
     expect(screen.queryByText('lead_data_safety_profile')).not.toBeInTheDocument()
     expect(screen.queryByText('tenant_business_policy_restriction')).not.toBeInTheDocument()
     expect(screen.queryByText('policy_profile.lead_data_safety_v1')).not.toBeInTheDocument()
+    expect(screen.queryByText('Защита от prompt injection / злоупотребления контекстом')).not.toBeInTheDocument()
+    expect(screen.queryByText('Защита от prompt injection и подмены инструкций')).not.toBeInTheDocument()
   })
 
   it('validates through backend and confirms update before policy mutation', async () => {
@@ -223,9 +226,12 @@ describe('AgentPolicyView', () => {
     })
 
     expect(screen.getByText('For the first smoke, an explicit profile is recommended.')).toBeInTheDocument()
-    expect(screen.getByText('Recommended')).toBeInTheDocument()
+    expect(screen.getByText('Recommended setup for this smoke')).toBeInTheDocument()
+    expect(screen.getAllByText('Recommended').length).toBeGreaterThan(0)
+    expect(screen.getByText('Best fit for this agent')).toBeInTheDocument()
+    expect(screen.getByText('Profile details')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'Select profile' }))
+    await user.click(screen.getByRole('button', { name: 'Select recommended profile' }))
 
     expect(manager.updateForm).toHaveBeenCalledWith({
       bindingMode: 'explicit_profile',

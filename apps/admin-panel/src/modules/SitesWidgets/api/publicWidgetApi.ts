@@ -92,6 +92,13 @@ type SendMessageResponsePayload = {
   correlation_id?: string
 }
 
+type PublicWidgetErrorPayload = {
+  detail?: string
+  error_category?: string
+  error_code?: string
+  correlation_id?: string
+}
+
 function readString(value: unknown, fallback = '') {
   return typeof value === 'string' ? value : fallback
 }
@@ -140,6 +147,44 @@ function mapMessage(payload: MessagePayload = {}): WidgetMessage {
   }
 }
 
+async function readPublicWidgetError(response: Response): Promise<PublicWidgetErrorPayload> {
+  try {
+    const payload = await response.json()
+    return payload && typeof payload === 'object' ? payload as PublicWidgetErrorPayload : {}
+  } catch {
+    return {}
+  }
+}
+
+function readPublicWidgetErrorCode(payload: PublicWidgetErrorPayload, response: Response) {
+  if (payload.error_category) return payload.error_category
+  if (payload.error_code) return payload.error_code
+
+  const detail = payload.detail?.toLowerCase() ?? ''
+  if (response.status === 404 || detail.includes('resolved widget resource not found')) {
+    return 'widget_not_found'
+  }
+
+  return `widget_public_${response.status}`
+}
+
+async function throwPublicWidgetError(response: Response): Promise<never> {
+  const payload = await readPublicWidgetError(response)
+  const code = readPublicWidgetErrorCode(payload, response)
+  const message = payload.detail ?? `widget_public_${response.status}`
+  throw {
+    code,
+    message,
+    response: {
+      data: {
+        ...payload,
+        error_code: code,
+        message,
+      },
+    },
+  }
+}
+
 async function publicJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     ...init,
@@ -151,7 +196,7 @@ async function publicJson<T>(path: string, init?: RequestInit): Promise<T> {
     },
   })
   if (!response.ok) {
-    throw new Error(`widget_public_${response.status}`)
+    await throwPublicWidgetError(response)
   }
   return response.json() as Promise<T>
 }

@@ -35,11 +35,15 @@ function readErrorKind(error: unknown) {
 function readErrorMessage(error: unknown) {
   const payload = readRecord(error)
   if (!payload) return null
+  const responseData = readRecord(readRecord(payload.response)?.data)
+  const detailRecord = readRecord(payload.details)
 
   return (
     readText(payload.message) ??
-    readText(readRecord(payload.details)?.message) ??
-    readText(readRecord(readRecord(payload.response)?.data)?.message)
+    readText(detailRecord?.message) ??
+    readText(detailRecord?.detail) ??
+    readText(responseData?.message) ??
+    readText(responseData?.detail)
   )
 }
 
@@ -62,7 +66,11 @@ export function getLocalizedApiErrorMessage(error: unknown, t: Translate, fallba
   }
 
   const message = readErrorMessage(error)
-  if (message) return message
+  if (message) {
+    const localizedBackendMessage = translateIfExists(t, `errors.backend.${message}`)
+    if (localizedBackendMessage) return localizedBackendMessage
+    return message
+  }
 
   return fallback
 }

@@ -27,6 +27,7 @@ $jsonLd = json_encode(json_ld_for_page($currentLocale, $currentPage), JSON_UNESC
     <meta name="twitter:title" content="<?= e($meta['title'] ?? app_config('brand')) ?>">
     <meta name="twitter:description" content="<?= e($meta['description'] ?? '') ?>">
     <meta name="twitter:image" content="<?= e($socialImage) ?>">
-    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="preload" as="style" href="<?= e(asset('/static/styles.css')) ?>">
+    <link rel="stylesheet" href="<?= e(asset('/static/styles.css')) ?>">
     <script type="application/ld+json"><?= $jsonLd ?></script>
 </head>

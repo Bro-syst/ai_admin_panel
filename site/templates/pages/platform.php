@@ -6,35 +6,48 @@ $page = t('pages.platform', []);
 $features = t('pages.home.platform.features', []);
 ?>
 <section class="page-hero">
-    <div class="container narrow">
-        <p class="section-label"><?= e($page['hero']['label']) ?></p>
-        <h1><?= e($page['hero']['title']) ?></h1>
-        <p><?= e($page['hero']['body']) ?></p>
+    <div class="shell shell--narrow">
+        <p class="eyebrow"><?= e($page['hero']['label']) ?></p>
+        <h1 class="display"><?= e($page['hero']['title']) ?></h1>
+        <p class="lead"><?= e($page['hero']['body']) ?></p>
     </div>
 </section>
+
+<section class="section band-dark">
+    <div class="shell">
+        <div class="matrix cols-2">
+            <?php foreach ($features as $index => $feature): ?>
+                <article class="matrix-card">
+                    <span class="index"><?= e(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)) ?></span>
+                    <h3><?= e($feature['title']) ?></h3>
+                    <p><?= e($feature['text']) ?></p>
+                </article>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
 <section class="section">
-    <div class="container feature-grid">
-        <?php foreach ($features as $feature): ?>
-            <article class="feature-card">
-                <h2><?= e($feature['title']) ?></h2>
-                <p><?= e($feature['text']) ?></p>
-            </article>
-        <?php endforeach; ?>
+    <div class="shell">
+        <div class="matrix">
+            <?php foreach ($page['sections'] as $index => $section): ?>
+                <article class="matrix-card">
+                    <span class="index"><?= e(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)) ?></span>
+                    <h3><?= e($section['title']) ?></h3>
+                    <p><?= e($section['text']) ?></p>
+                </article>
+            <?php endforeach; ?>
+        </div>
     </div>
 </section>
-<section class="section surface">
-    <div class="container stacked">
-        <?php foreach ($page['sections'] as $section): ?>
-            <article class="wide-panel">
-                <h2><?= e($section['title']) ?></h2>
-                <p><?= e($section['text']) ?></p>
-            </article>
-        <?php endforeach; ?>
-    </div>
-</section>
-<section class="final-cta compact">
-    <div class="container">
-        <h2><?= e(t('pages.home.final_cta.title')) ?></h2>
-        <a class="button button-primary" href="<?= e(page_path($currentLocale, 'pilot')) ?>#contact"><?= e(t('site.cta.primary')) ?></a>
+
+<section class="section band-dark band-deep final-cta">
+    <div class="shell">
+        <p class="eyebrow"><?= e(t('site.nav.platform')) ?></p>
+        <h2 class="heading"><?= e(t('pages.home.final_cta.title')) ?></h2>
+        <div class="button-row center">
+            <a class="button button-primary" href="<?= e(page_path($currentLocale, 'pilot')) ?>#contact"><?= e(t('site.cta.primary')) ?></a>
+        </div>
+        <p class="cta-meta"><?= e(app_config('brand')) ?> · platform · syn0rix.com</p>
     </div>
 </section>

@@ -11,6 +11,9 @@ import {
   type ReleaseDetail,
   type ReleaseEvidenceRequirements,
   type ReleaseListItem,
+  type ReleasePublishEvidenceBundle,
+  type ReleasePublishEvidenceCandidates,
+  type ReleasePublishEvidenceDefaults,
   type ReleaseReadiness,
   type ReleaseRetrievalEvidenceCandidate,
   type ReleaseRetrievalEvidenceCandidates,
@@ -128,6 +131,35 @@ function defaultPublishForm(): PublishEvidenceForm {
   }
 }
 
+export function applyPublishEvidenceDefaults(
+  current: PublishEvidenceForm,
+  defaults: ReleasePublishEvidenceDefaults | null | undefined,
+): PublishEvidenceForm {
+  if (!defaults) return current
+  return {
+    supportReconstructionReference: defaults.supportReconstructionReference ?? current.supportReconstructionReference,
+    usageChatId: defaults.usageChatId ?? current.usageChatId,
+    usageConversationTurnId: defaults.usageConversationTurnId ?? current.usageConversationTurnId,
+    usageModelRequestId: defaults.usageModelRequestId ?? current.usageModelRequestId,
+    billingExportReference: defaults.billingExportReference ?? current.billingExportReference,
+    releaseReportReference: defaults.releaseReportReference ?? current.releaseReportReference,
+  }
+}
+
+export function applyPublishEvidenceBundle(
+  current: PublishEvidenceForm,
+  bundle: ReleasePublishEvidenceBundle,
+): PublishEvidenceForm {
+  return {
+    supportReconstructionReference: bundle.supportReconstructionReference ?? current.supportReconstructionReference,
+    usageChatId: bundle.usageChatId ?? current.usageChatId,
+    usageConversationTurnId: bundle.usageConversationTurnId ?? current.usageConversationTurnId,
+    usageModelRequestId: bundle.usageModelRequestId ?? current.usageModelRequestId,
+    billingExportReference: bundle.billingExportReference ?? current.billingExportReference,
+    releaseReportReference: bundle.releaseReportReference ?? current.releaseReportReference,
+  }
+}
+
 function isSmokeCaseComplete(form: ReleaseDraftForm, smokeCase: ReleaseDraftSmokeCaseForm) {
   if (!smokeCase.required) return true
   if (!smokeCase.passed) return false
@@ -238,6 +270,12 @@ export function selectRetrievalEvidenceCandidateId(current: string, candidates: 
   })[0]?.candidateId ?? ''
 }
 
+export function selectPublishEvidenceBundleId(current: string, candidates: ReleasePublishEvidenceCandidates | null): string {
+  if (!candidates?.items.length) return ''
+  if (current && candidates.items.some((bundle) => bundle.bundleId === current)) return current
+  return candidates.summary.recommendedBundleId || candidates.items[0]?.bundleId || ''
+}
+
 function applyRetrievalEvidenceCandidateToDraft(
   form: ReleaseDraftForm,
   candidate: ReleaseRetrievalEvidenceCandidate,
@@ -289,6 +327,8 @@ export function useReleasesManager(tenantId: string, agentId: string) {
   const [evidenceRequirements, setEvidenceRequirements] = useState<ReleaseEvidenceRequirements | null>(null)
   const [usageEvidenceCandidates, setUsageEvidenceCandidates] = useState<ReleaseUsageEvidenceCandidates | null>(null)
   const [selectedUsageEvidenceCandidateId, setSelectedUsageEvidenceCandidateId] = useState<string>('')
+  const [publishEvidenceCandidates, setPublishEvidenceCandidates] = useState<ReleasePublishEvidenceCandidates | null>(null)
+  const [selectedPublishEvidenceBundleId, setSelectedPublishEvidenceBundleId] = useState<string>('')
   const [retrievalEvidenceCandidates, setRetrievalEvidenceCandidates] = useState<ReleaseRetrievalEvidenceCandidates | null>(null)
   const [selectedRetrievalEvidenceCandidateId, setSelectedRetrievalEvidenceCandidateId] = useState<string>('')
   const [releaseCandidateByReleaseId, setReleaseCandidateByReleaseId] = useState<Record<string, string>>({})
@@ -302,8 +342,10 @@ export function useReleasesManager(tenantId: string, agentId: string) {
   const [isMutating, setIsMutating] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [usageEvidenceCandidatesError, setUsageEvidenceCandidatesError] = useState<string | null>(null)
+  const [publishEvidenceCandidatesError, setPublishEvidenceCandidatesError] = useState<string | null>(null)
   const [retrievalEvidenceCandidatesError, setRetrievalEvidenceCandidatesError] = useState<string | null>(null)
   const [isLoadingRetrievalEvidenceCandidates, setIsLoadingRetrievalEvidenceCandidates] = useState(true)
+  const [isLoadingPublishEvidenceCandidates, setIsLoadingPublishEvidenceCandidates] = useState(true)
   const [isGeneratingRetrievalEvidenceCandidate, setIsGeneratingRetrievalEvidenceCandidate] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -327,6 +369,22 @@ export function useReleasesManager(tenantId: string, agentId: string) {
       setUsageEvidenceCandidatesError(getLocalizedApiErrorMessage(error, t, t('releases.usage_evidence_candidates_load_error')))
     } finally {
       setIsLoadingUsageEvidenceCandidates(false)
+    }
+  }, [agentId, tenantId, t])
+
+  const loadPublishEvidenceCandidates = useCallback(async (releaseId?: string | null) => {
+    setIsLoadingPublishEvidenceCandidates(true)
+    setPublishEvidenceCandidatesError(null)
+    try {
+      const nextPublishEvidenceCandidates = await releasesApi.getPublishEvidenceCandidates(tenantId, agentId, releaseId)
+      setPublishEvidenceCandidates(nextPublishEvidenceCandidates)
+      setSelectedPublishEvidenceBundleId((current) => selectPublishEvidenceBundleId(current, nextPublishEvidenceCandidates))
+    } catch (error) {
+      setPublishEvidenceCandidates(null)
+      setSelectedPublishEvidenceBundleId('')
+      setPublishEvidenceCandidatesError(getLocalizedApiErrorMessage(error, t, t('releases.publish_evidence_bundles_load_error')))
+    } finally {
+      setIsLoadingPublishEvidenceCandidates(false)
     }
   }, [agentId, tenantId, t])
 
@@ -382,9 +440,18 @@ export function useReleasesManager(tenantId: string, agentId: string) {
     void loadRetrievalEvidenceCandidates()
   }, [loadReleases, loadRetrievalEvidenceCandidates, loadUsageEvidenceCandidates])
 
+  useEffect(() => {
+    void loadPublishEvidenceCandidates(selectedRelease?.releaseId ?? null)
+  }, [loadPublishEvidenceCandidates, selectedRelease?.releaseId])
+
   const selectedUsageEvidenceCandidate = useMemo<ReleaseUsageEvidenceCandidate | null>(
     () => usageEvidenceCandidates?.items.find((candidate) => candidate.conversationTurnId === selectedUsageEvidenceCandidateId) ?? null,
     [selectedUsageEvidenceCandidateId, usageEvidenceCandidates?.items],
+  )
+
+  const selectedPublishEvidenceBundle = useMemo<ReleasePublishEvidenceBundle | null>(
+    () => publishEvidenceCandidates?.items.find((bundle) => bundle.bundleId === selectedPublishEvidenceBundleId) ?? null,
+    [publishEvidenceCandidates?.items, selectedPublishEvidenceBundleId],
   )
 
   const selectedRetrievalEvidenceCandidate = useMemo<ReleaseRetrievalEvidenceCandidate | null>(
@@ -418,11 +485,12 @@ export function useReleasesManager(tenantId: string, agentId: string) {
       setSelectedRelease(response.resource)
       setMutationResult(response.result)
       setNotice(message)
-      const [nextReadiness, nextEvidenceRequirements, nextReleases, nextRetrievalEvidenceCandidates] = await Promise.all([
+      const [nextReadiness, nextEvidenceRequirements, nextReleases, nextRetrievalEvidenceCandidates, nextPublishEvidenceCandidates] = await Promise.all([
         releasesApi.getReadiness(tenantId, agentId),
         releasesApi.getEvidenceRequirements(tenantId, agentId),
         releasesApi.listReleases(tenantId, agentId),
         releasesApi.getRetrievalEvidenceCandidates(tenantId, agentId).catch(() => null),
+        releasesApi.getPublishEvidenceCandidates(tenantId, agentId, response.resource.releaseId).catch(() => null),
       ])
       setReadiness(nextReadiness)
       setEvidenceRequirements(nextEvidenceRequirements)
@@ -430,6 +498,10 @@ export function useReleasesManager(tenantId: string, agentId: string) {
       if (nextRetrievalEvidenceCandidates) {
         setRetrievalEvidenceCandidates(nextRetrievalEvidenceCandidates)
         setSelectedRetrievalEvidenceCandidateId((current) => selectRetrievalEvidenceCandidateId(current, nextRetrievalEvidenceCandidates))
+      }
+      if (nextPublishEvidenceCandidates) {
+        setPublishEvidenceCandidates(nextPublishEvidenceCandidates)
+        setSelectedPublishEvidenceBundleId((current) => selectPublishEvidenceBundleId(current, nextPublishEvidenceCandidates))
       }
     } catch (error) {
       setFormError(getLocalizedApiErrorMessage(error, t, t('releases.action_error')))
@@ -617,6 +689,44 @@ export function useReleasesManager(tenantId: string, agentId: string) {
     setNotice(t('releases.notice.usage_evidence_applied'))
   }, [selectedUsageEvidenceCandidate, t])
 
+  const applyPublishEvidenceDefaultsToPublishForm = useCallback(() => {
+    if (selectedPublishEvidenceBundle) {
+      setPublishForm((current) => applyPublishEvidenceBundle(current, selectedPublishEvidenceBundle))
+      setFormError(null)
+      setNotice(t('releases.notice.publish_evidence_bundle_applied'))
+      return
+    }
+    setPublishForm((current) => {
+      let next = applyPublishEvidenceDefaults(current, evidenceRequirements?.publishEvidenceDefaults)
+      if (selectedReleaseSupportReconstructionReference) {
+        next = {
+          ...next,
+          supportReconstructionReference: selectedReleaseSupportReconstructionReference,
+        }
+      }
+      if (selectedUsageEvidenceCandidate) {
+        next = applyUsageEvidenceCandidate(next, selectedUsageEvidenceCandidate)
+      }
+      return next
+    })
+    setFormError(null)
+    setNotice(t('releases.notice.publish_evidence_defaults_applied'))
+  }, [evidenceRequirements?.publishEvidenceDefaults, selectedPublishEvidenceBundle, selectedReleaseSupportReconstructionReference, selectedUsageEvidenceCandidate, t])
+
+  const applyPublishEvidenceBundleToPublishForm = useCallback(() => {
+    if (!selectedPublishEvidenceBundle) {
+      setFormError(t('releases.publish_evidence_bundle_select_first'))
+      return
+    }
+    if (selectedPublishEvidenceBundle.readinessStatus !== 'ready') {
+      setFormError(t('releases.publish_evidence_bundle_blocked'))
+      return
+    }
+    setPublishForm((current) => applyPublishEvidenceBundle(current, selectedPublishEvidenceBundle))
+    setFormError(null)
+    setNotice(t('releases.notice.publish_evidence_bundle_applied'))
+  }, [selectedPublishEvidenceBundle, t])
+
   const createRelease = useCallback(async () => {
     const input = buildReleaseDraftInput(draftForm, evidenceRequirements)
     await applyMutation(async () => {
@@ -658,6 +768,9 @@ export function useReleasesManager(tenantId: string, agentId: string) {
     usageEvidenceCandidates,
     selectedUsageEvidenceCandidateId,
     selectedUsageEvidenceCandidate,
+    publishEvidenceCandidates,
+    selectedPublishEvidenceBundleId,
+    selectedPublishEvidenceBundle,
     retrievalEvidenceCandidates,
     selectedRetrievalEvidenceCandidateId,
     selectedRetrievalEvidenceCandidate,
@@ -679,26 +792,32 @@ export function useReleasesManager(tenantId: string, agentId: string) {
     draftProgress,
     isLoading,
     isLoadingUsageEvidenceCandidates,
+    isLoadingPublishEvidenceCandidates,
     isLoadingRetrievalEvidenceCandidates,
     isGeneratingRetrievalEvidenceCandidate,
     isMutating,
     errorMessage,
     usageEvidenceCandidatesError,
+    publishEvidenceCandidatesError,
     retrievalEvidenceCandidatesError,
     formError,
     notice,
     loadReleases,
     loadUsageEvidenceCandidates,
+    loadPublishEvidenceCandidates,
     loadRetrievalEvidenceCandidates,
     selectRelease,
     setDraftForm,
     setPublishForm,
     setSelectedUsageEvidenceCandidateId,
+    setSelectedPublishEvidenceBundleId,
     setSelectedRetrievalEvidenceCandidateId,
     applyEvidenceReferenceToGroundedCases,
     applyRetrievalEvidenceCandidateToDraftForm,
     generateRetrievalEvidenceCandidate,
     applyUsageEvidenceCandidateToPublishForm,
+    applyPublishEvidenceDefaultsToPublishForm,
+    applyPublishEvidenceBundleToPublishForm,
     fillDefaultSmokeOutcomes,
     createRelease,
     publishSelected,

@@ -41,7 +41,7 @@ function policyProfileCardClass(isRecommended: boolean, isSelected: boolean) {
       ? 'border-emerald-300 bg-emerald-50/50 dark:border-emerald-500/40 dark:bg-emerald-500/10'
       : 'border-[var(--border)] bg-[var(--surface)]'
 
-  return ['rounded-2xl border p-4 shadow-[var(--shadow-soft)] transition', tone].join(' ')
+  return ['rounded-lg border p-3 transition', tone].join(' ')
 }
 
 function readinessItems(binding: AgentPolicyBinding | null, t: (key: string) => string) {
@@ -101,12 +101,32 @@ function PolicyMutationEvidenceBlock({ manager }: { manager: AgentPolicyManager 
   )
 }
 
+function CompactList({ values }: { values: string[] }) {
+  if (values.length === 0) return <span>{values.length}</span>
+
+  return (
+    <span className="inline-flex min-w-0 flex-wrap gap-1">
+      {values.slice(0, 3).map((value) => (
+        <span key={value} className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-2 py-0.5 text-xs font-semibold text-[var(--text-muted)]">
+          {value}
+        </span>
+      ))}
+      {values.length > 3 ? <span className="text-xs font-semibold text-[var(--text-muted)]">+{values.length - 3}</span> : null}
+    </span>
+  )
+}
+
 export function AgentPolicyView({ manager }: { manager: AgentPolicyManager }) {
   const { t } = useI18n()
   const disabled = !manager.canManagePolicy || manager.isMutating
   const validation = manager.validationBinding
   const validateTitle = manager.isDirty ? t('agent_policy.validate_save_first_tooltip') : undefined
   const selectedProfile = manager.catalog?.items.find((profile) => profile.profileId === manager.form.policyProfileId) ?? null
+  const recommendedProfile = manager.catalog?.items.find((profile) => isRecommendedPolicyProfile(profile.profileId, manager.agentDetail?.templateId)) ?? null
+  const policyProfiles = manager.catalog?.items
+    ? [...manager.catalog.items].sort((left, right) => Number(isRecommendedPolicyProfile(right.profileId, manager.agentDetail?.templateId)) - Number(isRecommendedPolicyProfile(left.profileId, manager.agentDetail?.templateId)))
+    : []
+  const recommendedProfileSelected = recommendedProfile ? manager.form.bindingMode === 'explicit_profile' && manager.form.policyProfileId === recommendedProfile.profileId : false
 
   const selectProfile = (profile: AgentPolicyProfileDefinition) => {
     manager.updateForm({
@@ -148,6 +168,49 @@ export function AgentPolicyView({ manager }: { manager: AgentPolicyManager }) {
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-sm text-[var(--text-muted)]">{t('common.loading')}</div>
       ) : (
         <>
+          {recommendedProfile ? (
+            <section className="rounded-lg border border-emerald-300 bg-emerald-50/80 p-4 text-sm shadow-[var(--shadow-soft)] dark:border-emerald-500/40 dark:bg-emerald-500/10">
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-200">{t('agent_policy.first_smoke_setup_title')}</p>
+                    <StatusBadge status="ready" label={t('agent_policy.recommended_badge')} />
+                    {recommendedProfile.safeFallbackMode ? <StatusBadge status={recommendedProfile.safeFallbackMode} label={translatedValue(t, 'agent_policy.safe_fallback_mode', recommendedProfile.safeFallbackMode)} /> : null}
+                  </div>
+                  <h3 className="mt-2 text-base font-bold text-[var(--text)]">{translatedPolicyProfileLabel(t, recommendedProfile.profileId, recommendedProfile.label)}</h3>
+                  <p className="mt-1 max-w-4xl text-sm text-[var(--text-muted)]">{translatedPolicyProfileDescription(t, recommendedProfile.profileId, recommendedProfile.description)}</p>
+                  <div className="mt-3 grid gap-2 md:grid-cols-3">
+                    <div className="rounded-lg border border-emerald-200 bg-white/70 px-3 py-2 dark:border-emerald-500/30 dark:bg-emerald-950/20">
+                      <div className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-200">{t('agent_policy.expectation_markers')}</div>
+                      <div className="mt-1"><CompactList values={translatedValues(t, 'agent_policy.expectation_marker', recommendedProfile.expectationMarkers)} /></div>
+                    </div>
+                    <div className="rounded-lg border border-emerald-200 bg-white/70 px-3 py-2 dark:border-emerald-500/30 dark:bg-emerald-950/20">
+                      <div className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-200">{t('agent_policy.decision_points')}</div>
+                      <div className="mt-1"><CompactList values={translatedValues(t, 'agent_policy.decision_point', recommendedProfile.decisionPoints)} /></div>
+                    </div>
+                    <div className="rounded-lg border border-emerald-200 bg-white/70 px-3 py-2 dark:border-emerald-500/30 dark:bg-emerald-950/20">
+                      <div className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-200">{t('agent_policy.policy_domains')}</div>
+                      <div className="mt-1"><CompactList values={translatedValues(t, 'agent_policy.policy_domain', recommendedProfile.policyDomains)} /></div>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  disabled={disabled || recommendedProfileSelected}
+                  onClick={() => selectProfile(recommendedProfile)}
+                  className={[
+                    'inline-flex min-h-10 items-center justify-center rounded-lg border px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:border-emerald-200 disabled:bg-white/70 disabled:text-emerald-700 dark:disabled:border-emerald-500/30 dark:disabled:bg-emerald-950/20 dark:disabled:text-emerald-200',
+                    recommendedProfileSelected
+                      ? 'border-emerald-200 bg-white/70 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/20 dark:text-emerald-200'
+                      : 'border-[var(--primary)] bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]',
+                  ].join(' ')}
+                >
+                  {recommendedProfileSelected ? t('agent_policy.profile_selected') : t('agent_policy.select_recommended_profile')}
+                </button>
+              </div>
+            </section>
+          ) : null}
+
           <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)]">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
@@ -268,9 +331,13 @@ export function AgentPolicyView({ manager }: { manager: AgentPolicyManager }) {
           </section>
 
           <section className="grid gap-3 xl:grid-cols-2">
-            {manager.catalog?.items.length ? manager.catalog.items.map((profile) => {
+            {policyProfiles.length ? policyProfiles.map((profile) => {
               const recommended = isRecommendedPolicyProfile(profile.profileId, manager.agentDetail?.templateId)
               const selected = manager.form.bindingMode === 'explicit_profile' && manager.form.policyProfileId === profile.profileId
+              const expectationMarkers = translatedValues(t, 'agent_policy.expectation_marker', profile.expectationMarkers)
+              const decisionPoints = translatedValues(t, 'agent_policy.decision_point', profile.decisionPoints)
+              const policyDomains = translatedValues(t, 'agent_policy.policy_domain', profile.policyDomains)
+              const tenantPolicyMarkers = translatedValues(t, 'agent_policy.tenant_policy_marker', profile.tenantPolicyMarkers)
 
               return (
               <article key={profile.profileId} className={policyProfileCardClass(recommended, selected)}>
@@ -284,13 +351,18 @@ export function AgentPolicyView({ manager }: { manager: AgentPolicyManager }) {
                   </div>
                   {profile.safeFallbackMode ? <StatusBadge status={profile.safeFallbackMode} label={translatedValue(t, 'agent_policy.safe_fallback_mode', profile.safeFallbackMode)} /> : null}
                 </div>
-                <div className="mt-3">
+                <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-[var(--text-muted)]">
+                  <span className="rounded-full border border-[var(--border)] bg-[var(--surface-muted)] px-2 py-1">{t('agent_policy.decision_points')}: {profile.decisionPoints.length}</span>
+                  <span className="rounded-full border border-[var(--border)] bg-[var(--surface-muted)] px-2 py-1">{t('agent_policy.policy_domains')}: {profile.policyDomains.length}</span>
+                  <span className="rounded-full border border-[var(--border)] bg-[var(--surface-muted)] px-2 py-1">{t('agent_policy.tenant_policy_markers')}: {profile.tenantPolicyMarkers.length}</span>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     disabled={disabled || selected}
                     onClick={() => selectProfile(profile)}
                     className={[
-                      'inline-flex min-h-9 items-center justify-center rounded-xl border px-3 py-1.5 text-sm font-bold disabled:cursor-not-allowed disabled:border-[var(--border)] disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-muted)]',
+                      'inline-flex min-h-9 items-center justify-center rounded-lg border px-3 py-1.5 text-sm font-bold disabled:cursor-not-allowed disabled:border-[var(--border)] disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-muted)]',
                       selected
                         ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200'
                         : 'border-[var(--primary)] bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]',
@@ -298,13 +370,17 @@ export function AgentPolicyView({ manager }: { manager: AgentPolicyManager }) {
                   >
                     {selected ? t('agent_policy.profile_selected') : t('agent_policy.select_profile')}
                   </button>
+                  {recommended && !selected ? <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-200">{t('agent_policy.recommended_profile_hint')}</span> : null}
                 </div>
-                <div className="mt-3 grid gap-3 lg:grid-cols-2">
-                  <ListBlock title={t('agent_policy.expectation_markers')} values={translatedValues(t, 'agent_policy.expectation_marker', profile.expectationMarkers)} />
-                  <ListBlock title={t('agent_policy.policy_domains')} values={translatedValues(t, 'agent_policy.policy_domain', profile.policyDomains)} />
-                  <ListBlock title={t('agent_policy.decision_points')} values={translatedValues(t, 'agent_policy.decision_point', profile.decisionPoints)} />
-                  <ListBlock title={t('agent_policy.tenant_policy_markers')} values={translatedValues(t, 'agent_policy.tenant_policy_marker', profile.tenantPolicyMarkers)} />
-                </div>
+                <details open={recommended || selected} className="mt-3 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] px-3 py-2">
+                  <summary className="cursor-pointer text-sm font-bold text-[var(--text)]">{t('agent_policy.profile_details')}</summary>
+                  <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                    <ListBlock title={t('agent_policy.expectation_markers')} values={expectationMarkers} />
+                    <ListBlock title={t('agent_policy.policy_domains')} values={policyDomains} />
+                    <ListBlock title={t('agent_policy.decision_points')} values={decisionPoints} />
+                    <ListBlock title={t('agent_policy.tenant_policy_markers')} values={tenantPolicyMarkers} />
+                  </div>
+                </details>
               </article>
               )
             }) : (

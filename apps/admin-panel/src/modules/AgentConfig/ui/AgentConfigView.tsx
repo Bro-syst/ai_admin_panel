@@ -16,12 +16,33 @@ function arrayToLines(value: string[]) {
   return value.join('\n')
 }
 
+function fieldShellClass(needsOperatorInput: boolean) {
+  return needsOperatorInput
+    ? 'grid gap-2 rounded-xl border border-blue-200 bg-blue-50/50 p-3 dark:border-blue-900/70 dark:bg-blue-950/20'
+    : 'grid gap-1'
+}
+
+function FieldLabelText({ label, badge }: { label: string; badge?: string }) {
+  return (
+    <span className="flex flex-wrap items-center gap-2">
+      <span className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">{label}</span>
+      {badge ? (
+        <span className="rounded-full border border-blue-200 bg-blue-100 px-2 py-0.5 text-[10px] font-bold uppercase text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-200">
+          {badge}
+        </span>
+      ) : null}
+    </span>
+  )
+}
+
 function Field({
   label,
   help,
   value,
   disabled,
   placeholder,
+  needsOperatorInput = false,
+  operatorInputBadge,
   onChange,
 }: {
   label: string
@@ -29,11 +50,13 @@ function Field({
   value: string
   disabled: boolean
   placeholder?: string
+  needsOperatorInput?: boolean
+  operatorInputBadge?: string
   onChange: (value: string) => void
 }) {
   return (
-    <label className="grid gap-1">
-      <span className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">{label}</span>
+    <label className={fieldShellClass(needsOperatorInput)}>
+      <FieldLabelText label={label} badge={needsOperatorInput ? operatorInputBadge : undefined} />
       <input
         aria-label={label}
         value={value}
@@ -94,6 +117,8 @@ function TextAreaField({
   value,
   disabled,
   rows = 3,
+  needsOperatorInput = false,
+  operatorInputBadge,
   onChange,
 }: {
   label: string
@@ -101,11 +126,13 @@ function TextAreaField({
   value: string
   disabled: boolean
   rows?: number
+  needsOperatorInput?: boolean
+  operatorInputBadge?: string
   onChange: (value: string) => void
 }) {
   return (
-    <label className="grid gap-1">
-      <span className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">{label}</span>
+    <label className={fieldShellClass(needsOperatorInput)}>
+      <FieldLabelText label={label} badge={needsOperatorInput ? operatorInputBadge : undefined} />
       <textarea
         aria-label={label}
         value={value}
@@ -349,6 +376,22 @@ function ListBlock({ title, values }: { title: string; values: string[] }) {
   )
 }
 
+function ManualInputGuide({ title, hint, items }: { title: string; hint: string; items: string[] }) {
+  return (
+    <div className="mt-4 border-l-4 border-blue-500 bg-blue-50/60 px-4 py-3 dark:bg-blue-950/20">
+      <h4 className="text-sm font-bold text-[var(--text)]">{title}</h4>
+      <p className="mt-1 text-sm text-[var(--text-muted)]">{hint}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {items.map((item) => (
+          <span key={item} className="rounded-full border border-blue-200 bg-[var(--surface)] px-3 py-1 text-xs font-semibold text-blue-700 dark:border-blue-900 dark:text-blue-200">
+            {item}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function confirmAction(message: string, action: () => void) {
   if (window.confirm(message)) action()
 }
@@ -387,6 +430,16 @@ export function AgentConfigView({ manager }: { manager: AgentConfigManager }) {
   const schemaVersionOptions = toSelectOptions(t, schemaVersionField, draft.compatibilityAndSafety.configSchemaVersion, false)
   const capabilityOptions = metadataOptions(t, capabilitiesField)
   const safetyLabelOptions = metadataOptions(t, safetyLabelsField)
+  const operatorInputBadge = t('agent_config.operator_input_badge')
+  const operatorInputFields = [
+    fieldLabel(t, personaField, 'agent_config.identity.persona_summary'),
+    t('agent_config.goals'),
+    t('agent_config.rules'),
+    t('agent_config.restrictions'),
+    fieldLabel(t, handoffConditionsField, 'agent_config.handoff_conditions'),
+    fieldLabel(t, compatibilityNotesField, 'agent_config.compatibility_notes'),
+  ]
+  const selectedConfigIsActive = manager.selectedConfig?.status === 'active'
 
   const updateBinding = (index: number, patch: Partial<AgentIntegrationActionBinding>) => {
     manager.updateDraftPayload((current) => ({
@@ -510,11 +563,15 @@ export function AgentConfigView({ manager }: { manager: AgentConfigManager }) {
                 </button>
               </div>
             </div>
-            {manager.selectedConfig && !manager.canActivateSelected ? (
+            {manager.selectedConfig && selectedConfigIsActive ? (
+              <p className="mt-3 text-sm font-semibold text-emerald-700 dark:text-emerald-200">{t('agent_config.validation.activated_selected')}</p>
+            ) : manager.selectedConfig && !manager.canActivateSelected ? (
               <p className="mt-3 text-sm text-[var(--text-muted)]">{t('agent_config.validation.validate_before_activate')}</p>
             ) : null}
             {manager.canActivateSelected ? (
               <p className="mt-3 text-sm font-semibold text-emerald-700 dark:text-emerald-200">{t('agent_config.validation.activate_next_step')}</p>
+            ) : selectedConfigIsActive ? (
+              <p className="mt-3 text-sm text-[var(--text-muted)]">{t('agent_config.validation.activated_explainer')}</p>
             ) : (
               <p className="mt-3 text-sm text-[var(--text-muted)]">{t('agent_config.validation.validate_explainer')}</p>
             )}
@@ -532,7 +589,8 @@ export function AgentConfigView({ manager }: { manager: AgentConfigManager }) {
                 <button
                   type="button"
                   onClick={() => manager.resetDraftFromSelected()}
-                  className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--border)] px-4 text-sm font-semibold text-[var(--text)] hover:bg-[var(--surface-muted)]"
+                  disabled={disabled || !manager.selectedConfig}
+                  className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--border)] px-4 text-sm font-semibold text-[var(--text)] hover:bg-[var(--surface-muted)] disabled:cursor-not-allowed disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-muted)]"
                 >
                   {t('agent_config.reset_from_selected')}
                 </button>
@@ -546,8 +604,17 @@ export function AgentConfigView({ manager }: { manager: AgentConfigManager }) {
                 </button>
               </div>
             </div>
+            {!manager.selectedConfig ? (
+              <p className="mt-3 text-sm text-[var(--text-muted)]">{t('agent_config.reset_from_selected_unavailable')}</p>
+            ) : null}
 
             {!manager.canManageConfig ? <p className="mt-3 text-sm text-[var(--text-muted)]">{t('agent_config.permission_readonly')}</p> : null}
+
+            <ManualInputGuide
+              title={t('agent_config.operator_inputs_title')}
+              hint={t('agent_config.operator_inputs_hint')}
+              items={operatorInputFields}
+            />
 
             <div className="mt-4 grid gap-4">
               <div className="grid gap-3 lg:grid-cols-2">
@@ -563,6 +630,8 @@ export function AgentConfigView({ manager }: { manager: AgentConfigManager }) {
                   help={fieldHelp(t, personaField)}
                   value={draft.identity.personaSummary ?? ''}
                   disabled={disabled}
+                  needsOperatorInput
+                  operatorInputBadge={operatorInputBadge}
                   onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, identity: { ...current.identity, personaSummary: value } }))}
                 />
                 <SelectField
@@ -584,15 +653,15 @@ export function AgentConfigView({ manager }: { manager: AgentConfigManager }) {
               </div>
 
               <div className="grid gap-3 lg:grid-cols-3">
-                <TextAreaField label={t('agent_config.goals')} value={arrayToLines(draft.goals)} disabled={disabled} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, goals: linesToArray(value) }))} />
-                <TextAreaField label={t('agent_config.rules')} value={arrayToLines(draft.rules)} disabled={disabled} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, rules: linesToArray(value) }))} />
-                <TextAreaField label={t('agent_config.restrictions')} value={arrayToLines(draft.restrictions)} disabled={disabled} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, restrictions: linesToArray(value) }))} />
+                <TextAreaField label={t('agent_config.goals')} value={arrayToLines(draft.goals)} disabled={disabled} needsOperatorInput operatorInputBadge={operatorInputBadge} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, goals: linesToArray(value) }))} />
+                <TextAreaField label={t('agent_config.rules')} value={arrayToLines(draft.rules)} disabled={disabled} needsOperatorInput operatorInputBadge={operatorInputBadge} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, rules: linesToArray(value) }))} />
+                <TextAreaField label={t('agent_config.restrictions')} value={arrayToLines(draft.restrictions)} disabled={disabled} needsOperatorInput operatorInputBadge={operatorInputBadge} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, restrictions: linesToArray(value) }))} />
               </div>
 
               <div className="grid gap-3 lg:grid-cols-2">
                 <div className="grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3">
                   <ToggleField label={fieldLabel(t, handoffEnabledField, 'agent_config.handoff_enabled')} help={fieldHelp(t, handoffEnabledField)} checked={draft.handoffPolicy.handoffEnabled} disabled={disabled} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, handoffPolicy: { ...current.handoffPolicy, handoffEnabled: value } }))} />
-                  <TextAreaField label={fieldLabel(t, handoffConditionsField, 'agent_config.handoff_conditions')} help={fieldHelp(t, handoffConditionsField)} value={arrayToLines(draft.handoffPolicy.handoffConditions)} disabled={disabled} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, handoffPolicy: { ...current.handoffPolicy, handoffConditions: linesToArray(value) } }))} />
+                  <TextAreaField label={fieldLabel(t, handoffConditionsField, 'agent_config.handoff_conditions')} help={fieldHelp(t, handoffConditionsField)} value={arrayToLines(draft.handoffPolicy.handoffConditions)} disabled={disabled} needsOperatorInput operatorInputBadge={operatorInputBadge} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, handoffPolicy: { ...current.handoffPolicy, handoffConditions: linesToArray(value) } }))} />
                 </div>
                 <div className="grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3">
                   <ToggleField label={fieldLabel(t, integrationEnabledField, 'agent_config.integration_enabled')} help={fieldHelp(t, integrationEnabledField)} checked={draft.integrationPolicy.integrationEnabled} disabled={disabled} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, integrationPolicy: { ...current.integrationPolicy, integrationEnabled: value } }))} />
@@ -669,7 +738,7 @@ export function AgentConfigView({ manager }: { manager: AgentConfigManager }) {
               <div className="grid gap-3 lg:grid-cols-3">
                 <SelectField label={fieldLabel(t, schemaVersionField, 'agent_config.schema_version')} help={fieldHelp(t, schemaVersionField)} value={draft.compatibilityAndSafety.configSchemaVersion} disabled={schemaVersionField?.readonly ?? true} options={schemaVersionOptions} onChange={() => undefined} />
                 <MultiSelectField label={fieldLabel(t, safetyLabelsField, 'agent_config.safety_labels')} help={fieldHelp(t, safetyLabelsField)} values={draft.compatibilityAndSafety.safetyLabels} disabled={disabled} options={safetyLabelOptions} onChange={(values) => manager.updateDraftPayload((current) => ({ ...current, compatibilityAndSafety: { ...current.compatibilityAndSafety, safetyLabels: values } }))} />
-                <TextAreaField label={fieldLabel(t, compatibilityNotesField, 'agent_config.compatibility_notes')} help={fieldHelp(t, compatibilityNotesField)} value={arrayToLines(draft.compatibilityAndSafety.compatibilityNotes)} disabled={disabled} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, compatibilityAndSafety: { ...current.compatibilityAndSafety, compatibilityNotes: linesToArray(value) } }))} />
+                <TextAreaField label={fieldLabel(t, compatibilityNotesField, 'agent_config.compatibility_notes')} help={fieldHelp(t, compatibilityNotesField)} value={arrayToLines(draft.compatibilityAndSafety.compatibilityNotes)} disabled={disabled} needsOperatorInput operatorInputBadge={operatorInputBadge} onChange={(value) => manager.updateDraftPayload((current) => ({ ...current, compatibilityAndSafety: { ...current.compatibilityAndSafety, compatibilityNotes: linesToArray(value) } }))} />
               </div>
 
               <div className="flex flex-col gap-2 border-t border-[var(--border)] pt-4 sm:flex-row sm:items-center sm:justify-end">

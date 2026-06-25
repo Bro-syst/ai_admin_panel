@@ -13,6 +13,9 @@ export type KnowledgeMutationResult = {
   correlationId: string | null
   mutationTimestamp: string
   changedStateSummary: Record<string, unknown>
+  status?: string | null
+  resultStatus?: string | null
+  version?: string | number | null
 }
 
 export type KnowledgeListMetadata = {

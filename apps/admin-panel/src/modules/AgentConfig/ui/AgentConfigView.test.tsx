@@ -194,6 +194,11 @@ describe('AgentConfigView', () => {
     expect(screen.getByText('Выбранная конфигурация')).toBeInTheDocument()
     expect(screen.getByText('Выберите версию конфигурации или создайте черновик.')).toBeInTheDocument()
     expect(screen.getByText('Черновик конфигурации')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Сбросить из выбранной версии' })).toBeDisabled()
+    expect(screen.getByText('Сначала выберите версию конфигурации, чтобы сбросить черновик.')).toBeInTheDocument()
+    expect(screen.getByText('Поля ручного ввода')).toBeInTheDocument()
+    expect(screen.getByText('Заполните эти операторские поля перед созданием первой версии. Остальные параметры в основном приходят из серверной схемы.')).toBeInTheDocument()
+    expect(screen.getAllByText('Ручной ввод')).toHaveLength(6)
     expect(screen.getByText('Понятный и дружелюбный')).toBeInTheDocument()
     expect(screen.getByText('Английский')).toBeInTheDocument()
     expect(screen.getByLabelText('Тон общения')).toHaveValue('clear_and_helpful')
@@ -557,10 +562,13 @@ describe('AgentConfigView', () => {
     expect(evidence).not.toBeNull()
     const evidenceScope = within(evidence as HTMLElement)
 
-    expect(evidenceScope.getByText('activate_config')).toBeInTheDocument()
-    expect(evidenceScope.getByText('agent_config')).toBeInTheDocument()
+    expect(evidenceScope.getByText('Activate config')).toBeInTheDocument()
+    expect(evidenceScope.getByTitle('activate_config')).toBeInTheDocument()
+    expect(evidenceScope.getByText('Agent config')).toBeInTheDocument()
+    expect(evidenceScope.getByTitle('agent_config')).toBeInTheDocument()
     expect(evidenceScope.getByText('config_safe_1')).toBeInTheDocument()
-    expect(evidenceScope.getByText('active')).toBeInTheDocument()
+    expect(evidenceScope.getByText('Active')).toBeInTheDocument()
+    expect(evidenceScope.getByTitle('active')).toBeInTheDocument()
     expect(evidenceScope.getByText('3')).toBeInTheDocument()
     expect(evidenceScope.getByText('corr_safe_1')).toBeInTheDocument()
     expect(evidenceScope.getByText('2026-05-20T10:00:00Z')).toBeInTheDocument()
@@ -570,6 +578,59 @@ describe('AgentConfigView', () => {
     await user.click(evidenceScope.getAllByRole('button', { name: 'Copy' })[0])
 
     expect(writeText).toHaveBeenCalledWith('config_safe_1')
+  })
+
+  it('renders Russian mutation evidence labels without backend keys as primary copy', () => {
+    renderView({
+      mutationResult: {
+        action: 'activate_config_version',
+        resourceType: 'agent_config',
+        resourceId: 'config_safe_1',
+        actorId: 'admin_1',
+        actorType: 'admin',
+        tenantId: 'tenant_1',
+        correlationId: 'corr_safe_1',
+        mutationTimestamp: '2026-05-20T10:00:00Z',
+        changedStateSummary: {},
+        status: 'active',
+        version: 3,
+      },
+    }, 'ru')
+
+    const evidence = screen.getByRole('heading', { name: 'Результат последнего изменения конфигурации' }).closest('section')
+    expect(evidence).not.toBeNull()
+    const evidenceScope = within(evidence as HTMLElement)
+
+    expect(evidenceScope.getByText('Активация версии конфигурации')).toBeInTheDocument()
+    expect(evidenceScope.getByTitle('activate_config_version')).toBeInTheDocument()
+    expect(evidenceScope.getByText('Конфигурация агента')).toBeInTheDocument()
+    expect(evidenceScope.getByTitle('agent_config')).toBeInTheDocument()
+    expect(evidenceScope.getByText('Активно')).toBeInTheDocument()
+    expect(evidenceScope.getByTitle('active')).toBeInTheDocument()
+    expect(evidenceScope.getByText('ID корреляции / запроса')).toBeInTheDocument()
+    expect(evidenceScope.queryByText('activate_config_version')).not.toBeInTheDocument()
+    expect(evidenceScope.queryByText('agent_config')).not.toBeInTheDocument()
+  })
+
+  it('shows activated selected config copy after activation', () => {
+    const payload = createDefaultAgentConfigPayload('Sales assistant')
+
+    renderView({
+      selectedConfig: {
+        id: 'config_active',
+        tenantId: 'tenant_1',
+        agentId: 'agent_1',
+        version: 3,
+        status: 'active',
+        payload,
+        activatedAt: '2026-05-20T10:00:00Z',
+      },
+      canActivateSelected: false,
+    }, 'ru')
+
+    expect(screen.getByText('Выбранная версия конфигурации активирована.')).toBeInTheDocument()
+    expect(screen.getByText('Вернитесь к деталям агента, чтобы проверить оставшиеся блокеры настройки.')).toBeInTheDocument()
+    expect(screen.queryByText('Проверьте выбранную конфигурацию перед активацией.')).not.toBeInTheDocument()
   })
 
   it('shows safe evidence fallbacks when correlation and status fields are absent', () => {

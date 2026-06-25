@@ -315,7 +315,9 @@ export function TenantDetailView({ manager }: { manager: TenantDetailManager }) 
                     ) : null}
                   </div>
                 ) : (
-                  <p className="mt-3 text-sm text-[var(--text-muted)]">{t('tenants.config.empty_payload')}</p>
+                  <p className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] px-3 py-2 text-sm text-[var(--text-muted)]">
+                    {detail.configurationSummary ? t('tenants.config.payload_unavailable_with_summary') : t('tenants.config.empty_payload')}
+                  </p>
                 )}
               </section>
             </div>
@@ -370,6 +372,9 @@ export function TenantDetailView({ manager }: { manager: TenantDetailManager }) 
                   disabled={!manager.allowedActions.provisionDefaultConfig}
                   onClick={() => manager.requestAction('provision_default_config')}
                 />
+                {tenant.configurationPresent ? (
+                  <p className="text-xs font-medium text-[var(--text-muted)]">{t('tenants.actions.default_config_already_present')}</p>
+                ) : null}
                 <ActionButton
                   label={t('tenants.actions.save_configuration')}
                   disabled={
@@ -386,11 +391,18 @@ export function TenantDetailView({ manager }: { manager: TenantDetailManager }) 
                   {t('tenants.mutation_actions')}
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {detail.supportedMutationActions.length > 0 ? detail.supportedMutationActions.map((action) => (
-                    <span key={action} className="rounded-full border border-[var(--border)] bg-[var(--surface-muted)] px-2 py-1 text-xs text-[var(--text-muted)]">
-                      {translatedValue(t, 'tenants.mutation_action', action)}
-                    </span>
-                  )) : (
+                  {detail.supportedMutationActions.length > 0 ? detail.supportedMutationActions.map((action) => {
+                    const actionLabel = translatedValue(t, 'tenants.mutation_action', action)
+                    return (
+                      <span
+                        key={action}
+                        title={action}
+                        className="rounded-full border border-[var(--border)] bg-[var(--surface-muted)] px-2 py-1 text-xs text-[var(--text-muted)]"
+                      >
+                        {actionLabel}
+                      </span>
+                    )
+                  }) : (
                     <span className="text-sm text-[var(--text-muted)]">{t('tenants.empty_value')}</span>
                   )}
                 </div>

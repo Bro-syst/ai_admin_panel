@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useI18n } from '@/core/i18n/useI18n'
 import type { AgentDetailManager } from '@/modules/Agents/model/useAgentDetailManager'
@@ -66,6 +67,11 @@ function setupStatusIsReady(status: string) {
   return status === 'ready' || status === 'active' || status === 'selected' || status === 'configured'
 }
 
+function guidedSetupLabelForRoute(t: (key: string) => string, route: string | null, fallbackLabel: string) {
+  if (route?.endsWith('/sites-widgets')) return t('sites_widgets.manage_sites_widgets')
+  return fallbackLabel
+}
+
 function ListBlock({ title, values }: { title: string; values: string[] }) {
   const { t } = useI18n()
 
@@ -91,23 +97,43 @@ function confirmAction(message: string, action: () => void) {
 
 export function AgentDetailView({ manager }: { manager: AgentDetailManager }) {
   const { t } = useI18n()
+  const blockerDetailsRef = useRef<HTMLDetailsElement | null>(null)
+  const [blockersHighlighted, setBlockersHighlighted] = useState(false)
   const detail = manager.detail
   const canEditMetadata = manager.allowedMutationActions.updateMetadata
   const canChangeStatus = manager.allowedMutationActions.changeStatus
   const canChangeLifecycle = manager.allowedMutationActions.changeLifecycle
   const blockingSetupItem = manager.setupChecklist?.items.find((item) => item.blocking && item.state !== 'ready')
   const blockingSetupItems = manager.setupChecklist?.items.filter((item) => item.blocking && item.state !== 'ready') ?? []
-  const capabilitiesNeedSave = Boolean(detail && !setupStatusIsReady(detail.setupReadinessSummary.capabilityStatus))
   const hasSetupBlockers = Boolean(detail && detail.setupReadinessSummary.blockingItemCount > 0)
+  const hasCoreSetupBlockers = detail
+    ? [
+      detail.setupReadinessSummary.agentConfigStatus,
+      detail.setupReadinessSummary.knowledgeStatus,
+      detail.setupReadinessSummary.capabilityStatus,
+      detail.setupReadinessSummary.policyStatus,
+      detail.setupReadinessSummary.siteWidgetStatus,
+    ].some((status) => !setupStatusIsReady(status))
+    : hasSetupBlockers
+  const hasLifecycleActivationBlockers = manager.setupChecklist
+    ? blockingSetupItems.some((item) => !['agent_lifecycle', 'release_handoff'].includes(item.itemId))
+    : hasCoreSetupBlockers
   const canActivateAgent = canChangeStatus && !hasSetupBlockers
-  const canActivateLifecycle = canChangeLifecycle && !hasSetupBlockers
+  const canActivateLifecycle = canChangeLifecycle && Boolean(detail?.activeConfigId) && !hasLifecycleActivationBlockers
+  const configRoute = detail ? `/tenants/${manager.tenantId}/agents/${manager.agentId}/config` : ''
+  const configNeedsSetup = Boolean(
+    detail && (!detail.activeConfigId || !setupStatusIsReady(detail.setupReadinessSummary.agentConfigStatus)),
+  )
+  const capabilitiesNeedSave = Boolean(
+    detail && !configNeedsSetup && !setupStatusIsReady(detail.setupReadinessSummary.capabilityStatus),
+  )
   const setupSummaryStatuses = detail ? [
     {
       key: 'config',
       label: t('agents.setup_status.config'),
       status: detail.setupReadinessSummary.agentConfigStatus,
-      route: setupRouteForStatus(manager.tenantId, manager.agentId, 'config'),
-      blocksSetup: false,
+      route: configRoute,
+      blocksSetup: true,
     },
     {
       key: 'knowledge',
@@ -145,29 +171,88 @@ export function AgentDetailView({ manager }: { manager: AgentDetailManager }) {
       blocksSetup: false,
     },
   ] : []
-  const summaryBlockerItems = blockingSetupItems.length > 0
-    ? blockingSetupItems.map((item) => ({
+  const checklistBlockerItems = blockingSetupItems.map((item) => ({
       key: item.itemId,
       label: translatedValue(t, 'agents.templates.owner_area', item.ownerArea),
       detail: translatedSetupDetail(t, item.itemId, item.detail),
       route: setupRouteForOwner(manager.tenantId, manager.agentId, item.ownerArea),
     }))
-    : setupSummaryStatuses
-      .filter((item) => item.blocksSetup && !setupStatusIsReady(item.status))
-      .map((item) => ({
-        key: item.key,
-        label: item.label,
-        detail: translatedValue(t, 'agents.setup_status_value', item.status),
-        route: item.route,
-      }))
+  const fallbackBlockerItems = setupSummaryStatuses
+    .filter((item) => item.blocksSetup && !setupStatusIsReady(item.status))
+    .map((item) => ({
+      key: item.key,
+      label: item.label,
+      detail: translatedValue(t, 'agents.setup_status_value', item.status),
+      route: item.route,
+    }))
+  const configBlockerItem = configNeedsSetup
+    ? {
+      key: 'config',
+      label: t('agents.setup_status.config'),
+      detail: t('agents.detail.active_config_missing'),
+      route: configRoute,
+    }
+    : null
+  const rawSummaryBlockerItems = [
+    ...(configBlockerItem ? [configBlockerItem] : []),
+    ...(checklistBlockerItems.length > 0 ? checklistBlockerItems : fallbackBlockerItems),
+  ]
+  const seenSummaryBlockerKeys = new Set<string>()
+  const summaryBlockerItems = rawSummaryBlockerItems.filter((item) => {
+    if (seenSummaryBlockerKeys.has(item.key)) return false
+    seenSummaryBlockerKeys.add(item.key)
+    return true
+  })
+  const releaseLoopBlockerItems = detail && summaryBlockerItems.length === 0 && hasSetupBlockers && !detail.setupReadinessSummary.releaseReady
+    ? [
+      {
+        key: 'agent_lifecycle',
+        label: t('agents.detail.lifecycle_blocker_label'),
+        detail: t('agents.detail.lifecycle_blocker_detail'),
+        route: null,
+      },
+      {
+        key: 'release_handoff',
+        label: t('agents.detail.release_handoff_blocker_label'),
+        detail: t('agents.detail.release_handoff_blocker_detail'),
+        route: setupRouteForStatus(manager.tenantId, manager.agentId, 'release'),
+      },
+    ]
+    : []
+  const visibleSummaryBlockerItems = summaryBlockerItems.length > 0 ? summaryBlockerItems : releaseLoopBlockerItems
+  const hiddenBlockerCount = detail
+    ? Math.max(0, detail.setupReadinessSummary.blockingItemCount - visibleSummaryBlockerItems.length)
+    : 0
   const nextSetupRoute = blockingSetupItem
     ? setupRouteForOwner(manager.tenantId, manager.agentId, blockingSetupItem.ownerArea)
     : setupSummaryStatuses.find((item) => item.blocksSetup && !setupStatusIsReady(item.status))?.route ?? null
-  const blockerSummaryValue = summaryBlockerItems.length > 0 ? (
+  const guidedNextSetupRoute = configNeedsSetup ? configRoute : nextSetupRoute
+  const guidedNextSetupFallbackLabel = configNeedsSetup
+    ? t('agent_config.manage_config')
+    : blockingSetupItem
+      ? translatedValue(t, 'agents.templates.owner_area', blockingSetupItem.ownerArea)
+      : setupSummaryStatuses.find((item) => item.route === nextSetupRoute)?.label ?? t('agents.detail.next_setup_step')
+  const guidedNextSetupLabel = guidedSetupLabelForRoute(t, guidedNextSetupRoute, guidedNextSetupFallbackLabel)
+  const showSetupBlockers = () => {
+    const details = blockerDetailsRef.current
+    if (!details) return
+    details.open = true
+    setBlockersHighlighted(true)
+    details.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
+  }
+  const blockerSummaryValue = visibleSummaryBlockerItems.length > 0 ? (
     <div className="grid gap-2">
-      <details id="agent-setup-blockers" open className="group">
+      <details
+        id="agent-setup-blockers"
+        ref={blockerDetailsRef}
+        open
+        className={[
+          'group rounded-lg px-1 py-0.5 transition-shadow',
+          blockersHighlighted ? 'ring-2 ring-amber-300 ring-offset-2 ring-offset-[var(--surface)]' : '',
+        ].join(' ')}
+      >
         <summary className="cursor-pointer list-none text-sm font-semibold text-[var(--text)] hover:text-[var(--primary)]">
-          {detail?.setupReadinessSummary.blockingItemCount ?? summaryBlockerItems.length}
+          {detail?.setupReadinessSummary.blockingItemCount ?? visibleSummaryBlockerItems.length}
           <span className="ml-2 text-xs font-medium text-[var(--text-muted)] group-open:hidden">
             {t('agents.detail.show_blockers')}
           </span>
@@ -176,18 +261,29 @@ export function AgentDetailView({ manager }: { manager: AgentDetailManager }) {
           </span>
         </summary>
         <ul className="mt-2 grid gap-1 text-xs font-medium text-[var(--text-muted)]">
-          {summaryBlockerItems.map((item) => (
+          {visibleSummaryBlockerItems.map((item) => (
             <li key={item.key}>
-              <Link
-                to={item.route}
-                className="block cursor-pointer rounded-md px-1 py-0.5 text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-[var(--primary)] active:text-[var(--primary-hover)]"
-              >
-                <span className="font-semibold text-[var(--primary)] underline-offset-2 hover:underline">{item.label}</span>
-                {': '}
-                {item.detail}
-              </Link>
+              {item.route ? (
+                <Link
+                  to={item.route}
+                  className="block cursor-pointer rounded-md px-1 py-0.5 text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-[var(--primary)] active:text-[var(--primary-hover)]"
+                >
+                  <span className="font-semibold text-[var(--primary)] underline-offset-2 hover:underline">{item.label}</span>
+                  {': '}
+                  {item.detail}
+                </Link>
+              ) : (
+                <span className="block rounded-md px-1 py-0.5 text-[var(--text-muted)]">
+                  <span className="font-semibold text-[var(--text)]">{item.label}</span>
+                  {': '}
+                  {item.detail}
+                </span>
+              )}
             </li>
           ))}
+          {hiddenBlockerCount > 0 ? (
+            <li className="px-1 py-0.5 text-[var(--text-muted)]">{t('agents.detail.additional_blockers_hidden')}</li>
+          ) : null}
         </ul>
       </details>
     </div>
@@ -209,19 +305,19 @@ export function AgentDetailView({ manager }: { manager: AgentDetailManager }) {
               <div className="flex flex-wrap gap-2 lg:justify-end">
                 <Link
                   to={`/tenants/${manager.tenantId}/agents/${manager.agentId}/config`}
-                  className={setupButtonClass(nextSetupRoute === `/tenants/${manager.tenantId}/agents/${manager.agentId}/config` || (!nextSetupRoute && !detail.activeConfigId))}
+                  className={setupButtonClass(guidedNextSetupRoute === configRoute)}
                 >
                   {t('agents.detail.configure_now')}
                 </Link>
                 <Link
                   to={`/tenants/${manager.tenantId}/agents/${manager.agentId}/knowledge`}
-                  className={setupButtonClass(nextSetupRoute === `/tenants/${manager.tenantId}/agents/${manager.agentId}/knowledge`)}
+                  className={setupButtonClass(guidedNextSetupRoute === `/tenants/${manager.tenantId}/agents/${manager.agentId}/knowledge`)}
                 >
                   {t('knowledge.manage_knowledge')}
                 </Link>
                 <Link
                   to={`/tenants/${manager.tenantId}/agents/${manager.agentId}/capabilities`}
-                  className={setupButtonClass(nextSetupRoute === `/tenants/${manager.tenantId}/agents/${manager.agentId}/capabilities`)}
+                  className={setupButtonClass(guidedNextSetupRoute === `/tenants/${manager.tenantId}/agents/${manager.agentId}/capabilities`)}
                 >
                   <span>{t('agent_capabilities.manage_capabilities')}</span>
                   {capabilitiesNeedSave ? (
@@ -232,19 +328,19 @@ export function AgentDetailView({ manager }: { manager: AgentDetailManager }) {
                 </Link>
                 <Link
                   to={`/tenants/${manager.tenantId}/agents/${manager.agentId}/policy`}
-                  className={setupButtonClass(nextSetupRoute === `/tenants/${manager.tenantId}/agents/${manager.agentId}/policy`)}
+                  className={setupButtonClass(guidedNextSetupRoute === `/tenants/${manager.tenantId}/agents/${manager.agentId}/policy`)}
                 >
                   {t('agent_policy.manage_policy')}
                 </Link>
                 <Link
                   to={`/tenants/${manager.tenantId}/agents/${manager.agentId}/sites-widgets`}
-                  className={setupButtonClass(nextSetupRoute === `/tenants/${manager.tenantId}/agents/${manager.agentId}/sites-widgets`)}
+                  className={setupButtonClass(guidedNextSetupRoute === `/tenants/${manager.tenantId}/agents/${manager.agentId}/sites-widgets`)}
                 >
                   {t('sites_widgets.manage_sites_widgets')}
                 </Link>
                 <Link
                   to={`/tenants/${manager.tenantId}/agents/${manager.agentId}/releases`}
-                  className={setupButtonClass(nextSetupRoute === `/tenants/${manager.tenantId}/agents/${manager.agentId}/releases`)}
+                  className={setupButtonClass(guidedNextSetupRoute === `/tenants/${manager.tenantId}/agents/${manager.agentId}/releases`)}
                 >
                   {t('releases.manage_releases')}
                 </Link>
@@ -300,7 +396,7 @@ export function AgentDetailView({ manager }: { manager: AgentDetailManager }) {
         </div>
       ) : null}
       {manager.formError ? <p className="text-sm font-medium text-rose-600">{manager.formError}</p> : null}
-      <MutationResultBlock title={t('agents.mutation_result')} result={manager.mutationResult} />
+      <MutationResultBlock title={t('agents.mutation_result')} result={manager.mutationResult} hideMissingOptionalFields />
 
       {manager.isLoading ? (
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-sm text-[var(--text-muted)]">
@@ -313,16 +409,34 @@ export function AgentDetailView({ manager }: { manager: AgentDetailManager }) {
         </div>
       ) : (
         <>
+          {guidedNextSetupRoute ? (
+            <section className="rounded-2xl border border-[var(--primary)] bg-[var(--primary-soft)] p-4 shadow-[var(--shadow-soft)]">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--primary-hover)]">
+                    {t('agents.detail.guided_setup_label')}
+                  </p>
+                  <h3 className="mt-1 text-base font-bold text-[var(--text)]">
+                    {configNeedsSetup ? t('agents.detail.guided_config_title') : t('agents.detail.guided_setup_title')}
+                  </h3>
+                  <p className="mt-1 max-w-3xl text-sm text-[var(--text-muted)]">
+                    {configNeedsSetup ? t('agents.detail.guided_config_subtitle') : t('agents.detail.guided_setup_subtitle')}
+                  </p>
+                </div>
+                <Link
+                  to={guidedNextSetupRoute}
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--primary)] bg-[var(--primary)] px-4 py-2 text-sm font-bold text-white hover:border-[var(--primary-hover)] hover:bg-[var(--primary-hover)]"
+                >
+                  {t('agents.detail.next_required_step')}: {guidedNextSetupLabel}
+                </Link>
+              </div>
+            </section>
+          ) : null}
+
           {!detail.activeConfigId ? (
             <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 shadow-[var(--shadow-soft)] dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
               <h3 className="font-bold">{t('agents.detail.config_required_title')}</h3>
               <p className="mt-1">{t('agents.detail.config_required_subtitle')}</p>
-              <Link
-                to={`/tenants/${manager.tenantId}/agents/${manager.agentId}/config`}
-                className="mt-3 inline-flex h-10 items-center justify-center rounded-xl border border-amber-300 bg-amber-100 px-4 text-sm font-bold text-amber-950 hover:bg-amber-200 dark:border-amber-400/40 dark:bg-amber-400/20 dark:text-amber-50"
-              >
-                {t('agent_config.manage_config')}
-              </Link>
             </section>
           ) : null}
 
@@ -394,7 +508,7 @@ export function AgentDetailView({ manager }: { manager: AgentDetailManager }) {
                 <label className="grid gap-1">
                   <span className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">{t('agents.purpose')}</span>
                   <textarea
-                    value={translatedKnownAgentText(t, manager.editForm.purpose, '')}
+                    value={manager.editForm.purpose}
                     onChange={(event) => manager.updateEditForm({ purpose: event.target.value })}
                     disabled={!canEditMetadata || manager.isMutating}
                     rows={3}
@@ -404,7 +518,7 @@ export function AgentDetailView({ manager }: { manager: AgentDetailManager }) {
                 <label className="grid gap-1">
                   <span className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">{t('agents.description')}</span>
                   <textarea
-                    value={translatedKnownAgentText(t, manager.editForm.description, '')}
+                    value={manager.editForm.description}
                     onChange={(event) => manager.updateEditForm({ description: event.target.value })}
                     disabled={!canEditMetadata || manager.isMutating}
                     rows={3}
@@ -430,32 +544,45 @@ export function AgentDetailView({ manager }: { manager: AgentDetailManager }) {
                 <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
                   <p className="font-semibold">
                     {t('agents.detail.activation_blocked_by_setup')}{' '}
-                    <a href="#agent-setup-blockers" className="font-bold text-amber-950 underline dark:text-amber-50">
+                    <button
+                      type="button"
+                      onClick={showSetupBlockers}
+                      aria-controls="agent-setup-blockers"
+                      className="font-bold text-amber-950 underline dark:text-amber-50"
+                    >
                       {t('agents.detail.show_blockers')}
-                    </a>
+                    </button>
                   </p>
-                  {summaryBlockerItems.length > 0 ? (
+                  {visibleSummaryBlockerItems.length > 0 ? (
                     <ul className="mt-2 grid gap-1">
-                      {summaryBlockerItems.map((item) => (
+                      {visibleSummaryBlockerItems.map((item) => (
                         <li key={item.key}>
-                          <Link
-                            to={item.route}
-                            className="block cursor-pointer rounded-md px-1 py-0.5 text-amber-900 hover:bg-amber-100 hover:text-amber-950 active:text-amber-800 dark:text-amber-100 dark:hover:bg-amber-400/20 dark:hover:text-amber-50"
-                          >
-                            <span className="font-bold underline">{item.label}</span>
-                            {': '}
-                            {item.detail}
-                          </Link>
+                          {item.route ? (
+                            <Link
+                              to={item.route}
+                              className="block cursor-pointer rounded-md px-1 py-0.5 text-amber-900 hover:bg-amber-100 hover:text-amber-950 active:text-amber-800 dark:text-amber-100 dark:hover:bg-amber-400/20 dark:hover:text-amber-50"
+                            >
+                              <span className="font-bold underline">{item.label}</span>
+                              {': '}
+                              {item.detail}
+                            </Link>
+                          ) : (
+                            <span className="block rounded-md px-1 py-0.5 text-amber-900 dark:text-amber-100">
+                              <span className="font-bold">{item.label}</span>
+                              {': '}
+                              {item.detail}
+                            </span>
+                          )}
                         </li>
                       ))}
                     </ul>
                   ) : null}
-                  {blockingSetupItem ? (
+                  {guidedNextSetupRoute ? (
                     <Link
-                      to={setupRouteForOwner(manager.tenantId, manager.agentId, blockingSetupItem.ownerArea)}
+                      to={guidedNextSetupRoute}
                       className="mt-2 inline-flex font-bold text-amber-950 underline dark:text-amber-50"
                     >
-                      {t('agents.detail.next_setup_step')}: {translatedValue(t, 'agents.templates.owner_area', blockingSetupItem.ownerArea)}
+                      {t('agents.detail.next_setup_step')}: {guidedNextSetupLabel}
                     </Link>
                   ) : null}
                 </div>

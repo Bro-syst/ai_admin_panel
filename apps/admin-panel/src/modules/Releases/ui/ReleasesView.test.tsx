@@ -67,6 +67,14 @@ function renderView(manager: Partial<ReleasesManager> = {}) {
         labelKey: 'release.publish.release_report_reference.label',
         descriptionKey: 'release.publish.release_report_reference.description',
       }],
+      publishEvidenceDefaults: {
+        supportReconstructionReference: null,
+        usageChatId: null,
+        usageConversationTurnId: null,
+        usageModelRequestId: null,
+        billingExportReference: null,
+        releaseReportReference: 'report_1',
+      },
       runtimeProviderPreflight: {
         available: true,
         ready: true,
@@ -230,6 +238,7 @@ function renderView(manager: Partial<ReleasesManager> = {}) {
     applyRetrievalEvidenceCandidateToDraftForm: vi.fn(),
     generateRetrievalEvidenceCandidate: vi.fn(),
     applyUsageEvidenceCandidateToPublishForm: vi.fn(),
+    applyPublishEvidenceDefaultsToPublishForm: vi.fn(),
     fillDefaultSmokeOutcomes: vi.fn(),
     createRelease: vi.fn(),
     publishSelected: vi.fn(),
@@ -285,7 +294,8 @@ describe('ReleasesView', () => {
         blockingItemCount: 0,
         items: [
           { itemId: 'agent_config', ownerArea: 'agent_config', state: 'ready', blocking: true, detail: 'Active AgentConfig is present and accepted by the foundation policy.', requiredAction: null },
-          { itemId: 'agent_lifecycle', ownerArea: 'agent_lifecycle', state: 'ready', blocking: true, detail: 'Agent lifecycle is active.', requiredAction: null },
+          { itemId: 'agent_lifecycle', ownerArea: 'agent_lifecycle', state: 'ready', blocking: true, detail: 'Agent lifecycle is active.', requiredAction: 'Return agent lifecycle to active state before release handoff.' },
+          { itemId: 'release_handoff', ownerArea: 'release_handoff', state: 'pending', blocking: true, detail: 'Setup foundation is ready for Stage 24 release validation handoff.', requiredAction: 'Resolve blocking setup areas before Stage 24 release validation.' },
           { itemId: 'metering_interpretation', ownerArea: 'metering_interpretation', state: 'ready', blocking: true, detail: 'Template metering markers: agent_invocation, model_token_usage, workflow_action_optional.', requiredAction: null },
         ],
         currentReleaseId: null,
@@ -325,7 +335,8 @@ describe('ReleasesView', () => {
     expect(screen.getByText('Проверка пройдена по подтверждениям')).toBeInTheDocument()
     expect(screen.getByText('Подтверждён проверками')).toBeInTheDocument()
     expect(screen.getByText('Конфигурация агента: Готово - Активная конфигурация создана и принята')).toBeInTheDocument()
-    expect(screen.getByText('Жизненный цикл агента: Готово - Жизненный цикл агента включён')).toBeInTheDocument()
+    expect(screen.getByText('Жизненный цикл агента: Готово - Жизненный цикл агента включён. Верните жизненный цикл агента в активное состояние перед передачей в релиз')).toBeInTheDocument()
+    expect(screen.getByText('Передача в релиз: Ожидает настройки - Базовая настройка готова к проверке релиза. Устраните блокирующие области настройки перед проверкой релиза')).toBeInTheDocument()
     expect(screen.getByText('Учёт использования: Готово - Шаблон требует маркеры учёта: обращение агента, использование токенов модели, опциональное действие процесса')).toBeInTheDocument()
     expect(screen.queryByText('stage24_release_workflow')).not.toBeInTheDocument()
     expect(screen.queryByText('agent_lifecycle')).not.toBeInTheDocument()
@@ -341,7 +352,36 @@ describe('ReleasesView', () => {
     expect(screen.queryByText('Сформировать retrieval evidence')).not.toBeInTheDocument()
     expect(screen.queryByText('Active AgentConfig is present and accepted by the foundation policy.')).not.toBeInTheDocument()
     expect(screen.queryByText('Agent lifecycle is active.')).not.toBeInTheDocument()
+    expect(screen.queryByText('Return agent lifecycle to active state before release handoff.')).not.toBeInTheDocument()
+    expect(screen.queryByText('Resolve blocking setup areas before Stage 24 release validation.')).not.toBeInTheDocument()
     expect(screen.queryByText('Template metering markers: agent_invocation, model_token_usage, workflow_action_optional.')).not.toBeInTheDocument()
+  })
+
+  it('hides missing optional fields from release mutation results', () => {
+    renderView({
+      mutationResult: {
+        action: 'publish_release',
+        resourceType: 'agent_release',
+        resourceId: 'release_1',
+        actorId: null,
+        actorType: null,
+        tenantId: 'tenant_1',
+        correlationId: 'corr_publish',
+        mutationTimestamp: '2026-06-21T21:53:48.154522Z',
+        changedStateSummary: {},
+        status: null,
+        resultStatus: null,
+        version: null,
+      },
+    })
+
+    expect(screen.getByRole('heading', { name: 'Last release mutation result' })).toBeInTheDocument()
+    expect(screen.getByText('publish_release')).toBeInTheDocument()
+    expect(screen.getByText('agent_release')).toBeInTheDocument()
+    expect(screen.getByText('corr_publish')).toBeInTheDocument()
+    expect(screen.queryByText('Status / result')).not.toBeInTheDocument()
+    expect(screen.queryByText('Version')).not.toBeInTheDocument()
+    expect(screen.queryByText('Backend did not return this field')).not.toBeInTheDocument()
   })
 
   it('lets operators edit optional manual override comment before draft creation', async () => {
@@ -366,6 +406,30 @@ describe('ReleasesView', () => {
     fireEvent.change(screen.getByPlaceholderText('Manual override comment'), { target: { value: 'Approved by launch owner.' } })
 
     expect(setDraftForm).toHaveBeenCalled()
+  })
+
+  it('localizes retrieval evidence required action in Russian', () => {
+    window.localStorage.setItem('ai_admin_panel:locale_v1', 'ru')
+
+    renderView({
+      retrievalEvidenceCandidates: {
+        items: [],
+        summary: {
+          candidateCount: 0,
+          ready: false,
+          noCandidateReason: 'managed_knowledge_not_ready',
+          requiredAction: 'Complete managed knowledge binding and indexing readiness.',
+          problems: [],
+        },
+        noCandidateReason: 'managed_knowledge_not_ready',
+        generatedAt: '2026-05-28T11:01:00Z',
+      },
+      selectedRetrievalEvidenceCandidate: null,
+      selectedRetrievalEvidenceCandidateId: '',
+    })
+
+    expect(screen.getByText('Что сделать: Завершите привязку управляемой базы знаний и готовность индексации.')).toBeInTheDocument()
+    expect(screen.queryByText('Complete managed knowledge binding and indexing readiness.')).not.toBeInTheDocument()
   })
 
   it('confirms publish, rollback and disable with release context', async () => {
@@ -420,6 +484,14 @@ describe('ReleasesView', () => {
           relatedMissingOrFailedItemsDefault: [],
         },
         publishEvidenceRequirements: [],
+        publishEvidenceDefaults: {
+          supportReconstructionReference: null,
+          usageChatId: null,
+          usageConversationTurnId: null,
+          usageModelRequestId: null,
+          billingExportReference: null,
+          releaseReportReference: null,
+        },
         runtimeProviderPreflight: {
           available: true,
           ready: false,
@@ -474,6 +546,14 @@ describe('ReleasesView', () => {
           labelKey: 'release.publish.usage_chat_id.label',
           descriptionKey: 'release.publish.usage_chat_id.description',
         }],
+        publishEvidenceDefaults: {
+          supportReconstructionReference: null,
+          usageChatId: null,
+          usageConversationTurnId: null,
+          usageModelRequestId: null,
+          billingExportReference: null,
+          releaseReportReference: null,
+        },
         runtimeProviderPreflight: {
           available: false,
           ready: false,
@@ -662,7 +742,7 @@ describe('ReleasesView', () => {
           candidateCount: 0,
           ready: false,
           noCandidateReason: 'managed_knowledge_not_ready',
-          requiredAction: 'Finish knowledge indexing.',
+          requiredAction: 'Complete managed knowledge binding and indexing readiness.',
           problems: ['source_set_pending'],
         },
         noCandidateReason: 'managed_knowledge_not_ready',
@@ -698,7 +778,7 @@ describe('ReleasesView', () => {
     })
 
     expect(screen.getByText('Knowledge indexing or retrieval readiness is not complete yet. Finish knowledge setup, then retry candidate generation.')).toBeInTheDocument()
-    expect(screen.getByText('Required action: Finish knowledge indexing.')).toBeInTheDocument()
+    expect(screen.getByText('Required action: Complete managed knowledge binding and indexing readiness.')).toBeInTheDocument()
     expect(screen.getByText('source_set_pending')).toBeInTheDocument()
     expect(screen.getByLabelText('Evidence reference')).toBeDisabled()
     expect(screen.getByLabelText('Product answer is grounded Stable reference')).toBeDisabled()
@@ -778,6 +858,14 @@ describe('ReleasesView', () => {
           relatedMissingOrFailedItemsDefault: [],
         },
         publishEvidenceRequirements: [],
+        publishEvidenceDefaults: {
+          supportReconstructionReference: null,
+          usageChatId: null,
+          usageConversationTurnId: null,
+          usageModelRequestId: null,
+          billingExportReference: null,
+          releaseReportReference: null,
+        },
         runtimeProviderPreflight: {
           available: true,
           ready: false,

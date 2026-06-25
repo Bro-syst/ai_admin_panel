@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useI18n } from '@/core/i18n/useI18n'
-import type { ReleaseDetail, ReleaseRetrievalEvidenceCandidate, RuntimeProviderPreflightRequirement } from '@/modules/Releases/api/releasesApi'
+import type { ReleaseDetail, ReleasePublishEvidenceBundle, ReleaseRetrievalEvidenceCandidate, RuntimeProviderPreflightRequirement } from '@/modules/Releases/api/releasesApi'
 import { getUsageEvidenceNoCandidateReasonKey } from '@/modules/Releases/model/usageEvidenceCandidates'
 import type { ReleasesManager } from '@/modules/Releases/model/useReleasesManager'
 import { InfoGrid, ListBlock, MutationResultBlock, StatusBadge } from '@/shared/ui/EntityInfo'
@@ -56,6 +56,39 @@ function getRetrievalEvidenceNoCandidateReasonKey(reason: string | null | undefi
   return reason && knownReasons.has(reason)
     ? `releases.retrieval_evidence.no_candidate_reason.${reason}`
     : 'releases.retrieval_evidence.no_candidate_reason.unknown'
+}
+
+function getPublishEvidenceNoCandidateReasonKey(reason: string | null | undefined) {
+  const knownReasons = new Set([
+    'release_not_found',
+    'no_release_candidate',
+    'publish_evidence_incomplete',
+  ])
+  return reason && knownReasons.has(reason)
+    ? `releases.publish_evidence.no_candidate_reason.${reason}`
+    : 'releases.publish_evidence.no_candidate_reason.unknown'
+}
+
+function getPublishEvidenceBlockingReasonKey(reason: string) {
+  const knownReasons = new Set([
+    'release_not_publishable',
+    'published_release_not_active',
+    'missing_selected_config',
+    'invalid_selected_config_id',
+    'missing_support_reconstruction_reference',
+    'candidate_source_unavailable',
+    'managed_knowledge_not_ready',
+    'no_retrieval_evidence_candidate',
+    'runtime_provider_not_ready',
+    'no_successful_widget_conversation',
+    'usage_not_recorded',
+    'missing_usage_evidence_candidate',
+    'missing_billing_export_reference',
+    'missing_release_report_reference',
+  ])
+  return knownReasons.has(reason)
+    ? `releases.publish_evidence.blocking_reason.${reason}`
+    : 'releases.publish_evidence.blocking_reason.unknown'
 }
 
 function formatKnownReadinessDetail(t: (key: string) => string, itemId: string, fallback: string) {
@@ -135,6 +168,115 @@ function RuntimeProviderPreflightSafeBlock({ requirements }: { requirements: Run
           />
         </div>
       ))}
+    </div>
+  )
+}
+
+function PublishEvidenceBundleCard({
+  bundle,
+  checked,
+  onSelect,
+}: {
+  bundle: ReleasePublishEvidenceBundle
+  checked: boolean
+  onSelect: () => void
+}) {
+  const { t } = useI18n()
+  return (
+    <label className="grid cursor-pointer gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 text-sm text-[var(--text)] has-[:checked]:border-[var(--primary)]">
+      <span className="flex items-start gap-2">
+        <input
+          type="radio"
+          name="release-publish-evidence-bundle"
+          checked={checked}
+          onChange={onSelect}
+        />
+        <span className="grid min-w-0 flex-1 gap-2">
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="font-bold">{bundle.displayLabel || t('releases.publish_evidence.bundle')}</span>
+            <StatusBadge
+              status={bundle.readinessStatus}
+              label={translateBackendValue(t, 'releases.publish_evidence.readiness_status', bundle.readinessStatus)}
+            />
+            {bundle.recommended ? <StatusBadge status="ready" label={t('releases.publish_evidence.recommended')} /> : null}
+          </span>
+          {bundle.blockingReasons.length ? (
+            <ul className="grid gap-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+              {bundle.blockingReasons.map((reason) => (
+                <li key={reason}>{t(getPublishEvidenceBlockingReasonKey(reason))}{getPublishEvidenceBlockingReasonKey(reason).endsWith('.unknown') ? `: ${reason}` : ''}</li>
+              ))}
+            </ul>
+          ) : null}
+        </span>
+      </span>
+      <InfoGrid
+        items={[
+          { label: t('releases.publish_evidence.release'), value: `v${bundle.releaseVersion} / ${translateBackendValue(t, 'releases.release_status', bundle.releaseStatus)}` },
+          { label: t('releases.publish_evidence.selected_config_id'), value: bundle.selectedConfigId ?? t('agents.empty_value') },
+          { label: t('releases.publish_evidence.retrieval_candidate_id'), value: bundle.retrievalCandidateId ?? t('agents.empty_value') },
+          { label: t('releases.publish_evidence.usage_candidate_id'), value: bundle.usageCandidateId ?? t('agents.empty_value') },
+          { label: t('releases.publish_billing_export_reference'), value: bundle.billingExportReference ?? t('agents.empty_value') },
+          { label: t('releases.publish_report_reference'), value: bundle.releaseReportReference ?? t('agents.empty_value') },
+        ]}
+      />
+    </label>
+  )
+}
+
+function PublishEvidenceBundleSelector({ manager, disabled }: { manager: ReleasesManager; disabled: boolean }) {
+  const { t } = useI18n()
+  const selectedBundleReady = manager.selectedPublishEvidenceBundle?.readinessStatus === 'ready'
+  return (
+    <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h4 className="text-sm font-bold text-[var(--text)]">{t('releases.publish_evidence.title')}</h4>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">{t('releases.publish_evidence.help')}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => void manager.loadPublishEvidenceCandidates(manager.selectedRelease?.releaseId ?? null)}
+          className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[var(--border)] px-3 text-sm font-semibold text-[var(--text)] hover:border-[var(--primary)] disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-muted)]"
+          disabled={manager.isLoadingPublishEvidenceCandidates}
+        >
+          {manager.isLoadingPublishEvidenceCandidates ? t('common.loading') : t('common.retry')}
+        </button>
+      </div>
+      {manager.isLoadingPublishEvidenceCandidates ? (
+        <p className="mt-3 text-sm text-[var(--text-muted)]">{t('common.loading')}</p>
+      ) : manager.publishEvidenceCandidatesError ? (
+        <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">{manager.publishEvidenceCandidatesError}</p>
+      ) : manager.publishEvidenceCandidates?.items.length ? (
+        <>
+          <div className="mt-3 grid gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] sm:grid-cols-2">
+            <span>{t('releases.publish_evidence.count')}: {manager.publishEvidenceCandidates.summary.candidateCount}</span>
+            <span>{t('releases.publish_evidence.generated_at')}: {manager.publishEvidenceCandidates.generatedAt ?? t('agents.empty_value')}</span>
+          </div>
+          <div className="mt-3 grid gap-2">
+            {manager.publishEvidenceCandidates.items.map((bundle) => (
+              <PublishEvidenceBundleCard
+                key={bundle.bundleId}
+                bundle={bundle}
+                checked={manager.selectedPublishEvidenceBundleId === bundle.bundleId}
+                onSelect={() => manager.setSelectedPublishEvidenceBundleId(bundle.bundleId)}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            disabled={disabled || !manager.selectedPublishEvidenceBundle || !selectedBundleReady}
+            onClick={manager.applyPublishEvidenceBundleToPublishForm}
+            className="mt-3 inline-flex min-h-10 items-center justify-center rounded-xl border border-[var(--primary)] bg-[var(--primary)] px-4 text-sm font-bold text-white disabled:border-[var(--border)] disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-muted)]"
+          >
+            {t('releases.publish_evidence.use_bundle')}
+          </button>
+        </>
+      ) : manager.publishEvidenceCandidates ? (
+        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+          <p>{t(getPublishEvidenceNoCandidateReasonKey(manager.publishEvidenceCandidates.noCandidateReason))}</p>
+          {manager.publishEvidenceCandidates.generatedAt ? <p className="mt-1 text-xs">{t('releases.publish_evidence.generated_at')}: {manager.publishEvidenceCandidates.generatedAt}</p> : null}
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -254,7 +396,11 @@ function RetrievalEvidenceBlock({ manager, disabled }: { manager: ReleasesManage
         <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
           <p>{t(noCandidateReasonKey)}</p>
           {isUnknownReason && rawReason ? <p className="mt-1 break-all text-xs">{t('releases.retrieval_evidence.no_candidate_reason_value')}: {rawReason}</p> : null}
-          {candidates.summary.requiredAction ? <p className="mt-1">{t('releases.retrieval_evidence.required_action')}: {candidates.summary.requiredAction}</p> : null}
+          {candidates.summary.requiredAction ? (
+            <p className="mt-1">
+              {t('releases.retrieval_evidence.required_action')}: {translateBackendValue(t, 'releases.retrieval_evidence.required_action_value', candidates.summary.requiredAction)}
+            </p>
+          ) : null}
           {candidates.summary.problems.length ? <ListBlock title={t('releases.retrieval_evidence.problems')} values={candidates.summary.problems} /> : null}
           {candidates.generatedAt ? <p className="mt-1 text-xs">{t('releases.retrieval_evidence.generated_at')}: {candidates.generatedAt}</p> : null}
         </div>
@@ -392,7 +538,7 @@ export function ReleasesView({ manager }: { manager: ReleasesManager }) {
       {manager.notice ? <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">{manager.notice}</div> : null}
       {manager.errorMessage ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">{manager.errorMessage}</div> : null}
       {manager.formError ? <p className="text-sm font-medium text-rose-600">{manager.formError}</p> : null}
-      <MutationResultBlock title={t('releases.mutation_result')} result={manager.mutationResult} />
+      <MutationResultBlock title={t('releases.mutation_result')} result={manager.mutationResult} hideMissingOptionalFields />
 
       {manager.isLoading ? (
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-sm text-[var(--text-muted)]">{t('common.loading')}</div>
@@ -622,6 +768,18 @@ export function ReleasesView({ manager }: { manager: ReleasesManager }) {
                   {t('releases.runtime_provider_publish_warning')}
                 </div>
               ) : null}
+              <PublishEvidenceBundleSelector manager={manager} disabled={disabled} />
+              <div className="mt-4 flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-[var(--text-muted)]">{t('releases.publish_evidence_autofill_hint')}</p>
+                <button
+                  type="button"
+                  disabled={disabled || !selected}
+                  onClick={manager.applyPublishEvidenceDefaultsToPublishForm}
+                  className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[var(--primary)] bg-[var(--primary)] px-4 text-sm font-bold text-white disabled:border-[var(--border)] disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-muted)]"
+                >
+                  {t('releases.publish_evidence_autofill')}
+                </button>
+              </div>
               <div className="mt-4 grid gap-3 lg:grid-cols-2">
                 {publishFields.map((field) => (
                   <label key={field.name} className="grid gap-1">

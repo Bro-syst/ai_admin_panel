@@ -106,7 +106,10 @@ export function useSitesWidgetsManager(tenantId: string, agentId: string) {
   const [widgets, setWidgets] = useState<Widget[]>([])
   const [siteForm, setSiteForm] = useState<SiteForm>({ hostname: '', allowedOriginsText: '' })
   const [widgetForm, setWidgetForm] = useState<WidgetForm>({ siteId: '', widgetKey: '' })
-  const [smokeForm, setSmokeForm] = useState<SmokeForm>({ widgetKey: '', messageText: 'Hello from Admin Portal smoke.' })
+  const [smokeForm, setSmokeForm] = useState<SmokeForm>(() => ({
+    widgetKey: '',
+    messageText: t('sites_widgets.default_smoke_message'),
+  }))
   const [smokeResult, setSmokeResult] = useState<WidgetSmokeResult | null>(null)
   const [smokeError, setSmokeError] = useState<string | null>(null)
   const [mutationResult, setMutationResult] = useState<MutationResult | null>(null)

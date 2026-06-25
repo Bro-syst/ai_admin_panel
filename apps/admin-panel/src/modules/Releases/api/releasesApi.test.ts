@@ -173,6 +173,14 @@ describe('releasesApi', () => {
           label_key: 'release.publish.release_report_reference.label',
           description_key: 'release.publish.release_report_reference.description',
         }],
+        publish_evidence_defaults: {
+          support_reconstruction_reference: null,
+          usage_chat_id: null,
+          usage_conversation_turn_id: null,
+          usage_model_request_id: null,
+          billing_export_reference: 'billing-export:billing-chain-1',
+          release_report_reference: 'docs:TZ-SVC-4.3:RELEASE_METERING_USAGE_REPORT',
+        },
         runtime_provider_preflight: {
           ready: false,
           requirements: [{
@@ -197,6 +205,10 @@ describe('releasesApi', () => {
       requiredSmokeCases: [{ caseId: 'sales_support.product_grounded', groundedReferenceRequired: true }],
       manualOverride: { allowed: true, defaultReasonCode: 'release_evidence_operator_approved_override' },
       publishEvidenceRequirements: [{ field: 'release_report_reference', required: true }],
+      publishEvidenceDefaults: {
+        billingExportReference: 'billing-export:billing-chain-1',
+        releaseReportReference: 'docs:TZ-SVC-4.3:RELEASE_METERING_USAGE_REPORT',
+      },
       runtimeProviderPreflight: {
         available: true,
         ready: false,
@@ -328,6 +340,87 @@ describe('releasesApi', () => {
     })
   })
 
+  it('loads publish evidence bundles for a selected release without raw payload leakage', async () => {
+    getMock.mockResolvedValue({
+      data: {
+        agent_id: 'agent_1',
+        template_id: 'sales_qualification_v1',
+        items: [{
+          bundle_id: 'bundle_1',
+          display_label: 'Release v1 publish evidence',
+          readiness_status: 'ready',
+          recommended: true,
+          release_id: 'release_1',
+          release_version: 1,
+          release_status: 'validated',
+          release_active: false,
+          selected_config_id: 'config_1',
+          support_reconstruction_reference: 'support-reconstruction:knowledge-retrieval-run:run_1',
+          usage_chat_id: 'chat_1',
+          usage_conversation_turn_id: 'turn_1',
+          usage_model_request_id: 'model_request_1',
+          billing_export_reference: 'billing-export:billing-chain-1',
+          release_report_reference: 'docs:TZ-SVC-4.3:RELEASE_METERING_USAGE_REPORT',
+          retrieval_candidate_id: 'retrieval_candidate_1',
+          usage_candidate_id: 'turn_1',
+          blocking_reasons: [],
+          technical_details: { release_candidate_id: 'release_1' },
+          transcript: 'must-not-map',
+          raw_payload: { secret: 'must-not-map' },
+        }],
+        summary: {
+          candidate_count: 1,
+          ready: true,
+          recommended_bundle_id: 'bundle_1',
+          no_candidate_reason: null,
+          message: 'Ready publish evidence bundle is available.',
+        },
+        no_candidate_reason: null,
+        generated_at: '2026-06-23T10:00:00Z',
+      },
+    })
+
+    await expect(releasesApi.getPublishEvidenceCandidates('tenant_1', 'agent_1', 'release_1')).resolves.toEqual({
+      agentId: 'agent_1',
+      templateId: 'sales_qualification_v1',
+      items: [{
+        bundleId: 'bundle_1',
+        displayLabel: 'Release v1 publish evidence',
+        readinessStatus: 'ready',
+        recommended: true,
+        releaseId: 'release_1',
+        releaseVersion: 1,
+        releaseStatus: 'validated',
+        releaseActive: false,
+        selectedConfigId: 'config_1',
+        supportReconstructionReference: 'support-reconstruction:knowledge-retrieval-run:run_1',
+        usageChatId: 'chat_1',
+        usageConversationTurnId: 'turn_1',
+        usageModelRequestId: 'model_request_1',
+        billingExportReference: 'billing-export:billing-chain-1',
+        releaseReportReference: 'docs:TZ-SVC-4.3:RELEASE_METERING_USAGE_REPORT',
+        retrievalCandidateId: 'retrieval_candidate_1',
+        usageCandidateId: 'turn_1',
+        blockingReasons: [],
+        technicalDetails: { release_candidate_id: 'release_1' },
+      }],
+      summary: {
+        candidateCount: 1,
+        ready: true,
+        recommendedBundleId: 'bundle_1',
+        noCandidateReason: null,
+        message: 'Ready publish evidence bundle is available.',
+      },
+      noCandidateReason: null,
+      generatedAt: '2026-06-23T10:00:00Z',
+    })
+
+    expect(getMock).toHaveBeenCalledWith(
+      '/api/admin/v1/portal/tenants/tenant_1/agents/agent_1/release-publish-evidence-candidates',
+      { params: { release_id: 'release_1' } },
+    )
+  })
+
   it('loads retrieval evidence candidates through canonical portal endpoint without raw payload leakage', async () => {
     getMock.mockResolvedValue({
       data: {
@@ -401,20 +494,35 @@ describe('releasesApi', () => {
   it('creates retrieval evidence candidates with backend-owned ids and idempotency key', async () => {
     postMock.mockResolvedValue({
       data: {
-        items: [],
-        summary: {
-          candidate_count: 0,
-          ready: false,
-          no_candidate_reason: 'candidate_generation_failed',
-          required_action: 'Retry after retrieval run is available.',
+        resource: {
+          candidate_id: 'candidate_1',
+          release_candidate_id: 'release_candidate_1',
+          retrieval_run_id: 'retrieval_run_1',
+          stable_reference: 'knowledge-retrieval-run:retrieval_run_1',
+          support_reconstruction_reference: 'retrieval-run:retrieval_run_1',
+          selected_config_id: 'config_7',
+          outcome: 'retrieval evidence verified',
+          source_ids: ['source_1'],
+          index_id: 'index_1',
+          index_version_id: 'index_version_1',
+          source_set_key: 'source_set_1',
+          source_set_readiness_marker: 'ready',
+          selected_chunk_count: 6,
+          citation_count: 5,
+          created_at: '2026-05-28T10:00:00Z',
+          status: 'ready',
           problems: [],
         },
-        no_candidate_reason: 'candidate_generation_failed',
-        generated_at: null,
+        result: {
+          action: 'create_retrieval_evidence_candidate',
+          resource_type: 'release_retrieval_evidence_candidate',
+          resource_id: 'candidate_1',
+          mutation_timestamp: '2026-05-28T10:00:01Z',
+        },
       },
     })
 
-    await releasesApi.createRetrievalEvidenceCandidate('tenant_1', 'agent_1', {
+    const result = await releasesApi.createRetrievalEvidenceCandidate('tenant_1', 'agent_1', {
       selectedConfigId: 'config_7',
       releaseCandidateId: 'release_candidate_1',
       idempotencyKey: 'release_retrieval_evidence_1',
@@ -424,6 +532,15 @@ describe('releasesApi', () => {
       selected_config_id: 'config_7',
       release_candidate_id: 'release_candidate_1',
       idempotency_key: 'release_retrieval_evidence_1',
+    })
+    expect(result.summary.ready).toBe(true)
+    expect(result.summary.candidateCount).toBe(1)
+    expect(result.items[0]).toMatchObject({
+      candidateId: 'candidate_1',
+      releaseCandidateId: 'release_candidate_1',
+      stableReference: 'knowledge-retrieval-run:retrieval_run_1',
+      selectedConfigId: 'config_7',
+      citationCount: 5,
     })
   })
 

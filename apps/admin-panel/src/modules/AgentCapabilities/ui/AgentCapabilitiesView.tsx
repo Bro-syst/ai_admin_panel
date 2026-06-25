@@ -26,6 +26,10 @@ function translatedCapabilityLabel(t: (key: string) => string, capabilityId: str
   return translated === key ? fallback : translated
 }
 
+function capabilityTechnicalTitle(item: AgentCapabilityCatalogItem) {
+  return [item.capabilityId, item.capabilityVersion].filter(Boolean).join(' / ')
+}
+
 function isRecommendedSmokeCapability(item: AgentCapabilityCatalogItem | undefined) {
   if (!item) return false
   return (
@@ -101,6 +105,7 @@ function CapabilityMutationEvidenceBlock({ manager }: { manager: AgentCapabiliti
   const noExternalActions = manager.profile?.explicitNoExternalActions ?? manager.form.explicitNoExternalActions
   const readiness = manager.profile?.readinessStatus ?? null
   const correlationOrRequest = result.correlationId ?? result.requestId ?? null
+  const actionLabel = translatedValue(t, 'agent_capabilities.mutation_action', result.action, t('agents.empty_value'))
 
   return (
     <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100">
@@ -108,7 +113,7 @@ function CapabilityMutationEvidenceBlock({ manager }: { manager: AgentCapabiliti
       <dl className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
         <div>
           <dt className="text-xs font-semibold uppercase opacity-70">{t('mutation_result.action')}</dt>
-          <dd className="break-all font-semibold">{result.action || t('agents.empty_value')}</dd>
+          <dd className="break-all font-semibold" title={result.action || undefined}>{actionLabel}</dd>
         </div>
         <div>
           <dt className="text-xs font-semibold uppercase opacity-70">{t('agent_capabilities.agent_id')}</dt>
@@ -147,6 +152,11 @@ export function AgentCapabilitiesView({ manager }: { manager: AgentCapabilitiesM
     manager.form.assignments.some((assignment) => assignment.enabled && isRecommendedSmokeCapability(catalogItemsById.get(assignment.capabilityId))) &&
     !manager.form.assignments.some((assignment) => assignment.enabled && isExternalSideEffectCapability(catalogItemsById.get(assignment.capabilityId)))
   const recommendedSetApplied = showRecommendedPreview
+  const recommendedSetLabel = recommendedSetApplied
+    ? manager.isDirty
+      ? t('agent_capabilities.recommended_smoke_selected_unsaved')
+      : t('agent_capabilities.recommended_smoke_saved')
+    : t('agent_capabilities.apply_recommended_smoke')
 
   return (
     <div className="space-y-4">
@@ -205,7 +215,7 @@ export function AgentCapabilitiesView({ manager }: { manager: AgentCapabilitiesM
                     : 'border-[var(--primary)] bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]',
                 ].join(' ')}
               >
-                {recommendedSetApplied ? t('agent_capabilities.recommended_smoke_applied') : t('agent_capabilities.apply_recommended_smoke')}
+                {recommendedSetLabel}
               </button>
             </div>
             {showRecommendedPreview ? (
@@ -266,8 +276,12 @@ export function AgentCapabilitiesView({ manager }: { manager: AgentCapabilitiesM
                 <article key={item.capabilityId} className={capabilityCardClass(item, manager.form.explicitNoExternalActions)}>
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div>
-                      <h3 className="text-sm font-bold text-[var(--text)]">{translatedCapabilityLabel(t, item.capabilityId, item.label)}</h3>
-                      <p className="mt-1 break-all text-xs text-[var(--text-muted)]">{item.capabilityId} / {item.capabilityVersion}</p>
+                      <h3 className="text-sm font-bold text-[var(--text)]" title={capabilityTechnicalTitle(item)}>
+                        {translatedCapabilityLabel(t, item.capabilityId, item.label)}
+                      </h3>
+                      <p className="mt-1 text-xs text-[var(--text-muted)]" title={capabilityTechnicalTitle(item)}>
+                        {t('agent_capabilities.technical_metadata_available')}
+                      </p>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {recommended ? (
                           <span className="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/20 dark:text-emerald-100">

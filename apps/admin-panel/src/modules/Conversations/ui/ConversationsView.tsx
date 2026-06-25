@@ -9,10 +9,19 @@ function valueOrEmpty(value: string | number | null | undefined, emptyValue: str
   return value === null || value === undefined || value === '' ? emptyValue : value
 }
 
-function chatLabel(chat: Chat | ConversationRuntimeItem) {
+function translateBackendValue(t: (key: string) => string, namespace: string, value: string | null | undefined) {
+  if (!value) return null
+
+  const key = `${namespace}.${value}`
+  const translated = t(key)
+
+  return translated === key ? value : translated
+}
+
+function chatLabel(chat: Chat | ConversationRuntimeItem, t: (key: string) => string) {
   const id = 'id' in chat ? chat.id : chat.chatId
   const status = 'status' in chat ? chat.status : chat.chatStatus
-  return `${id} / ${status}`
+  return `${id} / ${translateBackendValue(t, 'conversations.status', status)}`
 }
 
 function redactedText(message: Message | null, fallback: string) {
@@ -20,13 +29,14 @@ function redactedText(message: Message | null, fallback: string) {
 }
 
 function SnapshotEvidence({ turn, label }: { turn: ConversationTurn | null; label: string }) {
+  const { t } = useI18n()
   const values = [
     turn?.hasContextSnapshot ? 'context_snapshot' : null,
     turn?.hasRuntimeSnapshot ? 'runtime_snapshot' : null,
     turn?.hasMemorySnapshot ? 'memory_snapshot' : null,
   ].filter((value): value is string => Boolean(value))
 
-  return <ListBlock title={label} values={values} />
+  return <ListBlock title={label} values={values.map((value) => translateBackendValue(t, 'conversations.snapshot', value) ?? value)} />
 }
 
 function ChatList({ manager }: { manager: ConversationsManager }) {
@@ -40,6 +50,7 @@ function ChatList({ manager }: { manager: ConversationsManager }) {
       <div className="mt-3 grid gap-2">
         {source.length ? source.map((item) => {
           const chatId = 'id' in item ? item.id : item.chatId
+          const status = 'status' in item ? item.status : item.chatStatus
           const isSelected = manager.selectedChat?.id === chatId
           return (
             <button
@@ -52,8 +63,8 @@ function ChatList({ manager }: { manager: ConversationsManager }) {
               ].join(' ')}
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="break-all text-sm font-bold text-[var(--text)]">{chatLabel(item)}</span>
-                <StatusBadge status={'status' in item ? item.status : item.chatStatus} />
+                <span className="break-all text-sm font-bold text-[var(--text)]">{chatLabel(item, t)}</span>
+                <StatusBadge status={status} label={translateBackendValue(t, 'conversations.status', status) ?? status} />
               </div>
               {'redactedMessagePreview' in item && item.redactedMessagePreview ? (
                 <p className="mt-2 line-clamp-2 text-xs text-[var(--text-muted)]">{item.redactedMessagePreview}</p>
@@ -91,7 +102,9 @@ function MessagesPanel({ manager }: { manager: ConversationsManager }) {
               ].join(' ')}
             >
               <div className="text-sm font-bold text-[var(--text)]">#{valueOrEmpty(message.sequenceNumber, t('agents.empty_value'))}</div>
-              <div className="mt-1 text-xs text-[var(--text-muted)]">{message.source} / {message.messageType}</div>
+              <div className="mt-1 text-xs text-[var(--text-muted)]">
+                {translateBackendValue(t, 'conversations.message_source', message.source)} / {translateBackendValue(t, 'conversations.message_type', message.messageType)}
+              </div>
             </button>
           )) : <p className="text-sm text-[var(--text-muted)]">{t('conversations.no_messages')}</p>}
         </div>
@@ -106,8 +119,8 @@ function MessagesPanel({ manager }: { manager: ConversationsManager }) {
             <div className="mt-3">
               <InfoGrid
                 items={[
-                  { label: t('conversations.source'), value: manager.selectedMessage.source },
-                  { label: t('conversations.message_type'), value: manager.selectedMessage.messageType },
+                  { label: t('conversations.source'), value: translateBackendValue(t, 'conversations.message_source', manager.selectedMessage.source) },
+                  { label: t('conversations.message_type'), value: translateBackendValue(t, 'conversations.message_type', manager.selectedMessage.messageType) },
                   { label: t('conversations.sequence'), value: valueOrEmpty(manager.selectedMessage.sequenceNumber, t('agents.empty_value')) },
                   { label: t('conversations.created'), value: valueOrEmpty(manager.selectedMessage.createdAt, t('agents.empty_value')) },
                 ]}
@@ -139,7 +152,7 @@ function TurnsPanel({ manager }: { manager: ConversationsManager }) {
               ].join(' ')}
             >
               <div className="break-all text-sm font-bold text-[var(--text)]">{item.id}</div>
-              <div className="mt-1 text-xs text-[var(--text-muted)]">{item.status}</div>
+              <div className="mt-1 text-xs text-[var(--text-muted)]">{translateBackendValue(t, 'conversations.turn_status', item.status)}</div>
             </button>
           )) : <p className="text-sm text-[var(--text-muted)]">{t('conversations.no_turns')}</p>}
         </div>
@@ -150,11 +163,11 @@ function TurnsPanel({ manager }: { manager: ConversationsManager }) {
               <div className="mt-3">
                 <InfoGrid
                   items={[
-                    { label: t('common.status'), value: turn.status },
+                    { label: t('common.status'), value: translateBackendValue(t, 'conversations.turn_status', turn.status) },
                     { label: t('conversations.correlation_id'), value: valueOrEmpty(turn.correlationId, t('agents.empty_value')) },
                     { label: t('conversations.model_request_id'), value: valueOrEmpty(turn.modelRequestId, t('agents.empty_value')) },
-                    { label: t('conversations.failure_classification'), value: valueOrEmpty(turn.failureClassification, t('agents.empty_value')) },
-                    { label: t('conversations.action_class'), value: valueOrEmpty(turn.actionClass, t('agents.empty_value')) },
+                    { label: t('conversations.failure_classification'), value: valueOrEmpty(translateBackendValue(t, 'conversations.failure_classification_value', turn.failureClassification), t('agents.empty_value')) },
+                    { label: t('conversations.action_class'), value: valueOrEmpty(translateBackendValue(t, 'conversations.action_class_value', turn.actionClass), t('agents.empty_value')) },
                     { label: t('conversations.workflow_identity'), value: valueOrEmpty(turn.workflowIdentity, t('agents.empty_value')) },
                     { label: t('conversations.inbound_message'), value: valueOrEmpty(turn.inboundMessageId, t('agents.empty_value')) },
                     { label: t('conversations.outbound_message'), value: valueOrEmpty(turn.outboundMessageId, t('agents.empty_value')) },
@@ -275,7 +288,12 @@ export function ConversationsView({ manager }: { manager: ConversationsManager }
                     <p className="mt-1 break-all text-xs text-[var(--text-muted)]">{manager.selectedChat?.id ?? t('agents.empty_value')}</p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    {manager.selectedChat ? <StatusBadge status={manager.selectedChat.status} /> : null}
+                    {manager.selectedChat ? (
+                      <StatusBadge
+                        status={manager.selectedChat.status}
+                        label={translateBackendValue(t, 'conversations.status', manager.selectedChat.status) ?? manager.selectedChat.status}
+                      />
+                    ) : null}
                     <button
                       type="button"
                       disabled={closeDisabled}

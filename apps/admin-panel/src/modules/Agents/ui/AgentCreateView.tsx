@@ -13,6 +13,13 @@ export function AgentCreateView({
   catalogManager: AgentTemplateCatalogManager
 }) {
   const { t } = useI18n()
+  const submitDisabledReason = !manager.canMutate
+    ? t('agents.permission_readonly')
+    : !catalogManager.selectedTemplate
+      ? t('agents.create.template_error')
+      : !manager.form.name.trim()
+        ? t('agents.create.name_error')
+        : null
 
   return (
     <div className="space-y-4">
@@ -72,10 +79,16 @@ export function AgentCreateView({
             type="button"
             onClick={() => void manager.createAgent()}
             disabled={!manager.canSubmit}
+            aria-describedby={submitDisabledReason ? 'agent-create-submit-disabled-reason' : undefined}
             className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-xl border border-[var(--primary)] bg-[var(--primary)] px-4 text-sm font-bold text-white hover:bg-[var(--primary-hover)] disabled:cursor-not-allowed disabled:border-[var(--border)] disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-muted)]"
           >
             {manager.isSubmitting ? t('agents.create.submitting') : t('agents.create.submit')}
           </button>
+          {!manager.canSubmit && submitDisabledReason ? (
+            <p id="agent-create-submit-disabled-reason" className="mt-2 text-sm text-[var(--text-muted)]">
+              {submitDisabledReason}
+            </p>
+          ) : null}
         </section>
       </div>
     </div>

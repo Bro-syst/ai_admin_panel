@@ -1,31 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://core-ai-platform.example/</loc>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://core-ai-platform.example/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://core-ai-platform.example/en/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://core-ai-platform.example/es/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://core-ai-platform.example/"/>
+    <loc>https://syn0rix.com/en/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://syn0rix.com/en/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://syn0rix.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://syn0rix.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://syn0rix.com/en/"/>
   </url>
   <url>
-    <loc>https://core-ai-platform.example/platform/</loc>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://core-ai-platform.example/platform/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://core-ai-platform.example/en/platform/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://core-ai-platform.example/es/platform/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://core-ai-platform.example/platform/"/>
+    <loc>https://syn0rix.com/en/platform/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://syn0rix.com/en/platform/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://syn0rix.com/ru/platform/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://syn0rix.com/es/platform/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://syn0rix.com/en/platform/"/>
   </url>
   <url>
-    <loc>https://core-ai-platform.example/agents/</loc>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://core-ai-platform.example/agents/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://core-ai-platform.example/en/agents/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://core-ai-platform.example/es/agents/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://core-ai-platform.example/agents/"/>
+    <loc>https://syn0rix.com/en/agents/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://syn0rix.com/en/agents/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://syn0rix.com/ru/agents/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://syn0rix.com/es/agents/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://syn0rix.com/en/agents/"/>
   </url>
   <url>
-    <loc>https://core-ai-platform.example/pilot/</loc>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://core-ai-platform.example/pilot/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://core-ai-platform.example/en/pilot/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://core-ai-platform.example/es/pilot/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://core-ai-platform.example/pilot/"/>
+    <loc>https://syn0rix.com/en/solutions/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://syn0rix.com/en/solutions/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://syn0rix.com/ru/solutions/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://syn0rix.com/es/solutions/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://syn0rix.com/en/solutions/"/>
+  </url>
+  <url>
+    <loc>https://syn0rix.com/en/solutions/dc/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://syn0rix.com/en/solutions/dc/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://syn0rix.com/ru/solutions/dc/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://syn0rix.com/es/solutions/dc/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://syn0rix.com/en/solutions/dc/"/>
+  </url>
+  <url>
+    <loc>https://syn0rix.com/en/solutions/billing/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://syn0rix.com/en/solutions/billing/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://syn0rix.com/ru/solutions/billing/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://syn0rix.com/es/solutions/billing/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://syn0rix.com/en/solutions/billing/"/>
+  </url>
+  <url>
+    <loc>https://syn0rix.com/en/solutions/hsm/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://syn0rix.com/en/solutions/hsm/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://syn0rix.com/ru/solutions/hsm/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://syn0rix.com/es/solutions/hsm/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://syn0rix.com/en/solutions/hsm/"/>
+  </url>
+  <url>
+    <loc>https://syn0rix.com/en/pilot/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://syn0rix.com/en/pilot/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://syn0rix.com/ru/pilot/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://syn0rix.com/es/pilot/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://syn0rix.com/en/pilot/"/>
   </url>
 </urlset>

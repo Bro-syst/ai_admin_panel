@@ -1,11 +1,52 @@
 Options -Indexes
+DirectoryIndex index.php
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  RewriteRule ^(config|includes|storage|content|docs|TZ|templates)(/|$) - [F,L]
+  RewriteRule ^(config|includes|storage|content|docs|TZ|templates|locales|deploy)(/|$) - [F,L]
 
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule ^ index.php [L]
+</IfModule>
+
+# --- Compression --------------------------------------------------------
+# Prefer Brotli when the module is available, otherwise fall back to gzip.
+<IfModule mod_brotli.c>
+  AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/css text/xml \
+    application/javascript application/json application/ld+json \
+    application/xml application/rss+xml image/svg+xml
+</IfModule>
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml \
+    application/javascript application/json application/ld+json \
+    application/xml application/rss+xml image/svg+xml
+</IfModule>
+
+# --- Caching ------------------------------------------------------------
+# Assets are not fingerprinted yet, so use a moderate cache that self-heals
+# within a week (validated via Last-Modified/ETag) instead of immutable.
+# When ?v=<hash> cache-busting is added, bump CSS/JS to 1 year + immutable.
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType image/webp "access plus 30 days"
+  ExpiresByType image/x-icon "access plus 30 days"
+  ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+<IfModule mod_headers.c>
+  # Cacheable but revalidated, so a deploy propagates within the week.
+  <FilesMatch "\.(css|js)$">
+    Header set Cache-Control "public, max-age=604800, must-revalidate"
+  </FilesMatch>
+  # HTML must always be revalidated so locale routing/SEO stay correct.
+  <FilesMatch "\.php$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
 </IfModule>

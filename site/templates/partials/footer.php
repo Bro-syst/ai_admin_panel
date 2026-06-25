@@ -5,8 +5,8 @@ declare(strict_types=1);
 $nav = t('site.nav', []);
 ?>
 <footer class="site-footer">
-    <div class="container footer-grid">
-        <div>
+    <div class="shell footer-inner">
+        <div class="footer-brand-block">
             <a class="brand footer-brand" href="<?= e(page_path($currentLocale, 'home')) ?>">
                 <span class="brand-mark" aria-hidden="true">AI</span>
                 <span>
@@ -16,10 +16,11 @@ $nav = t('site.nav', []);
             </a>
             <p><?= e(t('site.footer.description')) ?></p>
         </div>
-        <nav aria-label="Footer">
-            <?php foreach (['platform', 'agents', 'pilot'] as $page): ?>
+        <nav class="footer-nav" aria-label="Footer">
+            <?php foreach (['platform', 'agents', 'solutions', 'pilot'] as $page): ?>
                 <a href="<?= e(page_path($currentLocale, $page)) ?>"><?= e($nav[$page] ?? $page) ?></a>
             <?php endforeach; ?>
         </nav>
+        <p class="footer-meta">© <?= e(date('Y')) ?> <?= e(app_config('brand')) ?> · syn0rix.com</p>
     </div>
 </footer>

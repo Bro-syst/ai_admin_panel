@@ -14,6 +14,14 @@ $currentLocale = $route['locale'];
 $currentPage = $route['page'];
 $statusCode = $route['status'];
 
+remember_locale($currentLocale);
+
+if (!empty($route['redirect_to'])) {
+    header('Vary: Accept-Language, Cookie');
+    header('Location: ' . $route['redirect_to'], true, 302);
+    exit;
+}
+
 $fallbackTranslations = load_locale((string) $app['default_locale']);
 $translations = load_locale($currentLocale);
 

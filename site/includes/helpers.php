@@ -52,6 +52,14 @@ function page_url(string $locale, string $page): string
     return current_origin() . page_path($locale, $page);
 }
 
+function asset(string $path): string
+{
+    $file = dirname(__DIR__) . $path;
+    $version = is_file($file) ? (string) filemtime($file) : null;
+
+    return $version !== null ? $path . '?v=' . $version : $path;
+}
+
 function csrf_token(): string
 {
     if (session_status() !== PHP_SESSION_ACTIVE) {

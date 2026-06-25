@@ -80,4 +80,51 @@ describe('publicWidgetApi', () => {
       body: JSON.stringify({ widget_key: 'sales_widget', idempotency_key: 'idem_2', content_text: 'hello' }),
     }))
   })
+
+  it('surfaces public widget backend error categories for localization', async () => {
+    const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 403,
+      json: () => Promise.resolve({
+        detail: 'Origin is not allowed',
+        error_category: 'forbidden_origin',
+        correlation_id: 'corr_1',
+      }),
+    })
+
+    await expect(publicWidgetApi.createSession('sales_widget', 'idem_1')).rejects.toMatchObject({
+      code: 'forbidden_origin',
+      message: 'Origin is not allowed',
+      response: {
+        data: {
+          error_code: 'forbidden_origin',
+          correlation_id: 'corr_1',
+        },
+      },
+    })
+  })
+
+  it('maps detail-only missing widget responses to the localized backend code', async () => {
+    const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 404,
+      json: () => Promise.resolve({
+        detail: 'Resolved widget resource not found',
+        correlation_id: 'corr_2',
+      }),
+    })
+
+    await expect(publicWidgetApi.createSession('sales_widget', 'idem_1')).rejects.toMatchObject({
+      code: 'widget_not_found',
+      message: 'Resolved widget resource not found',
+      response: {
+        data: {
+          error_code: 'widget_not_found',
+          correlation_id: 'corr_2',
+        },
+      },
+    })
+  })
 })

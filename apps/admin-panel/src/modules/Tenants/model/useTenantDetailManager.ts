@@ -104,7 +104,10 @@ export function useTenantDetailManager(tenantId: string) {
       changeTenantStatus: canMutate && includesAction(detail, 'tenant.change_status'),
       changeProvisioningStatus: canMutate && includesAction(detail, 'tenant.change_provisioning_status'),
       updateBillingRef: canMutate && includesAction(detail, 'tenant.update_provisioning_metadata'),
-      provisionDefaultConfig: canMutate && includesAction(detail, 'tenant.provision_default_configuration'),
+      provisionDefaultConfig:
+        canMutate &&
+        includesAction(detail, 'tenant.provision_default_configuration') &&
+        detail?.tenant.configurationPresent !== true,
       updateConfiguration: canMutate && includesAction(detail, 'tenant.update_configuration') && configuration !== null,
     }),
     [canMutate, configuration, detail],

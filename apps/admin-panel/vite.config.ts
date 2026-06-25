@@ -51,6 +51,27 @@ function patchDevSetCookie(headers: Record<string, string | string[] | undefined
   )
 }
 
+function firstHeader(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value
+}
+
+function originFromReferer(value: string | undefined) {
+  if (!value) return undefined
+  try {
+    return new URL(value).origin
+  } catch {
+    return undefined
+  }
+}
+
+function localDevOriginFromHost(value: string | undefined) {
+  return value ? `http://${value}` : undefined
+}
+
+function isPublicWidgetRequest(url: string | undefined) {
+  return url?.startsWith('/api/v1/widget') ?? false
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, appRoot, '')
   const devApiTarget = env.AI_ADMIN_DEV_API_TARGET?.trim() || defaultDevApiTarget
@@ -69,6 +90,21 @@ export default defineConfig(({ mode }) => {
           cookieDomainRewrite: '',
           configure(proxy) {
             proxy.on('proxyReq', (proxyReq, req) => {
+              if (isPublicWidgetRequest(req.url)) {
+                const requestReferer = firstHeader(req.headers.referer)
+                const requestOrigin =
+                  firstHeader(req.headers.origin) ??
+                  originFromReferer(requestReferer) ??
+                  localDevOriginFromHost(firstHeader(req.headers.host))
+                if (requestOrigin) {
+                  proxyReq.setHeader('origin', requestOrigin)
+                }
+                if (requestReferer) {
+                  proxyReq.setHeader('referer', requestReferer)
+                }
+                return
+              }
+
               proxyReq.setHeader('origin', devApiTargetOrigin)
               proxyReq.setHeader('referer', `${devApiTargetOrigin}${req.url ?? '/'}`)
             })

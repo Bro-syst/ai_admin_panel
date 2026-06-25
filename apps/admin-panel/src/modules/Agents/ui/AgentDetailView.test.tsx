@@ -198,7 +198,9 @@ describe('AgentDetailView', () => {
     expect(screen.getByText('Setup checklist')).toBeInTheDocument()
     expect(screen.getByText('Foundation assessment')).toBeInTheDocument()
     expect(screen.getByText('Channel binding')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Manage config' })).toHaveAttribute('href', '/tenants/tenant_1/agents/agent_1/config')
+    expect(screen.getByRole('link', { name: 'Configure now' })).toHaveAttribute('href', '/tenants/tenant_1/agents/agent_1/config')
+    expect(screen.getByRole('link', { name: 'Next required step: Manage config' })).toHaveAttribute('href', '/tenants/tenant_1/agents/agent_1/config')
+    expect(screen.queryByRole('link', { name: 'Manage config' })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Manage knowledge' })).toHaveAttribute('href', '/tenants/tenant_1/agents/agent_1/knowledge')
     expect(screen.getByRole('link', { name: 'Manage capabilities' })).toHaveAttribute('href', '/tenants/tenant_1/agents/agent_1/capabilities')
     expect(screen.getByRole('link', { name: 'Manage policy' })).toHaveAttribute('href', '/tenants/tenant_1/agents/agent_1/policy')
@@ -209,6 +211,34 @@ describe('AgentDetailView', () => {
     expect(screen.queryByRole('link', { name: /Conversations/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Usage/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Billing/i })).not.toBeInTheDocument()
+  })
+
+  it('renders lifecycle mutation evidence without missing optional field noise', () => {
+    renderView({
+      notice: 'Жизненный цикл агента обновлён.',
+      mutationResult: {
+        action: 'change_lifecycle',
+        resourceType: 'agent',
+        resourceId: 'agent_1',
+        actorId: null,
+        actorType: null,
+        tenantId: 'tenant_1',
+        correlationId: 'corr_1',
+        mutationTimestamp: '2026-06-14T22:32:00Z',
+        changedStateSummary: {},
+      },
+    }, 'ru')
+
+    expect(screen.getByRole('heading', { name: 'Результат последнего изменения' })).toBeInTheDocument()
+    expect(screen.getByText('Изменение жизненного цикла агента')).toBeInTheDocument()
+    expect(screen.getByTitle('change_lifecycle')).toBeInTheDocument()
+    expect(screen.getByText('Агент')).toBeInTheDocument()
+    expect(screen.getByTitle('agent')).toBeInTheDocument()
+    expect(screen.getAllByText('agent_1')).toHaveLength(2)
+    expect(screen.getByText('corr_1')).toBeInTheDocument()
+    expect(screen.queryByText('Статус / результат')).not.toBeInTheDocument()
+    expect(screen.queryByText('Версия')).not.toBeInTheDocument()
+    expect(screen.queryByText('Сервер не вернул поле')).not.toBeInTheDocument()
   })
 
   it('requires confirmation before status action', async () => {
@@ -318,14 +348,106 @@ describe('AgentDetailView', () => {
     expect(statusButton).toBeDisabled()
     expect(lifecycleButton).toBeDisabled()
     expect(screen.getByText('Activation is locked until backend setup blockers are resolved.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Next setup step: Knowledge/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Next setup step: Manage config/i })).toHaveAttribute(
       'href',
-      '/tenants/tenant_1/agents/agent_1/knowledge',
+      '/tenants/tenant_1/agents/agent_1/config',
     )
 
     await user.click(statusButton)
 
     expect(confirmSpy).not.toHaveBeenCalled()
+    expect(manager.updateStatus).not.toHaveBeenCalled()
+    confirmSpy.mockRestore()
+  })
+
+  it('allows lifecycle activation when core setup is ready but release blockers remain', async () => {
+    const user = userEvent.setup()
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const manager = renderView({
+      detail: {
+        agentId: 'agent_1',
+        tenantId: 'tenant_1',
+        name: 'Sales agent',
+        description: 'Handles sales',
+        purpose: 'Qualify leads',
+        status: 'inactive',
+        lifecycleStatus: 'draft',
+        archetypeId: 'sales_qualification',
+        templateId: 'sales_qualification_v1',
+        activeConfigId: 'config_1',
+        setupReadinessSummary: {
+          overallReadinessStatus: 'blocked',
+          releaseReady: false,
+          blockingItemCount: 2,
+          tenantStatus: 'active',
+          agentLifecycleStatus: 'draft',
+          archetypeTemplateStatus: 'selected',
+          agentConfigStatus: 'ready',
+          knowledgeStatus: 'ready',
+          capabilityStatus: 'ready',
+          policyStatus: 'ready',
+          policyBindingMode: 'template_default',
+          siteWidgetStatus: 'ready',
+          publicChannelRequired: true,
+          publicChannelInUse: true,
+          meteringInterpretationMarkers: ['turns'],
+          releaseHandoffTarget: 'stage_10',
+        },
+        foundationAssessmentSummary: {
+          validationStatus: 'valid',
+          compatibilityStatus: 'compatible',
+          processingPath: 'active',
+          normalized: true,
+          safeDefaultsApplied: true,
+          fallbackEligible: false,
+          provenanceMarker: 'backend',
+          issueCount: 0,
+          issues: [],
+          compatibilityNotes: [],
+        },
+        channelBindingSummary: {
+          supportedChannels: ['public_widget'],
+          publicChannelSupported: true,
+          readinessStatus: 'ready',
+          publicChannelRequired: true,
+          publicChannelInUse: true,
+          bindingCount: 2,
+          readyBindingCount: 2,
+          meteringInterpretationMarkers: ['turns'],
+          releaseHandoffTarget: 'stage_10',
+          issueCount: 0,
+        },
+        supportedMutationActions: ['agents.update_metadata', 'agents.change_status', 'agents.change_lifecycle'],
+        agent: {} as never,
+      },
+      setupChecklist: null,
+    })
+
+    const statusButton = screen.getByRole('button', { name: 'Set status active' })
+    const lifecycleButton = screen.getByRole('button', { name: 'Set lifecycle active' })
+
+    expect(statusButton).toBeDisabled()
+    expect(lifecycleButton).toBeEnabled()
+    expect(
+      screen.getAllByRole('link', { name: /Release handoff\s*:\s*Review release readiness after lifecycle is active/i })[0],
+    ).toHaveAttribute('href', '/tenants/tenant_1/agents/agent_1/releases')
+
+    const showBlockersButton = screen.getByRole('button', { name: 'Show blockers' })
+    expect(showBlockersButton).toHaveAttribute('aria-controls', 'agent-setup-blockers')
+    await user.click(showBlockersButton)
+
+    const blockerDetails = document.getElementById('agent-setup-blockers')
+    expect(blockerDetails).toHaveAttribute('open')
+    expect(blockerDetails?.className).toContain('ring-2')
+    expect(blockerDetails?.textContent).toContain('Agent lifecycle')
+    expect(blockerDetails?.textContent).toContain('Enable lifecycle before release handoff.')
+    expect(blockerDetails?.textContent).toContain('Release handoff')
+    expect(blockerDetails?.textContent).toContain('Review release readiness after lifecycle is active.')
+
+    await user.click(lifecycleButton)
+
+    expect(confirmSpy).toHaveBeenCalledWith('Set this agent lifecycle to active?')
+    expect(manager.updateLifecycle).toHaveBeenCalledWith('active')
     expect(manager.updateStatus).not.toHaveBeenCalled()
     confirmSpy.mockRestore()
   })
@@ -490,10 +612,11 @@ describe('AgentDetailView', () => {
     expect(capabilitiesLink.className).toContain('hover:bg-[var(--primary-hover)]')
     expect(capabilitiesLink.className).not.toContain('hover:bg-[var(--surface-muted)]')
     expect(screen.getByText('Возможности ещё не сохранены.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Показать блокеры' })).toHaveAttribute('href', '#agent-setup-blockers')
-    expect(screen.getByText('Дополнительные safe defaults не требовались')).toBeInTheDocument()
-    expect(screen.getAllByText(/не выбран режим capability assignment/).length).toBeGreaterThan(0)
-    expect(screen.getAllByRole('link', { name: /Возможности.*не выбран режим capability assignment/ }).length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: 'Показать блокеры' })).toHaveAttribute('aria-controls', 'agent-setup-blockers')
+    expect(screen.getByText('Дополнительные безопасные настройки не требовались')).toBeInTheDocument()
+    expect(screen.queryByText('Дополнительные safe defaults не требовались')).not.toBeInTheDocument()
+    expect(screen.getAllByText(/не выбран режим назначения возможностей/).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('link', { name: /Возможности.*не выбран режим назначения возможностей/ }).length).toBeGreaterThan(0)
     expect(screen.getAllByRole('link', { name: /Политика безопасности.*Назначить профиль политики/ }).length).toBeGreaterThan(0)
     expect(screen.getAllByRole('link', { name: /Канал подключения.*Подключить сайт или виджет/ }).length).toBeGreaterThan(0)
     expect(screen.getByText('Связанные виджеты')).toBeInTheDocument()
@@ -575,8 +698,142 @@ describe('AgentDetailView', () => {
     expect(screen.getByText('Все обязательные пункты отображены выше.')).toBeInTheDocument()
   })
 
+  it('labels the channel guided setup route as sites and widgets', () => {
+    renderView(
+      {
+        detail: {
+          agentId: 'agent_1',
+          tenantId: 'tenant_1',
+          name: 'Sales Support Manual Smoke Agent',
+          description: 'Manual smoke agent for first service E2E verification',
+          purpose: 'Answer bounded sales and support questions from approved knowledge',
+          status: 'inactive',
+          lifecycleStatus: 'draft',
+          archetypeId: 'sales_qualification',
+          templateId: 'sales_qualification_v1',
+          activeConfigId: 'config_1',
+          setupReadinessSummary: {
+            overallReadinessStatus: 'blocked',
+            releaseReady: false,
+            blockingItemCount: 1,
+            tenantStatus: 'active',
+            agentLifecycleStatus: 'draft',
+            archetypeTemplateStatus: 'selected',
+            agentConfigStatus: 'ready',
+            knowledgeStatus: 'ready',
+            capabilityStatus: 'ready',
+            policyStatus: 'ready',
+            policyBindingMode: 'explicit_profile',
+            siteWidgetStatus: 'missing',
+            publicChannelRequired: true,
+            publicChannelInUse: false,
+            meteringInterpretationMarkers: [],
+            releaseHandoffTarget: 'stage_10',
+          },
+          foundationAssessmentSummary: {
+            validationStatus: 'valid',
+            compatibilityStatus: 'compatible',
+            processingPath: 'active',
+            normalized: true,
+            safeDefaultsApplied: false,
+            fallbackEligible: false,
+            provenanceMarker: null,
+            issueCount: 0,
+            issues: [],
+            compatibilityNotes: [],
+          },
+          channelBindingSummary: {
+            supportedChannels: ['public_widget', 'internal_console'],
+            publicChannelSupported: true,
+            readinessStatus: 'pending',
+            publicChannelRequired: true,
+            publicChannelInUse: false,
+            bindingCount: 0,
+            readyBindingCount: 0,
+            meteringInterpretationMarkers: [],
+            releaseHandoffTarget: 'stage_10',
+            issueCount: 1,
+          },
+          supportedMutationActions: [],
+          agent: {} as never,
+        },
+        setupChecklist: null,
+        editForm: {
+          name: 'Sales Support Manual Smoke Agent',
+          description: 'Manual smoke agent for first service E2E verification',
+          purpose: 'Answer bounded sales and support questions from approved knowledge',
+        },
+      },
+      'ru',
+    )
+
+    const guidedLink = screen.getByRole('link', { name: 'Следующий обязательный шаг: Настроить сайты и виджеты' })
+    expect(guidedLink).toHaveAttribute('href', '/tenants/tenant_1/agents/agent_1/sites-widgets')
+    expect(screen.queryByRole('link', { name: 'Следующий обязательный шаг: Канал' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Канал: Требуется' })).toHaveAttribute(
+      'href',
+      '/tenants/tenant_1/agents/agent_1/sites-widgets',
+    )
+  })
+
   it('routes unknown setup owner areas back to agent config', () => {
     renderView({
+      detail: {
+        agentId: 'agent_1',
+        tenantId: 'tenant_1',
+        name: 'Sales agent',
+        description: 'Handles sales',
+        purpose: 'Qualify leads',
+        status: 'inactive',
+        lifecycleStatus: 'draft',
+        archetypeId: 'sales_qualification',
+        templateId: 'sales_qualification_v1',
+        activeConfigId: 'config_1',
+        setupReadinessSummary: {
+          overallReadinessStatus: 'blocked',
+          releaseReady: false,
+          blockingItemCount: 1,
+          tenantStatus: 'active',
+          agentLifecycleStatus: 'draft',
+          archetypeTemplateStatus: 'selected',
+          agentConfigStatus: 'ready',
+          knowledgeStatus: 'ready',
+          capabilityStatus: 'ready',
+          policyStatus: 'ready',
+          policyBindingMode: 'template_default',
+          siteWidgetStatus: 'ready',
+          publicChannelRequired: true,
+          publicChannelInUse: true,
+          meteringInterpretationMarkers: ['turns'],
+          releaseHandoffTarget: 'stage_10',
+        },
+        foundationAssessmentSummary: {
+          validationStatus: 'valid',
+          compatibilityStatus: 'compatible',
+          processingPath: 'safe_defaults',
+          normalized: true,
+          safeDefaultsApplied: true,
+          fallbackEligible: false,
+          provenanceMarker: 'template',
+          issueCount: 0,
+          issues: [],
+          compatibilityNotes: [],
+        },
+        channelBindingSummary: {
+          supportedChannels: ['web_widget'],
+          publicChannelSupported: true,
+          readinessStatus: 'ready',
+          publicChannelRequired: true,
+          publicChannelInUse: true,
+          bindingCount: 0,
+          readyBindingCount: 0,
+          meteringInterpretationMarkers: ['turns'],
+          releaseHandoffTarget: 'stage_10',
+          issueCount: 0,
+        },
+        supportedMutationActions: [],
+        agent: {} as never,
+      },
       setupChecklist: createSetupChecklist([
           {
             itemId: 'custom_config_blocker',
@@ -692,6 +949,13 @@ describe('AgentDetailView', () => {
     )
 
     expect(screen.getByText('Агент создан. Требуется конфигурация.')).toBeInTheDocument()
+    expect(screen.getByText('Пошаговая настройка')).toBeInTheDocument()
+    expect(screen.getByText('Начните с конфигурации агента')).toBeInTheDocument()
+    expect(screen.queryByText('Возможности ещё не сохранены.')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Следующий обязательный шаг: Настроить конфигурацию' })).toHaveAttribute(
+      'href',
+      '/tenants/tenant_1/agents/agent_1/config',
+    )
     expect(screen.getByRole('link', { name: 'Перейти к конфигурации' })).toHaveAttribute(
       'href',
       '/tenants/tenant_1/agents/agent_1/config',
@@ -702,7 +966,8 @@ describe('AgentDetailView', () => {
     expect(screen.getAllByText('Семантически некорректна').length).toBeGreaterThan(0)
     expect(screen.getByText('Активная конфигурация не создана')).toBeInTheDocument()
     expect(screen.getAllByText('Отвечает на ограниченные вопросы продаж и поддержки по утверждённой базе знаний').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Тестовый агент для проверки первого клиентского сценария')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Answer bounded sales and support questions from approved knowledge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Manual smoke agent for first service E2E verification')).toBeInTheDocument()
     expect(screen.queryByText('stage24_release_validation')).not.toBeInTheDocument()
     expect(screen.queryByText('semantically_invalid')).not.toBeInTheDocument()
     expect(screen.queryByText('Active config is not provisioned')).not.toBeInTheDocument()

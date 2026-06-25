@@ -58,6 +58,15 @@ export function CopyableValue({ value, label }: { value: string | number | null 
   )
 }
 
+function localizedMutationValue(t: (key: string) => string, group: string, value: string | null | undefined) {
+  if (!value) return null
+
+  const key = `mutation_result.${group}.${value}`
+  const translated = t(key)
+
+  return translated === key ? value : translated
+}
+
 export function MutationResultBlock({
   title,
   result,
@@ -85,6 +94,9 @@ export function MutationResultBlock({
   const status = result.resultStatus ?? result.status ?? null
   const showStatus = status !== null || !hideMissingOptionalFields
   const showVersion = (result.version !== null && result.version !== undefined) || !hideMissingOptionalFields
+  const actionLabel = localizedMutationValue(t, 'action_value', result.action)
+  const resourceTypeLabel = localizedMutationValue(t, 'resource_type', result.resourceType)
+  const statusLabel = localizedMutationValue(t, 'status_value', status)
 
   return (
     <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100">
@@ -92,11 +104,11 @@ export function MutationResultBlock({
       <dl className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <dt className="text-xs font-semibold uppercase opacity-70">{t('mutation_result.action')}</dt>
-          <dd className="break-all font-semibold">{result.action}</dd>
+          <dd className="break-all font-semibold" title={result.action}>{actionLabel}</dd>
         </div>
         <div>
           <dt className="text-xs font-semibold uppercase opacity-70">{t('mutation_result.resource')}</dt>
-          <dd className="break-all font-semibold">{result.resourceType}</dd>
+          <dd className="break-all font-semibold" title={result.resourceType}>{resourceTypeLabel}</dd>
         </div>
         <div>
           <dt className="text-xs font-semibold uppercase opacity-70">{t('mutation_result.resource_id')}</dt>
@@ -107,7 +119,7 @@ export function MutationResultBlock({
         {showStatus ? (
           <div>
             <dt className="text-xs font-semibold uppercase opacity-70">{t('mutation_result.status_result')}</dt>
-            <dd className="break-all font-semibold">{status ?? t('mutation_result.not_returned')}</dd>
+            <dd className="break-all font-semibold" title={status ?? undefined}>{status ? statusLabel : t('mutation_result.not_returned')}</dd>
           </div>
         ) : null}
         {showVersion ? (

@@ -98,6 +98,14 @@ describe('AgentsListView', () => {
     expect(screen.queryByText('Knowledge')).not.toBeInTheDocument()
   })
 
+  it('localizes template ids in the agents table while preserving the raw id as metadata', () => {
+    renderView({}, {}, 'ru')
+
+    expect(screen.getAllByText('Квалификация продаж v1').length).toBeGreaterThan(0)
+    expect(screen.getByTitle('sales_qualification_v1')).toHaveTextContent('Квалификация продаж v1')
+    expect(screen.queryByText('sales_qualification_v1')).not.toBeInTheDocument()
+  })
+
   it('localizes agent catalog labels and hides backend setup-stage wording in Russian', () => {
     renderView(
       { agents: [], metadata: { page: 1, pageSize: 20, totalItems: 0, returnedItems: 0, ordering: 'name' } },

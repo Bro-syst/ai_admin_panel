@@ -6,7 +6,8 @@ import { I18nProvider } from '@/core/i18n/I18nProvider'
 import type { ConversationsManager } from '@/modules/Conversations/model/useConversationsManager'
 import { ConversationsView } from '@/modules/Conversations/ui/ConversationsView'
 
-function renderView(manager: Partial<ConversationsManager> = {}) {
+function renderView(manager: Partial<ConversationsManager> = {}, locale = 'en') {
+  window.localStorage.setItem('ai_admin_panel:locale_v1', locale)
   const defaultManager = {
     tenantId: 'tenant_1',
     statusFilter: 'all',
@@ -92,6 +93,72 @@ describe('ConversationsView', () => {
     expect(screen.getAllByText('model_req_1').length).toBeGreaterThan(0)
     expect(screen.getByText('Snapshot payloads are hidden unless the backend exposes support-safe fields.')).toBeInTheDocument()
     expect(screen.getByText('Support-safe memory summary')).toBeInTheDocument()
+  })
+
+  it('localizes conversation labels and backend status values for Russian operators', () => {
+    renderView({
+      runtimeSummary: {
+        tenantId: 'tenant_1',
+        totalChats: 2,
+        activeChats: 2,
+        closedChats: 0,
+        totalTurns: 2,
+        failedTurns: 1,
+        actionTurns: 1,
+        redactedMessageCount: 1,
+        metadata: {},
+        items: [
+          {
+            chatId: 'chat_1',
+            tenantId: 'tenant_1',
+            agentId: 'agent_1',
+            chatStatus: 'open',
+            startedAt: null,
+            lastActivityAt: null,
+            redactedMessagePreview: 'safe preview',
+            turnSummary: null,
+            currentMemorySummary: null,
+            requestSummary: null,
+            correlationRefs: [],
+            boundedPolicyOrRetrievalOutcomeRefsWhereAvailable: [],
+            openedAt: null,
+            lastMessageAt: null,
+            turnCount: 0,
+            failedTurnCount: 0,
+            actionTurnCount: 0,
+            latestFailureClassification: null,
+            latestActionClassification: null,
+          },
+        ],
+      },
+      selectedChat: { id: 'chat_1', tenantId: 'tenant_1', agentId: 'agent_1', status: 'open', openedAt: '2026-05-14T08:00:00Z', lastMessageAt: null, closedAt: null },
+      selectedTurn: { id: 'turn_1', tenantId: 'tenant_1', chatId: 'chat_1', agentId: 'agent_1', inboundMessageId: 'message_1', outboundMessageId: null, source: 'widget', status: 'failed', correlationId: 'corr_1', idempotencyKey: 'idem_1', requestFingerprint: 'fingerprint_1', modelRequestId: 'model_req_1', failureClassification: 'tool_failure', actionClass: 'handoff', workflowIdentity: 'wf_1', hasContextSnapshot: true, hasRuntimeSnapshot: true, hasMemorySnapshot: true, createdAt: '2026-05-14T08:00:00Z', updatedAt: '2026-05-14T08:01:00Z' },
+      messages: [{ id: 'message_1', tenantId: 'tenant_1', chatId: 'chat_1', source: 'user', messageType: 'text', sequenceNumber: 1, contentText: null, createdAt: '2026-05-14T08:00:00Z' }],
+      selectedMessage: { id: 'message_1', tenantId: 'tenant_1', chatId: 'chat_1', source: 'user', messageType: 'text', sequenceNumber: 1, contentText: null, createdAt: '2026-05-14T08:00:00Z' },
+    }, 'ru')
+
+    expect(screen.getByRole('link', { name: 'Назад к тенанту' })).toHaveAttribute('href', '/tenants/tenant_1')
+    expect(screen.getByRole('combobox', { name: 'Фильтр статуса диалога' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Закрыть диалог' })).toBeInTheDocument()
+    expect(screen.getByText('Сводка диалогов')).toBeInTheDocument()
+    expect(screen.getByText('Детали диалога')).toBeInTheDocument()
+    expect(screen.getByText('Чаты')).toBeInTheDocument()
+    expect(screen.getByText('Сообщения')).toBeInTheDocument()
+    expect(screen.getByText('Шаги диалога')).toBeInTheDocument()
+    expect(screen.getByText('Текущая память')).toBeInTheDocument()
+    expect(screen.getAllByText('Открыт').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Ошибка').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Пользователь / Текст').length).toBeGreaterThan(0)
+    expect(screen.getByText('Ошибка инструмента')).toBeInTheDocument()
+    expect(screen.getByText('Передача оператору')).toBeInTheDocument()
+    expect(screen.getByText('Снимок контекста')).toBeInTheDocument()
+    expect(screen.getByText('Снимок выполнения')).toBeInTheDocument()
+    expect(screen.getByText('Снимок памяти')).toBeInTheDocument()
+    expect(screen.getByText('Текст сообщения скрыт или не возвращён сервером.')).toBeInTheDocument()
+    expect(screen.queryByText('Conversations')).not.toBeInTheDocument()
+    expect(screen.queryByText('Runtime summary')).not.toBeInTheDocument()
+    expect(screen.queryByText('Conversation detail')).not.toBeInTheDocument()
+    expect(screen.queryByText('Message content is redacted or not returned by the backend.')).not.toBeInTheDocument()
   })
 
   it('requires confirmation before closing a conversation', async () => {

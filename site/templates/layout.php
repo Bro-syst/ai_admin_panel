@@ -13,6 +13,6 @@ declare(strict_types=1);
         <?php require __DIR__ . '/pages/' . $currentPage . '.php'; ?>
     </main>
     <?php require __DIR__ . '/partials/footer.php'; ?>
-    <script src="/static/script.js" defer></script>
+    <script src="<?= e(asset('/static/script.js')) ?>" defer></script>
 </body>
 </html>

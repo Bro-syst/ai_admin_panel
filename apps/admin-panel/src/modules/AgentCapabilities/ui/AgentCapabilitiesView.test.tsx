@@ -145,25 +145,28 @@ describe('AgentCapabilitiesView', () => {
 
     expect(screen.getByText('Возможности')).toBeInTheDocument()
     expect(screen.getByText('Назначение возможностей')).toBeInTheDocument()
-    expect(screen.getByText('Рекомендуемый режим для первого smoke: включить только чтение из базы знаний и явно запретить внешние действия.')).toBeInTheDocument()
-    expect(screen.getByText('Чтение из базы знаний безопасно; workflow, внешние уведомления и задачи исполнения создают действия или side effects.')).toBeInTheDocument()
+    expect(screen.getByText('Рекомендуемый режим для первой проверки: включить только чтение из базы знаний и явно запретить внешние действия.')).toBeInTheDocument()
+    expect(screen.getByText('Чтение из базы знаний безопасно; рабочие процессы, внешние уведомления и задачи исполнения создают действия или побочные эффекты.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Применить рекомендуемый набор' })).toBeInTheDocument()
     expect(screen.getAllByText('Заблокировано').length).toBeGreaterThan(0)
-    expect(screen.getByText('Включено capabilities')).toBeInTheDocument()
+    expect(screen.getByText('Включённые возможности')).toBeInTheDocument()
     expect(screen.getByText('Внешние действия разрешены')).toBeInTheDocument()
-    expect(screen.getByText('Для первого smoke рекомендуется запретить.')).toBeInTheDocument()
+    expect(screen.getByText('Для первой проверки рекомендуется запретить.')).toBeInTheDocument()
     expect(screen.getByText('Обязательна по шаблону')).toBeInTheDocument()
     expect(screen.getAllByText('База знаний').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Передача оператору').length).toBeGreaterThan(0)
     expect(screen.getByText('Поиск по базе знаний')).toBeInTheDocument()
     expect(screen.getByText('Поставить внешнее уведомление в очередь')).toBeInTheDocument()
     expect(screen.getByText('Запустить передачу оператору')).toBeInTheDocument()
-    expect(screen.getAllByText('Не включать для первого smoke').length).toBeGreaterThanOrEqual(2)
+    expect(screen.getAllByText('Не включать для первой проверки').length).toBeGreaterThanOrEqual(2)
+    expect(screen.getAllByText('Технический ID доступен при наведении.').length).toBeGreaterThanOrEqual(3)
+    expect(screen.getAllByTitle('capability.integration.notify_external / 1.0.0').length).toBeGreaterThan(0)
     expect(screen.getByLabelText('Запретить внешние действия')).toBeEnabled()
-    expect(screen.getByText('Управляется backend')).toBeInTheDocument()
+    expect(screen.getByText('Управляется сервером')).toBeInTheDocument()
     expect(screen.queryByText('template_required')).not.toBeInTheDocument()
     expect(screen.queryByText('handoff')).not.toBeInTheDocument()
     expect(screen.queryByText('backend_owned')).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent(/capability\.|capabilities|workflow|smoke|recommended mode/i)
   })
 
   it('explains empty required capabilities and warns when external actions are blocked', () => {
@@ -222,12 +225,31 @@ describe('AgentCapabilitiesView', () => {
           { capabilityId: 'capability.workflow.human_handoff', capabilityVersion: '1.0.0', enabled: false },
         ],
       },
+      isDirty: true,
     } as Partial<AgentCapabilitiesManager>, 'ru')
 
     expect(screen.getByText('Будет включено: Получить контекст из базы знаний.')).toBeInTheDocument()
     expect(screen.getByText('Будет запрещено: внешние действия.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Рекомендуемый набор применён' })).toBeInTheDocument()
-    expect(screen.getAllByText('Заблокировано recommended mode').length).toBeGreaterThanOrEqual(2)
+    expect(screen.getByRole('button', { name: 'Набор выбран, сохраните назначения' })).toBeInTheDocument()
+    expect(screen.getAllByText('Заблокировано рекомендуемым режимом').length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('shows saved recommended set state after assignments are persisted', () => {
+    renderView({
+      form: {
+        explicitNoExternalActions: true,
+        assignments: [
+          { capabilityId: 'cap_search', capabilityVersion: 'v1', enabled: true },
+          { capabilityId: 'capability.integration.notify_external', capabilityVersion: '1.0.0', enabled: false },
+          { capabilityId: 'capability.workflow.human_handoff', capabilityVersion: '1.0.0', enabled: false },
+        ],
+      },
+      isDirty: false,
+    } as Partial<AgentCapabilitiesManager>, 'ru')
+
+    expect(screen.getByRole('button', { name: 'Рекомендуемый набор сохранён' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Сохранить назначения' })).toBeDisabled()
+    expect(screen.getByTitle('Нет несохранённых изменений.')).toBeInTheDocument()
   })
 
   it('confirms manual high-risk capability enablement before changing the form', async () => {
@@ -284,7 +306,7 @@ describe('AgentCapabilitiesView', () => {
         issues: [],
       },
       mutationResult: {
-        action: 'update_capability_assignments',
+        action: 'upsert_capability_profile',
         resourceType: 'agent_capabilities',
         resourceId: 'agent_1',
         actorId: 'admin_1',
@@ -298,10 +320,11 @@ describe('AgentCapabilitiesView', () => {
     } as Partial<AgentCapabilitiesManager>)
 
     expect(screen.getByText('Capability mutation evidence')).toBeInTheDocument()
-    expect(screen.getByText('update_capability_assignments')).toBeInTheDocument()
+    expect(screen.getByText('Capability profile update')).toBeInTheDocument()
+    expect(screen.getByTitle('upsert_capability_profile')).toBeInTheDocument()
     expect(screen.getByText('agent_1')).toBeInTheDocument()
     expect(screen.getAllByText('1').length).toBeGreaterThan(0)
-    expect(screen.getByText('no_external_actions')).toBeInTheDocument()
+    expect(screen.getByText('External-action mode')).toBeInTheDocument()
     expect(screen.getByText('External actions blocked')).toBeInTheDocument()
     expect(screen.getAllByText('Ready').length).toBeGreaterThan(0)
     expect(screen.getByText('corr_1')).toBeInTheDocument()

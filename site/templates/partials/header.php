@@ -5,7 +5,7 @@ declare(strict_types=1);
 $nav = t('site.nav', []);
 ?>
 <header class="site-header">
-    <div class="container header-inner">
+    <div class="shell header-inner">
         <a class="brand" href="<?= e(page_path($currentLocale, 'home')) ?>" aria-label="<?= e(app_config('brand')) ?>">
             <span class="brand-mark" aria-hidden="true">AI</span>
             <span>
@@ -19,7 +19,7 @@ $nav = t('site.nav', []);
             <span></span>
         </button>
         <nav class="site-nav" id="site-nav" aria-label="Primary">
-            <?php foreach (['platform', 'agents', 'pilot'] as $page): ?>
+            <?php foreach (['platform', 'agents', 'solutions', 'pilot'] as $page): ?>
                 <a href="<?= e(page_path($currentLocale, $page)) ?>"><?= e($nav[$page] ?? $page) ?></a>
             <?php endforeach; ?>
             <a href="<?= e(page_path($currentLocale, 'pilot')) ?>#contact"><?= e($nav['contact'] ?? 'Contact') ?></a>
